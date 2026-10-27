@@ -1,6 +1,6 @@
 # Endpoints REST propuestos
 
-Base `/api/v1`. Catálogo de 71 operaciones. **41 implementadas:** 17 de fase A y 24 del flujo principal y consultas de apoyo. Las 30 restantes siguen reservadas. Estado y pruebas actuales: [FASE_B.md](FASE_B.md); base previa: [FASE_A.md](FASE_A.md). Contratos generales: CORRESPONDENCIA.md y ARQUITECTURA.md.
+Base `/api/v1`. **66 de 71 implementadas** tras Fase C. Solo cinco operaciones MongoDB siguen reservadas. Inventario por operación: [ESTADO_ENDPOINTS.md](ESTADO_ENDPOINTS.md). Contratos y seguridad actuales: [FASE_C.md](FASE_C.md); historial: FASE_A.md y FASE_B.md.
 
 ## Convenciones
 

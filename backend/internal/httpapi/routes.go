@@ -1,5 +1,5 @@
-// Catálogo general. Los handlers de fase A se registran en resources.go y router.go;
-// las rutas restantes están reservadas para fases posteriores.
+// Catálogo original de 71 operaciones. Las fases A/B/C registran 66 handlers
+// relacionales; únicamente las cinco operaciones MongoDB permanecen reservadas.
 package httpapi
 
 type Route struct {

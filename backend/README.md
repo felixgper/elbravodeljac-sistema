@@ -1,8 +1,10 @@
-# Backend Go: fases A y B
+# Backend Go: fases A, B y C
 
 APIs reales de acceso, Clientes, contactos, Vehículos y proceso del taller:
 recepción, diagnóstico, cotización, OT, asignaciones, avances/pruebas, pagos y entrega.
-[Estado y endpoints](../docs/backend/FASE_B.md).
+[Estado, contratos y pruebas](../docs/backend/FASE_C.md).
+[Inventario de las 71 operaciones](../docs/backend/ESTADO_ENDPOINTS.md).
+Incluye usuarios/roles/matriz, auxilios, proveedores, catálogos, Dashboard y reportes.
 Requiere Go 1.26 o superior; verificado con Go 1.27.1.
 
 ## Pruebas unitarias y análisis estático

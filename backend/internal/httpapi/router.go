@@ -87,7 +87,7 @@ func New(store application.Store, opts Options) (http.Handler, error) {
 	})
 	mux.HandleFunc("POST /api/v1/auth/login", s.login)
 	implemented := map[string]bool{"POST /api/v1/auth/login": true}
-	for _, e := range append(s.endpoints(), s.workshopEndpoints()...) {
+	for _, e := range append(append(s.endpoints(), s.workshopEndpoints()...), s.relationalEndpoints()...) {
 		implemented[e.method+" "+e.path] = true
 		mux.HandleFunc(e.method+" "+e.path, s.protect(e.permission, e.handler))
 	}
@@ -150,6 +150,11 @@ func (s *server) protect(permission string, next func(http.ResponseWriter, *http
 			s.failure(w, err)
 			return
 		}
+		if !auth.ValidCSRF(auth.CredentialVersion(u.PasswordHash), claims.CredentialVersion) {
+			s.tokens.Revoke(claims.ID)
+			writeError(w, 401, "UNAUTHORIZED", "Las credenciales cambiaron; inicia sesión nuevamente.")
+			return
+		}
 		if permission != "" && !u.Can(permission) {
 			writeError(w, 403, "FORBIDDEN", "Tu usuario no tiene este permiso.")
 			return
@@ -209,7 +214,7 @@ func (s *server) login(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 401, "INVALID_CREDENTIALS", "Credenciales inválidas.")
 		return
 	}
-	token, claims, err := s.tokens.Issue(u.ID)
+	token, claims, err := s.tokens.Issue(u.ID, u.PasswordHash)
 	if err != nil {
 		s.failure(w, err)
 		return
