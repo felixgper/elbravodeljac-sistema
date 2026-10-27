@@ -8,7 +8,7 @@ import (
 )
 
 const providerJSON = `jsonb_build_object('id',p.id_proveedor::text,'name',p.nombre,'document',p.documento,'ruc',p.documento,'phone',p.telefono,'contact',p.contacto)`
-const auxilioJSON = `jsonb_build_object('id',a.id_auxilio::text,'clientId',a.id_cliente_solicitante::text,'vehicleId',a.id_vehiculo::text,'technicianId',a.id_tecnico::text,'unitId',a.id_unidad_auxilio::text,'receptionId',a.id_recepcion::text,'location',a.ubicacion,'incident',a.tipo_incidente,'description',a.descripcion,'state',a.estado,'createdAt',a.fecha,'createdBy',a.id_usuario_registro::text)`
+const auxilioJSON = `jsonb_build_object('id',a.id_auxilio::text,'clientId',a.id_cliente_solicitante::text,'clientName',(SELECT c.nombre FROM clientes c WHERE c.id_cliente=a.id_cliente_solicitante),'vehicleId',a.id_vehiculo::text,'vehiclePlate',(SELECT v.placa FROM vehiculos v WHERE v.id_vehiculo=a.id_vehiculo),'technicianId',a.id_tecnico::text,'technicianName',(SELECT u.nombre FROM usuarios u WHERE u.id_usuario=a.id_tecnico),'unitId',a.id_unidad_auxilio::text,'receptionId',a.id_recepcion::text,'location',a.ubicacion,'incident',a.tipo_incidente,'description',a.descripcion,'state',a.estado,'createdAt',a.fecha,'createdBy',a.id_usuario_registro::text)`
 const unitJSON = `jsonb_build_object('id',c.id_unidad_auxilio::text,'code',c.codigo,'description',c.descripcion,'active',c.activo)`
 const linkJSON = `jsonb_build_object('id',l.id::text,'providerId',l.id_proveedor::text,'sparePartId',l.id_repuesto::text,'name',r.nombre,'referenceCost',l.costo_referencia::text,'referencePrice',r.precio_referencia::text,'stock',r.stock::text,'active',r.activo)`
 

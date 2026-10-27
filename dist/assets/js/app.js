@@ -131,23 +131,24 @@ function bindShell() {
     if (!event.target.closest('.module-search')) { results.hidden = true; search.setAttribute('aria-expanded','false'); }
   };
 }
-async function renderDashboard(currentRender) {
+async function renderDashboard(currentRender,period='Mes') {
   const content = document.getElementById('page-content');
   content.innerHTML = '<div class="loading-state" role="status">Cargando resumen…</div>';
   try {
-    const data = await getDashboard(); if (currentRender !== renderId) return;
+    const data = await getDashboard(period); if (currentRender !== renderId) return;
     const cards = [
-      {label:'Ingresos del mes',value:currency(data.monthlyIncomeCents),icon:'wallet',class:'copper',note:data.currentMonth},
+      {label:'Ingresos del período',value:currency(data.monthlyIncomeCents),icon:'wallet',class:'copper',note:data.period},
       {label:'Órdenes activas',value:getActiveOrders(data),icon:'wrench',class:'copper',note:'Pendientes, reparación y pruebas'},
       {label:'Servicios finalizados',value:data.completedServices,icon:'check',class:'green',note:'Atenciones concluidas'},
-      {label:'Auxilios de hoy',value:data.rescuesToday,icon:'rescue',class:'blue',note:realMode?'Solicitudes registradas':'Solicitudes de demostración'},
+      {label:'Auxilios del período',value:data.rescuesToday,icon:'rescue',class:'blue',note:realMode?'Solicitudes registradas':'Solicitudes de demostración'},
     ];
-    content.innerHTML = `<div class="dashboard-note"><span class="live-dot"></span>Dashboard general <span class="note-divider">/</span><span>${realMode?'Datos del servidor':'Datos de este navegador'} · ${escapeHtml(data.period)}</span></div>
+    content.innerHTML = `<div class="dashboard-note"><span class="live-dot"></span>Dashboard general <span class="note-divider">/</span><span>${realMode?'Datos del servidor':'Datos de este navegador'} · ${escapeHtml(data.period)}</span><div role="group" aria-label="Período del dashboard">${['Semana','Mes','Año'].map(p=>`<button type="button" class="${p===period?'primary':'secondary'}-button" data-period="${p}" aria-pressed="${p===period}">${p}</button>`).join('')}</div></div>
       <section class="kpi-grid" aria-label="Resumen de actividad">${cards.map(card => `<article class="kpi-card"><span class="kpi-icon ${card.class}">${icon(card.icon)}</span><div><strong class="kpi-value">${card.value}</strong><h2>${card.label}</h2><p>${card.note}</p></div></article>`).join('')}</section>
-      <div class="main-charts"><section class="panel income-panel"><div class="panel-heading"><div><h2>Ingresos de los últimos 6 meses</h2><p>Evolución de ingresos registrados</p></div><span class="panel-chip">${escapeHtml(String(new Date().getFullYear()))}</span></div>${incomeChart(data.income)}<div class="chart-caption"><span>${escapeHtml(data.period)}</span><strong>Último mes: ${currency(data.monthlyIncomeCents)}</strong></div></section>
+      <div class="main-charts"><section class="panel income-panel"><div class="panel-heading"><div><h2>Ingresos del período</h2><p>Evolución de ingresos registrados</p></div><span class="panel-chip">${escapeHtml(String(new Date().getFullYear()))}</span></div>${incomeChart(data.income)}<div class="chart-caption"><span>${escapeHtml(data.period)}</span><strong>Total del período: ${currency(data.monthlyIncomeCents)}</strong></div></section>
       <section class="panel states-panel"><div class="panel-heading"><div><h2>Estados del servicio</h2><p>Distribución de las órdenes de trabajo</p></div>${icon('orders')}</div>${donutChart(data.states)}</section></div>
       <div class="secondary-charts"><section class="panel"><div class="panel-heading"><div><h2>Órdenes por estado</h2><p>En proceso = reparación + pruebas</p></div></div>${verticalBars(data.states)}</section><section class="panel"><div class="panel-heading"><div><h2>Trabajo por mecánico</h2><p>Distribución del trabajo registrado</p></div></div>${horizontalBars(data.mechanics,'mechanics')}</section><section class="panel"><div class="panel-heading"><div><h2>Servicios más solicitados</h2><p>Atenciones por tipo de servicio</p></div></div>${horizontalBars(data.services,'services')}</section></div>
       <section class="workshop-banner" aria-label="El Bravo del JAC, servicio especializado en vehículos JAC"><div class="banner-crop"><img src="./assets/images/referencia-cobre-carbon.png" alt="Camioneta JAC y mecánico del taller. Diagnóstico, mantenimiento, repuestos y auxilio mecánico." loading="lazy"></div></section>`;
+    content.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>go('inicio?period='+encodeURIComponent(b.dataset.period)));
     const panel = content.querySelector('.income-panel');
     let lastWidth = 0;
     function fitIncomeChart() {
@@ -198,10 +199,10 @@ async function render() {
       const target = homePath(session.role);
       document.getElementById('page-content').innerHTML = `<section class="panel error-state no-access" role="alert"><span class="no-access-icon">${icon('lock')}</span><h2>No tienes permiso para entrar aquí</h2><p>${allowed.length ? 'Tu rol no incluye este módulo. Si lo necesitas, pide a un administrador que revise tus permisos.' : 'Tu rol no tiene módulos habilitados. Pide a un administrador que revise tus permisos.'}</p>${allowed.length ? `<a class="primary-button" href="#/${target}">Ir a mi pantalla de inicio</a>` : ''}</section>`;
     }
-    else if (module.id === 'inicio') await renderDashboard(currentRender);
+    else if (module.id === 'inicio') await renderDashboard(currentRender,params.get('period')||'Mes');
     else {
       const views={clientes:renderClients,vehiculos:renderVehicles,recepciones:renderReceptions,diagnosticos:renderDiagnoses,cotizaciones:renderQuotes,ordenes:renderOrders,auxilio:renderRescues,pagos:renderPayments,mecanicos:renderMechanics,proveedores:renderSuppliers,usuarios:renderUsers,reportes:renderReports};
-      if(realMode){document.getElementById('page-content').innerHTML='<div class="loading-state" role="status">Cargando datos del servidor…</div>';if(!await loadModule(module.id,params)||currentRender!==renderId)return;}
+      if(realMode){document.getElementById('page-content').innerHTML='<div class="loading-state" role="status">Cargando datos del servidor…</div>';if(!await loadModule(module.id,params,path)||currentRender!==renderId)return;}
       await views[module.id]({root:document.getElementById('page-content'),path,params,session});
       gateForms(module.id, path, can, document.getElementById('page-content'));
       if(realMode){const missing=getStore().unavailable||[];if(missing.length){document.getElementById('page-content').insertAdjacentHTML('afterbegin','<div class="inline-note" role="status">Tu acceso no incluye las consultas auxiliares: '+escapeHtml(missing.join(', '))+'. Los datos no autorizados no se cargan.</div>');}}

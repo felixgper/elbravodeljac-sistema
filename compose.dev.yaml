@@ -62,6 +62,15 @@ services:
       mongo-dev:
         condition: service_healthy
     networks: [dev-only, web-entry]
+  db-migrate:
+    profiles: [setup]
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.test
+    command: ["go", "run", "./cmd/db-migrate"]
+    environment:
+      POSTGRES_DSN: postgres://postgres:${DEV_POSTGRES_PASSWORD}@postgres-dev:5432/elbravodeljac_dev?sslmode=disable
+    networks: [dev-only]
   dev-bootstrap:
     profiles: [setup]
     build:

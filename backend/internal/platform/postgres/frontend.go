@@ -57,16 +57,24 @@ func (s *Store) FrontendOptions(ctx context.Context, module, resource string, p 
 	default:
 		return nil, domain.ErrForbidden
 	}
+	args := []any{scoped, u.ID}
+	if resource == "clientes" {
+		where = "(" + where + ") AND jac_normalize(c.nombre || ' ' || c.numero_documento) LIKE jac_normalize($3) AND ($4='' OR c.id_cliente::text=$4)"
+		args = append(args, "%"+p.Query+"%", p.ClientID)
+	} else if resource == "vehiculos" {
+		where = "(" + where + ") AND ($3='' OR v0.id_cliente::text=$3) AND jac_normalize(coalesce(v0.placa,'') || ' ' || coalesce(v0.modelo,'')) LIKE jac_normalize($4)"
+		args = append(args, p.ClientID, "%"+p.Query+"%")
+	}
 	out := domain.List[json.RawMessage]{Data: []json.RawMessage{}, Meta: domain.Meta{Page: p.Number, PageSize: p.Size}}
 	tx, err := s.Pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
-	if err = tx.QueryRow(ctx, "SELECT count(*) FROM "+from+" WHERE "+where, scoped, u.ID).Scan(&out.Meta.Total); err != nil {
+	if err = tx.QueryRow(ctx, "SELECT count(*) FROM "+from+" WHERE "+where, args...).Scan(&out.Meta.Total); err != nil {
 		return nil, translate(err)
 	}
-	rows, err := tx.Query(ctx, "SELECT "+expr+" FROM "+from+" WHERE "+where+" ORDER BY "+sort+" LIMIT $3 OFFSET $4", scoped, u.ID, p.Size, (p.Number-1)*p.Size)
+	rows, err := tx.Query(ctx, "SELECT "+expr+" FROM "+from+" WHERE "+where+" ORDER BY "+sort+" LIMIT $"+itoa(len(args)+1)+" OFFSET $"+itoa(len(args)+2), append(args, p.Size, (p.Number-1)*p.Size)...)
 	if err != nil {
 		return nil, translate(err)
 	}

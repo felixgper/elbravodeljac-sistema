@@ -1,5 +1,7 @@
 # El Bravo del JAC · Frontend y backend Go · Fase E
 
+[Revisión funcional implementada y probada — 27/10/2026](docs/backend/REVISION_12_OBSERVACIONES.md): búsqueda remota, cotizaciones manuales/descuentos, trabajadores, auxilio y períodos. Incluye migración segura para desarrollo/pruebas y un campo pendiente de identificar.
+
 Sistema web universitario de gestión del taller automotriz, realizado en **HTML, CSS y JavaScript**. Conserva la referencia funcional **Balsamiq V14.1 reparado** (23 pantallas y ventanas, notas internas V14.1.1) y adopta el estilo **Borgoña contemporáneo**: navegación color vino, superficies claras y títulos sans serif.
 
 Las **13 opciones del menú consumen las APIs Go** conservando el diseño aprobado.
@@ -62,7 +64,7 @@ También puedes servir `dist/index.html` con Live Server de VS Code. No abras el
 | Pagos y entrega | Registrar pagos; consultar saldo; identificar receptor; registrar contactos en una ventana; confirmar entrega |
 | Mecánicos | Consultar personal técnico y sus órdenes activas; ver asignaciones |
 | Proveedores | Buscar y registrar/editar proveedores en la misma ventana |
-| Reportes | Filtrar este mes o los últimos seis meses; consultar servicios e ingresos |
+| Reportes | Filtrar Semana, Mes o Año; consultar servicios e ingresos |
 | Usuarios y roles | Crear y editar usuarios; activar/desactivar; asignar roles; iniciar sesión con usuarios de ejemplo creados |
 
 La vista **Mis tareas** muestra las órdenes activas asignadas a Kevin o al auxiliar que inició sesión. Permite registrar avances y cambiar el estado operativo; la finalización con pruebas se realiza desde Actualizar orden.

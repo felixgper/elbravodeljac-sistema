@@ -17,6 +17,7 @@ func (s *server) endpoints() []endpoint {
 		{"GET", "/api/v1/clientes/{id}/contactos", "clientes.ver", s.contacts},
 		{"POST", "/api/v1/clientes/{id}/contactos", "pagos.entregar", s.createContact},
 		{"GET", "/api/v1/vehiculos", "vehiculos.ver", s.vehicles},
+		{"GET", "/api/v1/vehiculos/marcas", "vehiculos.ver", s.brands},
 		{"POST", "/api/v1/vehiculos", "vehiculos.crear", s.createVehicle},
 		{"GET", "/api/v1/vehiculos/{id}", "vehiculos.ver", s.vehicle},
 		{"PATCH", "/api/v1/vehiculos/{id}", "vehiculos.editar", s.patchVehicle},

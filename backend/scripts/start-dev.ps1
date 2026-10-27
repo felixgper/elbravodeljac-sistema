@@ -45,8 +45,9 @@ try {
         if (!$settings[$key]) { throw "Falta $key en el archivo privado; no se regeneran credenciales existentes." }
     }
     Invoke-DevelopmentCompose @('config','--quiet')
-    if (!$SkipBuild) { Invoke-DevelopmentCompose @('build','api','mongo-init','dev-bootstrap') }
+    if (!$SkipBuild) { Invoke-DevelopmentCompose @('build','api','mongo-init','dev-bootstrap','db-migrate') }
     Invoke-DevelopmentCompose @('up','-d','--wait','postgres-dev','mongo-dev')
+    Invoke-DevelopmentCompose @('run','--rm','--no-deps','db-migrate')
     Invoke-DevelopmentCompose @('run','--rm','--no-deps','dev-bootstrap')
     Invoke-DevelopmentCompose @('run','--rm','--no-deps','mongo-init')
     Invoke-DevelopmentCompose @('up','-d','api')

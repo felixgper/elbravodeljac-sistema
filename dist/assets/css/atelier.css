@@ -170,3 +170,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .role-item.active{box-shadow:0 0 0 3px #741b2810}
 .perm-check input:focus-visible{outline-color:#a95865}
 @media(max-width:900px){.data-table th:last-child{background:#f7f8fb}.data-table td:last-child{background:#fff}.data-table tbody tr:hover td:last-child{background:#fbedf0}}
+
+/* Searchable relationship fields: same input style and form layout. */
+.remote-picker{position:relative;width:100%}
+.remote-picker>input{width:100%}
+.remote-results{position:absolute;z-index:30;left:0;right:0;top:100%;max-height:280px;overflow:auto;background:#fff;border:1px solid #e5d8da;border-radius:8px;box-shadow:0 8px 20px #350c1718}
+.remote-results>button{display:block;width:100%;padding:10px 12px;text-align:left;background:#fff;border:0;cursor:pointer;color:inherit;font:inherit}
+.remote-results>button:hover,.remote-results>button[aria-selected=true]{background:#f8edf0}
+.remote-results p,.picker-pages{padding:10px 12px;margin:0}
+.picker-pages{display:flex;justify-content:space-between;gap:8px}

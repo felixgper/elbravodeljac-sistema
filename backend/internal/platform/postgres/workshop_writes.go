@@ -85,6 +85,9 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 	}
 	for i := range v.Items {
 		line := &v.Items[i]
+		if line.ServiceID == "" && line.SparePartID == "" {
+			continue
+		}
 		var name string
 		var table, column, ref string
 		if line.ServiceID != "" {
@@ -107,7 +110,7 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 		return nil, translate(err)
 	}
 	for _, line := range v.Items {
-		_, err = tx.Exec(ctx, `INSERT INTO detalle_cotizacion(id_cotizacion,id_servicio,id_repuesto,descripcion,cantidad,precio_unitario,subtotal,origen_repuesto) VALUES($1,nullif($2,'')::bigint,nullif($3,'')::bigint,$4,$5,$6,$7,nullif($8,''))`, id, line.ServiceID, line.SparePartID, line.Concept, line.Quantity, line.UnitPrice, line.Subtotal, line.Origin)
+		_, err = tx.Exec(ctx, `INSERT INTO detalle_cotizacion(id_cotizacion,id_servicio,id_repuesto,descripcion,cantidad,precio_unitario,subtotal,origen_repuesto,tipo_concepto,tipo_repuesto,descuento_unitario) VALUES($1,nullif($2,'')::bigint,nullif($3,'')::bigint,$4,$5,$6,$7,nullif($8,''),$9,nullif($10,''),$11)`, id, line.ServiceID, line.SparePartID, line.Concept, line.Quantity, line.UnitPrice, line.Subtotal, line.Origin, line.Type, line.PartKind, line.Discount)
 		if err != nil {
 			return nil, translate(err)
 		}
@@ -253,6 +256,20 @@ func (s *Store) UpdateOrder(ctx context.Context, id string, v domain.UpdateOrder
 			return nil, domain.ErrConflict
 		}
 	}
+	var currentMechanic, currentAssistant string
+	if err = tx.QueryRow(ctx, `SELECT coalesce(max(id_usuario::text) FILTER(WHERE rol_en_trabajo='MECANICO'),''),coalesce(max(id_usuario::text) FILTER(WHERE rol_en_trabajo='AUXILIAR'),'') FROM asignaciones_ot WHERE id_orden=$1 AND activo`, id).Scan(&currentMechanic, &currentAssistant); err != nil {
+		return nil, err
+	}
+	nextMechanic, nextAssistant := currentMechanic, currentAssistant
+	if v.MechanicID != nil {
+		nextMechanic = *v.MechanicID
+	}
+	if v.AssistantID != nil {
+		nextAssistant = *v.AssistantID
+	}
+	if nextAssistant != "" && nextAssistant == nextMechanic {
+		return nil, domain.Invalid("assistantId", "Mecánico responsable y auxiliar deben ser personas distintas.")
+	}
 	if v.MechanicID != nil {
 		if err = technicalUser(ctx, tx, *v.MechanicID, false); err != nil {
 			return nil, err
@@ -271,7 +288,7 @@ func (s *Store) UpdateOrder(ctx context.Context, id string, v domain.UpdateOrder
 		id   *string
 		role string
 	}{{v.MechanicID, "MECANICO"}, {v.AssistantID, "AUXILIAR"}} {
-		if assignment.id == nil {
+		if assignment.id == nil || (assignment.role == "MECANICO" && *assignment.id == currentMechanic) || (assignment.role == "AUXILIAR" && *assignment.id == currentAssistant) {
 			continue
 		}
 		if _, err = tx.Exec(ctx, `UPDATE asignaciones_ot SET activo=false WHERE id_orden=$1 AND rol_en_trabajo=$2 AND activo`, id, assignment.role); err != nil {

@@ -79,6 +79,8 @@ func OrderState(value string) (string, error) {
 }
 
 type QuoteLine struct {
+	PartKind    string `json:"partKind"`
+	Discount    string `json:"discount"`
 	ServiceID   string `json:"serviceId"`
 	SparePartID string `json:"sparePartId"`
 	Concept     string `json:"concept"`
@@ -105,32 +107,45 @@ func (v *QuoteInput) Validate() error {
 	}
 	v.Status = state
 	if len(v.Items) == 0 || len(v.Items) > 100 {
-		return Invalid("items", "Se requieren entre 1 y 100 conceptos con referencia real.")
+		return Invalid("items", "Se requieren entre 1 y 100 conceptos.")
 	}
 	var total int64
 	for i := range v.Items {
 		line := &v.Items[i]
-		service := line.ServiceID != ""
-		if service == (line.SparePartID != "") {
-			return Invalid("items", "Cada concepto requiere exactamente serviceId o sparePartId.")
+		manual := line.ServiceID == "" && line.SparePartID == ""
+		service := line.ServiceID != "" || (manual && line.Type == "Servicio")
+		if line.ServiceID != "" && line.SparePartID != "" {
+			return Invalid("items", "No combines servicio y repuesto en una misma referencia.")
 		}
-		id := line.SparePartID
-		if service {
-			id = line.ServiceID
-		}
-		if _, err := ID(id); err != nil {
-			return Invalid("items", "Referencia de catálogo inválida.")
-		}
-		if err := text("concept", line.Concept, 4000, false); err != nil {
-			return err
+		if manual {
+			if line.Type != "Servicio" && line.Type != "Repuesto" {
+				return Invalid("type", "Selecciona Servicio o Repuesto.")
+			}
+			if err := text("concept", line.Concept, 4000, true); err != nil {
+				return err
+			}
+		} else {
+			ref := line.SparePartID
+			if service {
+				ref = line.ServiceID
+			}
+			if _, err := ID(ref); err != nil {
+				return Invalid("items", "Referencia de catálogo inválida.")
+			}
+			if err := text("concept", line.Concept, 4000, false); err != nil {
+				return err
+			}
 		}
 		if service {
 			if line.Type != "" && line.Type != "Servicio" {
 				return Invalid("type", "La referencia corresponde a un servicio.")
 			}
 			line.Type = "Servicio"
+			if line.PartKind != "" {
+				return Invalid("partKind", "La mano de obra no tiene tipo de repuesto.")
+			}
 			if line.Origin != "" && line.Origin != "—" {
-				return Invalid("origin", "Un servicio no tiene origen de repuesto.")
+				return Invalid("origin", "Un servicio no tiene suministro de repuesto.")
 			}
 			line.Origin = ""
 		} else {
@@ -138,9 +153,15 @@ func (v *QuoteInput) Validate() error {
 				return Invalid("type", "La referencia corresponde a un repuesto.")
 			}
 			line.Type = "Repuesto"
+			if line.PartKind != "" && line.PartKind != "Original" && line.PartKind != "Alternativo" {
+				return Invalid("partKind", "Selecciona Original o Alternativo.")
+			}
+			if manual && line.PartKind == "" {
+				return Invalid("partKind", "El repuesto manual requiere tipo Original o Alternativo.")
+			}
 			line.Origin = strings.ToUpper(line.Origin)
 			if line.Origin != "TALLER" && line.Origin != "CLIENTE" {
-				return Invalid("origin", "El repuesto requiere origen Taller o Cliente.")
+				return Invalid("origin", "Indica si el repuesto lo suministra el Taller o el Cliente.")
 			}
 		}
 		quantity, err := Mileage(line.Quantity)
@@ -151,11 +172,22 @@ func (v *QuoteInput) Validate() error {
 		if err != nil {
 			return err
 		}
+		if line.Discount == "" {
+			line.Discount = "0.00"
+		}
+		discount, err := Money(line.Discount, "discount")
+		if err != nil {
+			return err
+		}
+		if discount > price {
+			return Invalid("discount", "El descuento por unidad no puede superar el precio de venta.")
+		}
+		line.Discount = FormatMileage(discount)
 		if line.Origin == "CLIENTE" && price != 0 {
 			return Invalid("unitPrice", "El repuesto del cliente debe tener precio cero.")
 		}
 		// Half-up rounding without overflow: 10-digit quantity * 12-digit price.
-		product := new(big.Int).Mul(big.NewInt(quantity), big.NewInt(price))
+		product := new(big.Int).Mul(big.NewInt(quantity), big.NewInt(price-discount))
 		product.Add(product, big.NewInt(50))
 		product.Div(product, big.NewInt(100))
 		if !product.IsInt64() || product.Int64() > 999999999999 {
@@ -180,6 +212,9 @@ type CreateOrderInput struct {
 }
 
 func (v CreateOrderInput) Validate() error {
+	if v.AssistantID != "" && v.AssistantID == v.MechanicID {
+		return Invalid("assistantId", "Selecciona personas distintas para mecánico responsable y auxiliar.")
+	}
 	for field, id := range map[string]string{"quoteId": v.QuoteID, "mechanicId": v.MechanicID} {
 		if _, err := ID(id); err != nil {
 			return Invalid(field, "ID inválido.")

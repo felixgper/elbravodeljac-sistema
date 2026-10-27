@@ -192,14 +192,23 @@ func statsRange(r *http.Request, dashboard bool) (time.Time, time.Time, error) {
 	now := time.Now().In(loc)
 	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
 	end := start.AddDate(0, 1, 0)
-	if dashboard {
-		start = start.AddDate(0, -5, 0)
-		return start, end, nil
+	period := r.URL.Query().Get("period")
+	if period == "" {
+		period = "Mes"
 	}
-	if r.URL.Query().Get("period") == "Últimos 6 meses" {
+	if !dashboard && period == "Este mes" {
+		period = "Mes"
+	}
+	if !dashboard && period == "Últimos 6 meses" {
 		start = start.AddDate(0, -5, 0)
-	} else if p := r.URL.Query().Get("period"); p != "" && p != "Este mes" {
-		return start, end, domain.Invalid("period", "Periodo inválido.")
+	} else {
+		start, end, err = businessPeriod(now, period)
+		if err != nil {
+			return start, end, err
+		}
+	}
+	if dashboard {
+		return start, end, nil
 	}
 	from, until := r.URL.Query().Get("desde"), r.URL.Query().Get("hasta")
 	if from != "" || until != "" {
@@ -230,4 +239,26 @@ func (s *server) statistics(dashboard bool) func(http.ResponseWriter, *http.Requ
 		out, err := s.store.Statistics(r.Context(), dashboard, start, end)
 		s.result(w, 200, out, err)
 	}
+}
+
+// Half-open business periods in Lima; weeks start Monday, independent of host TZ.
+func businessPeriod(now time.Time, period string) (time.Time, time.Time, error) {
+	loc, err := time.LoadLocation("America/Lima")
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	now = now.In(loc)
+	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	switch period {
+	case "Semana":
+		start = start.AddDate(0, 0, -(int(start.Weekday())+6)%7)
+		return start, start.AddDate(0, 0, 7), nil
+	case "Mes":
+		start = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
+		return start, start.AddDate(0, 1, 0), nil
+	case "Año":
+		start = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, loc)
+		return start, start.AddDate(1, 0, 0), nil
+	}
+	return start, start, domain.Invalid("period", "Selecciona Semana, Mes o Año.")
 }

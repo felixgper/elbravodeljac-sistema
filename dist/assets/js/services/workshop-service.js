@@ -8,9 +8,9 @@ import {ROLES,LOCKED_ROLE,REQUIRED_FOR_ADMIN,defaultPermissions,sanitizePermissi
 export {ROLES};
 export function getContext(state,order){
   const quote=state.quotes.find(q=>q.id===order?.quoteId),diagnosis=state.diagnoses.find(d=>d.id===quote?.diagnosisId),reception=state.receptions.find(r=>r.id===diagnosis?.receptionId);
-  return {quote,diagnosis,reception,client:state.clients.find(c=>c.id===reception?.clientId),vehicle:state.vehicles.find(v=>v.id===reception?.vehicleId)};
+  const client=state.clients.find(c=>c.id===(reception?.clientId||order?.clientId))||(realMode?{id:reception?.clientId||order?.clientId,name:reception?.clientName||order?.clientName}:undefined),vehicle=state.vehicles.find(v=>v.id===(reception?.vehicleId||order?.vehicleId))||(realMode?{id:reception?.vehicleId||order?.vehicleId,plate:reception?.vehiclePlate||order?.vehiclePlate,brand:reception?.vehicleBrand||order?.vehicleBrand,model:reception?.vehicleModel||order?.vehicleModel}:undefined);return {quote,diagnosis,reception,client,vehicle};
 }
-export function itemSubtotal(item){return Number((BigInt(decimalMinor(item.quantity,'Cantidad'))*BigInt(item.unitCents)+50n)/100n);}
+export function itemSubtotal(item){return Number((BigInt(decimalMinor(item.quantity,'Cantidad'))*BigInt(item.unitCents-(item.discountCents||0))+50n)/100n);}
 export function quoteTotal(quote){if(realMode&&quote?.total!==undefined)return real.cents(quote.total);return (quote?.items??[]).reduce((n,item)=>n+itemSubtotal(item),0);}
 export function paidTotal(state,orderId){return state.payments.filter(p=>p.orderId===orderId).reduce((n,p)=>n+p.amountCents,0);}
 export function balance(state,order){return quoteTotal(getContext(state,order).quote)-paidTotal(state,order.id);}
@@ -56,7 +56,7 @@ export function saveQuote(input,id){if(realMode)return real.saveQuote(input,id);
     const quantity=decimalString(line.quantity,'Cantidad');if(decimalMinor(quantity)===0)throw new Error('La cantidad debe ser mayor que cero.');
     let origin=line.type==='Servicio'?'—':line.origin;if(line.type==='Repuesto'&&!['Taller','Cliente'].includes(origin))throw new Error('Selecciona el origen del repuesto.');
     const unitCents=line.type==='Repuesto'&&origin==='Cliente'?0:decimalMinor(line.unitPrice,'Precio unitario');
-    return {concept:text(line.concept,'el concepto',200),type:line.type,origin,quantity,unitCents};
+    const discountCents=decimalMinor(line.discount||'0','Descuento');if(discountCents>unitCents)throw new Error('El descuento supera el precio de venta.');return {concept:text(line.concept,'el concepto',4000),type:line.type,partKind:line.partKind||'',discountCents,origin,quantity,unitCents};
   });
   if(quoteTotal({items})>999999999999)throw new Error('El total de esta cotización excede el límite de la demostración.');
   const data={diagnosisId:diagnosis.id,items,status:input.status,updatedAt:nowISO()};

@@ -1,3 +1,5 @@
+> Actualización 27/10/2026: [revisión funcional](REVISION_12_OBSERVACIONES.md). El contrato posterior admite conceptos manuales y catálogo opcional, incorpora alta de unidades desde Auxilio y filtros Semana/Mes/Año. Las limitaciones siguientes describen la entrega original de Fase E.
+
 # Fase E · Frontend aprobado conectado a Go
 
 Fecha: 27 de octubre de 2026. Rama: `backend/arquitectura-go-mongodb`.

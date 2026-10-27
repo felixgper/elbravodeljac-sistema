@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"strings"
 	"time"
 )
 
@@ -14,27 +15,27 @@ func (s *Store) Statistics(ctx context.Context, dashboard bool, start, end time.
 ), income AS (
  SELECT m.bucket,coalesce(p.amount,0)::numeric(18,2) AS amount FROM months m LEFT JOIN pay_month p USING(bucket)
 ), services AS (
- SELECT s.id_servicio::text AS id,s.nombre AS label,count(*) AS count FROM ordenes_trabajo o JOIN detalle_cotizacion d USING(id_cotizacion) JOIN servicios s USING(id_servicio) WHERE o.estado='finalizada' AND ($3::boolean OR (o.fecha_fin >= $1 AND o.fecha_fin < $2)) GROUP BY s.id_servicio,s.nombre
+ SELECT s.id_servicio::text AS id,coalesce(s.nombre,d.descripcion) AS label,count(*) AS count FROM ordenes_trabajo o JOIN detalle_cotizacion d USING(id_cotizacion) LEFT JOIN servicios s USING(id_servicio) WHERE coalesce(d.tipo_concepto,CASE WHEN d.id_servicio IS NOT NULL THEN 'Servicio' ELSE 'Repuesto' END)='Servicio' AND o.estado='finalizada' AND o.fecha_fin >= $1 AND o.fecha_fin < $2 GROUP BY s.id_servicio,coalesce(s.nombre,d.descripcion)
 ), rescues AS (
  SELECT count(*) AS count FROM auxilios WHERE fecha >= $1 AND fecha < $2
 ), states AS (
- SELECT t.key,t.label,t.color,(SELECT count(*) FROM ordenes_trabajo o WHERE o.estado=t.state) AS count FROM (VALUES ('pending','Pendientes','#d89a2a','creada'),('repair','En reparación','#791c2b','en_reparacion'),('testing','En pruebas','#467bbb','en_pruebas'),('completed','Finalizadas','#24906d','finalizada'),('cancelled','Canceladas','#b85858','cancelada')) t(key,label,color,state)
+ SELECT t.key,t.label,t.color,(SELECT count(*) FROM ordenes_trabajo o WHERE o.estado=t.state AND o.fecha_creacion >= $1 AND o.fecha_creacion < $2) AS count FROM (VALUES ('pending','Pendientes','#d89a2a','creada'),('repair','En reparación','#791c2b','en_reparacion'),('testing','En pruebas','#467bbb','en_pruebas'),('completed','Finalizadas','#24906d','finalizada'),('cancelled','Canceladas','#b85858','cancelada')) t(key,label,color,state)
 ), staff AS (
- SELECT u.id_usuario::text AS id,u.nombre AS label,count(DISTINCT o.id_orden) AS count FROM usuarios u LEFT JOIN asignaciones_ot a ON a.id_usuario=u.id_usuario AND a.activo AND a.rol_en_trabajo='MECANICO' LEFT JOIN ordenes_trabajo o ON o.id_orden=a.id_orden AND o.estado IN ('creada','en_reparacion','en_pruebas') WHERE EXISTS(SELECT 1 FROM usuario_roles ur JOIN roles r USING(id_rol) WHERE ur.id_usuario=u.id_usuario AND lower(r.nombre_rol) IN ('mecánico','mecanico','supervisor')) GROUP BY u.id_usuario,u.nombre ORDER BY count DESC,u.id_usuario LIMIT 4
+ SELECT u.id_usuario::text AS id,u.nombre AS label,count(DISTINCT o.id_orden) AS count FROM usuarios u LEFT JOIN asignaciones_ot a ON a.id_usuario=u.id_usuario AND a.activo AND a.rol_en_trabajo='MECANICO' LEFT JOIN ordenes_trabajo o ON o.id_orden=a.id_orden AND o.estado IN ('creada','en_reparacion','en_pruebas') AND o.fecha_creacion >= $1 AND o.fecha_creacion < $2 WHERE EXISTS(SELECT 1 FROM usuario_roles ur JOIN roles r USING(id_rol) WHERE ur.id_usuario=u.id_usuario AND lower(r.nombre_rol) IN ('mecánico','mecanico','supervisor')) GROUP BY u.id_usuario,u.nombre ORDER BY count DESC,u.id_usuario LIMIT 4
 ) `
 	projection := `jsonb_build_object(
- 'monthlyIncome',(SELECT amount::text FROM income ORDER BY bucket DESC LIMIT 1),
- 'monthlyIncomeCents',(SELECT (amount*100)::bigint::text FROM income ORDER BY bucket DESC LIMIT 1),
- 'activeOrders',(SELECT count(*) FROM ordenes_trabajo WHERE estado IN ('creada','en_reparacion','en_pruebas')),
- 'completedServices',(SELECT count(*) FROM ordenes_trabajo WHERE estado='finalizada'),
- 'rescuesToday',(SELECT count(*) FROM auxilios WHERE (fecha AT TIME ZONE 'America/Lima')::date=(statement_timestamp() AT TIME ZONE 'America/Lima')::date),
+ 'monthlyIncome',(SELECT coalesce(sum(amount),0)::numeric(18,2)::text FROM income),
+ 'monthlyIncomeCents',(SELECT (coalesce(sum(amount),0)*100)::bigint::text FROM income),
+ 'activeOrders',(SELECT count(*) FROM ordenes_trabajo WHERE estado IN ('creada','en_reparacion','en_pruebas') AND fecha_creacion >= $1 AND fecha_creacion < $2),
+ 'completedServices',(SELECT count(*) FROM ordenes_trabajo WHERE estado='finalizada' AND fecha_fin >= $1 AND fecha_fin < $2),
+ 'rescuesToday',(SELECT count(*) FROM auxilios WHERE fecha >= $1 AND fecha < $2),
  'income',(SELECT coalesce(jsonb_agg(jsonb_build_object('month',to_char(bucket,'YYYY-MM'),'amount',amount::text,'cents',(amount*100)::bigint::text) ORDER BY bucket),'[]'::jsonb) FROM income),
  'states',(SELECT jsonb_agg(to_jsonb(states)) FROM states),
  'mechanics',(SELECT coalesce(jsonb_agg(to_jsonb(staff)),'[]'::jsonb) FROM staff),
  'services',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) FROM (SELECT * FROM services ORDER BY count DESC,label LIMIT 4)t),
  'currentMonth',to_char(($2::timestamptz-interval '1 microsecond') AT TIME ZONE 'America/Lima','YYYY-MM'),
- 'from',$1::timestamptz,'until',$2::timestamptz,
- 'counts',jsonb_build_object('clients',(SELECT count(*) FROM clientes),'vehicles',(SELECT count(*) FROM vehiculos),'receptions',(SELECT count(*) FROM recepciones),'diagnoses',(SELECT count(*) FROM diagnosticos),'quotes',(SELECT count(*) FROM cotizaciones),'deliveries',(SELECT count(*) FROM entregas)))`
+ 'dashboard',$3::boolean,'from',$1::timestamptz,'until',$2::timestamptz,
+ 'counts',jsonb_build_object('clients',(SELECT count(DISTINCT id_cliente_atencion) FROM recepciones WHERE fecha_ingreso >= $1 AND fecha_ingreso < $2),'vehicles',(SELECT count(DISTINCT id_vehiculo) FROM recepciones WHERE fecha_ingreso >= $1 AND fecha_ingreso < $2),'receptions',(SELECT count(*) FROM recepciones WHERE fecha_ingreso >= $1 AND fecha_ingreso < $2),'diagnoses',(SELECT count(*) FROM diagnosticos WHERE fecha >= $1 AND fecha < $2),'quotes',(SELECT count(*) FROM cotizaciones WHERE fecha_emision >= $1 AND fecha_emision < $2),'deliveries',(SELECT count(*) FROM entregas WHERE fecha_entrega >= $1 AND fecha_entrega < $2)))`
 	if !dashboard {
 		projection = `jsonb_build_object(
  'services',(SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY t.label),'[]'::jsonb) FROM (SELECT * FROM services UNION ALL SELECT NULL::text,'Auxilio mecánico',count FROM rescues WHERE count>0)t),
@@ -42,7 +43,12 @@ func (s *Store) Statistics(ctx context.Context, dashboard bool, start, end time.
  'orders',(SELECT count(*) FROM ordenes_trabajo WHERE estado='finalizada' AND fecha_fin >= $1 AND fecha_fin < $2),
  'income',(SELECT coalesce(sum(amount),0)::numeric(18,2)::text FROM income),
  'incomeCents',(SELECT (coalesce(sum(amount),0)*100)::bigint::text FROM income),
- 'from',$1::timestamptz,'until',$2::timestamptz)`
+ 'dashboard',$3::boolean,'from',$1::timestamptz,'until',$2::timestamptz)`
+	}
+	if dashboard && end.Sub(start) <= 31*24*time.Hour {
+		cte = strings.ReplaceAll(cte, "'month'", "'day'")
+		cte = strings.ReplaceAll(cte, "interval '1 month'", "interval '1 day'")
+		projection = strings.ReplaceAll(projection, "to_char(bucket,'YYYY-MM')", "to_char(bucket,'YYYY-MM-DD')")
 	}
 	return readJSON(ctx, s.Pool, cte+"SELECT "+projection, start, end, dashboard)
 }

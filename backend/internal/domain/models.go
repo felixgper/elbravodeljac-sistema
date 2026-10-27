@@ -48,7 +48,8 @@ type ClientInput struct {
 	Email          string `json:"email"`
 }
 type Client struct {
-	ID string `json:"id"`
+	Vehicles []Vehicle `json:"vehicles,omitempty"`
+	ID       string    `json:"id"`
 	ClientInput
 }
 type ContactInput struct {

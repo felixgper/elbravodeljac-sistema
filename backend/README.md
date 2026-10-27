@@ -1,5 +1,7 @@
 # Backend Go: fases A, B, C, D y E
 
+[Revisión funcional y migración de desarrollo](../docs/backend/REVISION_12_OBSERVACIONES.md): conceptos manuales con referencias opcionales, búsqueda normalizada y períodos Lima. Aplicar con start-dev.ps1 antes de iniciar esta versión.
+
 APIs reales de acceso, Clientes, contactos, Vehículos y proceso del taller:
 recepción, diagnóstico, cotización, OT, asignaciones, avances/pruebas, pagos y entrega.
 [Integración del frontend, ejecución Windows y pruebas E](../docs/backend/FASE_E.md).

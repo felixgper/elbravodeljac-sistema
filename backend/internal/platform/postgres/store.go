@@ -73,18 +73,23 @@ func (s *Store) Client(ctx context.Context, id string) (domain.Client, error) {
 }
 func (s *Store) Clients(ctx context.Context, p domain.Page) (domain.List[domain.Client], error) {
 	out := domain.List[domain.Client]{Data: []domain.Client{}, Meta: domain.Meta{Page: p.Number, PageSize: p.Size}}
-	where := ` WHERE nombre ILIKE $1 OR numero_documento ILIKE $1 OR EXISTS(SELECT 1 FROM vehiculos v WHERE v.id_cliente=clientes.id_cliente AND v.placa ILIKE $1)`
+	where := ` WHERE jac_normalize(nombre || ' ' || numero_documento) LIKE jac_normalize($1) OR EXISTS(SELECT 1 FROM vehiculos v WHERE v.id_cliente=clientes.id_cliente AND v.placa ILIKE $1)`
 	err := s.Pool.QueryRow(ctx, `SELECT count(*) FROM clientes`+where, "%"+p.Query+"%").Scan(&out.Meta.Total)
 	if err != nil {
 		return out, translate(err)
 	}
-	rows, err := s.Pool.Query(ctx, `SELECT `+clientCols+` FROM clientes`+where+` ORDER BY id_cliente LIMIT $2 OFFSET $3`, "%"+p.Query+"%", p.Size, (p.Number-1)*p.Size)
+	rows, err := s.Pool.Query(ctx, `SELECT `+clientCols+`,(SELECT coalesce(jsonb_agg(jsonb_build_object('id',v.id_vehiculo::text,'clientId',v.id_cliente::text,'plate',v.placa,'brand',v.marca,'model',v.modelo) ORDER BY v.id_vehiculo),'[]'::jsonb) FROM vehiculos v WHERE v.id_cliente=clientes.id_cliente) FROM clientes`+where+` ORDER BY id_cliente LIMIT $2 OFFSET $3`, "%"+p.Query+"%", p.Size, (p.Number-1)*p.Size)
 	if err != nil {
 		return out, translate(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		v, err := scanClient(rows)
+		var v domain.Client
+		var raw []byte
+		err := rows.Scan(&v.ID, &v.Name, &v.DocumentType, &v.DocumentNumber, &v.Phone, &v.Address, &v.Email, &raw)
+		if err == nil {
+			err = json.Unmarshal(raw, &v.Vehicles)
+		}
 		if err != nil {
 			return out, err
 		}

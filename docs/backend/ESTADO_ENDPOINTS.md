@@ -90,3 +90,14 @@ permitidas de cada formulario, con sesión, permisos y alcance por asignación.
 No cambia las 71 operaciones originales: son 75 rutas de aplicación contando
 las cuatro ampliaciones. `/`, `/demo/` y los archivos estáticos no se cuentan
 como operaciones de negocio. [Pantallas y endpoints utilizados](FASE_E.md).
+
+
+Revisión funcional 27/10/2026 agrega `GET /api/v1/vehiculos/marcas`, con permiso
+`vehiculos.ver`: sugerencias derivadas de las marcas ya persistidas. Son **76 rutas
+de aplicación** contando `frontend/opciones`, las tres ampliaciones C y marcas.
+Las 71 originales siguen implementadas, sin introducir respuestas 501.
+`GET /dashboard?period=Semana|Mes|Año` y `GET /reportes?period=Semana|Mes|Año`
+usan límites del negocio en Lima. `POST /cotizaciones` / `PUT /cotizaciones/{id}` permite conceptos
+manuales con `type`, `concept`, `quantity`, `unitPrice`, `discount` y
+`partKind` (Original/Alternativo para repuesto); `serviceId`/`sparePartId` son opcionales
+y se validan cuando se envían. Ver [migración y pruebas](REVISION_12_OBSERVACIONES.md).

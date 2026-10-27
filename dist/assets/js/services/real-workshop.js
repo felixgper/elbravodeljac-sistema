@@ -8,7 +8,7 @@ export function cents(value) {
   return Number(n);
 }
 export const user=v=>({...v,role:(v.roles||[]).map(r=>typeof r==='string'?r:r.name).join(' / '),roleNames:(v.roles||[]).map(r=>typeof r==='string'?r:r.name)});
-export const quote=v=>({...v,items:(v.items||[]).map(i=>({...i,origin:i.type==='Servicio'?'—':i.origin==='CLIENTE'?'Cliente':'Taller',unitCents:cents(i.unitPrice)}))});
+export const quote=v=>({...v,items:(v.items||[]).map(i=>({...i,origin:i.type==='Servicio'?'—':i.origin==='CLIENTE'?'Cliente':'Taller',unitCents:cents(i.unitPrice),discountCents:cents(i.discount||'0.00')}))});
 const stateName=v=>({creada:'Pendiente',en_reparacion:'En reparación',en_pruebas:'En pruebas',finalizada:'Finalizada',cancelada:'Cancelada'})[v]||v;
 export function order(v) {
   const assignments=(v.assignments||[]).filter(a=>a.active);
@@ -21,7 +21,7 @@ export function order(v) {
 const specs={clients:['clientes','clientes'],vehicles:['vehiculos','vehiculos'],receptions:['recepciones','recepciones'],diagnoses:['diagnosticos','diagnosticos'],quotes:['cotizaciones','cotizaciones'],orders:['ordenes','ordenes'],rescues:['auxilios','auxilio'],suppliers:['proveedores','proveedores'],services:['servicios','cotizaciones'],spareParts:['repuestos','cotizaciones'],units:['unidades-auxilio','auxilio'],users:['mecanicos','mecanicos']};
 const needs={clientes:['clients','vehicles'],vehiculos:['clients','vehicles'],recepciones:['clients','vehicles','receptions','diagnoses'],diagnosticos:['clients','vehicles','receptions','diagnoses'],cotizaciones:['clients','vehicles','receptions','diagnoses','quotes','orders','services','spareParts'],ordenes:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],pagos:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],auxilio:['clients','vehicles','rescues','units','users','orders','quotes','diagnoses','receptions'],mecanicos:['users','orders','clients','vehicles','receptions','diagnoses','quotes'],proveedores:['suppliers']};
 let generation=0;
-export async function loadModule(module,params=new URLSearchParams()) {
+export async function loadModule(module,params=new URLSearchParams(),path=[]) {
   const current=++generation,sessionRef=realSession(),s={},permissions=sessionRef?.permissions||[],can=m=>permissions.includes(m+'.ver');
   const unavailable=[];
   if(module==='usuarios') {
@@ -30,6 +30,7 @@ export async function loadModule(module,params=new URLSearchParams()) {
     await Promise.all(s.roles.map(async r=>{s.rolePermissions[r.name]=(await request('/roles/'+r.id+'/permisos')).data.permissions;}));
   } else {
     await Promise.all((needs[module]||[]).map(async key=>{
+      if(['clients','vehicles'].includes(key))return;
       const [route,permission]=specs[key];
       if(!can(permission)||(module==='mecanicos'&&key==='orders')){
         try{s[key]=await allPages('/frontend/opciones?module='+module+'&resource='+route);}catch(error){if(error.status!==403)throw error;unavailable.push(permission);}
@@ -52,6 +53,30 @@ export async function loadModule(module,params=new URLSearchParams()) {
       }
     }
   }
+  if(module!=='usuarios'){
+    s.clients=[];s.vehicles=[];
+    const add=(key,value)=>{if(value&&!s[key].some(v=>v.id===value.id))s[key].push(value);};
+    if(module==='clientes'&&path[1]==='editar'&&path[2])add('clients',(await request('/clientes/'+path[2])).data);
+    if(module==='vehiculos'&&path[1]==='editar'){
+      if(path[2])add('vehicles',(await request('/vehiculos/'+path[2])).data);
+      else for(const v of (await request('/vehiculos?pageSize=1')).data)add('vehicles',v);
+    }
+    const related=[...(s.receptions||[]).slice(0,10),...(s.rescues||[]).slice(0,10),...(s.orders||[]).slice(0,10)];
+    for(const r of s.receptions||[])if(r.id===params.get('recepcion')||r.id===params.get('guardada'))related.push(r);
+    const diagnosis=(s.diagnoses||[]).find(d=>d.id===(params.get('diagnostico')||(s.quotes||[]).find(q=>q.id===params.get('id'))?.diagnosisId));
+    if(diagnosis){const r=(s.receptions||[]).find(r=>r.id===diagnosis.receptionId);if(r)related.push(r);}
+    const selectedOrder=(s.orders||[]).find(o=>o.id===(params.get('orden')||path[2]));if(selectedOrder)related.push(selectedOrder);
+    const clients=new Set([...related.map(r=>r.clientId),...s.vehicles.map(v=>v.clientId),params.get('cliente')].filter(Boolean));
+    const vehicles=new Set([...related.map(r=>r.vehicleId),params.get('vehiculo')].filter(Boolean));
+    await Promise.all([...clients].filter(id=>!s.clients.some(c=>c.id===id)).map(async id=>{
+      if(can('clientes'))add('clients',(await request('/clientes/'+id)).data);
+      else {const r=await request('/frontend/opciones?module='+module+'&resource=clientes&clientId='+id);for(const c of r.data)add('clients',c);}
+    }));
+    await Promise.all([...vehicles].filter(id=>!s.vehicles.some(v=>v.id===id)).map(async id=>{
+      if(can('vehiculos'))add('vehicles',(await request('/vehiculos/'+id)).data);
+    }));
+    if(module==='vehiculos')s.brands=(await request('/vehiculos/marcas')).data;
+  }
   if(module==='proveedores')await Promise.all((s.suppliers||[]).map(async p=>{p.linkedParts=await allPages('/proveedores/'+p.id+'/repuestos');p.parts=p.linkedParts.map(r=>r.name).join(', ');}));
   s.unavailable=[...new Set(unavailable)];
   if(current===generation&&realSession()===sessionRef)replaceRealStore(s);
@@ -71,12 +96,7 @@ export async function saveVehicle(input,id) {
 export async function saveReception(input){return (await request('/recepciones',{method:'POST',body:pick(input,['clientId','vehicleId','mileage','symptoms'])})).data;}
 export async function saveDiagnosis(input){return (await request('/diagnosticos',{method:'POST',body:pick(input,['receptionId','findings'])})).data;}
 export async function saveQuote(input,id){
-  const s=realStore(),items=input.items.map(i=>{
-    const key=i.type==='Servicio'?'serviceId':'sparePartId',catalog=i.type==='Servicio'?s.services:s.spareParts;
-    // La elección del catálogo se transporta con ID. No se adivinan nombres ni referencias.
-    if(!i[key] || (!catalog.some(c=>c.id===i[key]) && !s.quotes.find(q=>q.id===id)?.items.some(c=>c[key]===i[key])))throw new Error('Selecciona cada concepto del catálogo de servicios o repuestos.');
-    return {...pick(i,['concept','type','quantity','unitPrice']),[key]:i[key],origin:i.type==='Servicio'?'':i.origin};
-  });
+  const items=input.items.map(i=>({...pick(i,['concept','type','quantity','unitPrice','partKind','discount','serviceId','sparePartId']),origin:i.type==='Servicio'?'':i.origin}));
   return quote((await request('/cotizaciones'+(id?'/'+id:''),{method:id?'PUT':'POST',body:{diagnosisId:input.diagnosisId,status:input.status,items}})).data);
 }
 export async function createOrder(input){return order((await request('/ordenes',{method:'POST',body:pick(input,['quoteId','mechanicId','assistantId'])})).data);}
@@ -104,9 +124,31 @@ function roleID(name){const r=realStore().roles.find(r=>r.name===name);if(!r)thr
 export const saveRolePermissions=(role,permissions)=>request('/roles/'+roleID(role)+'/permisos',{method:'PUT',body:{permissions}});
 export const resetRolePermissions=role=>request('/roles/'+roleID(role)+'/permisos/restablecer',{method:'POST',body:{}});
 export const vehicleHistory=id=>request('/vehiculos/'+id+'/historial');
-export async function getDashboard(){const d=(await request('/dashboard')).data,income=d.income.map(m=>({...m,month:formatMonth(m.month,true),cents:safeInteger(m.cents)}));return {...d,monthlyIncomeCents:safeInteger(d.monthlyIncomeCents),income,period:income[0].month+'–'+income.at(-1).month+' '+d.currentMonth.slice(0,4),currentMonth:formatMonth(d.currentMonth)};}
+export async function getDashboard(period='Mes'){
+ const d=(await request('/dashboard?period='+encodeURIComponent(period))).data;
+ const formatDay=value=>new Intl.DateTimeFormat('es-PE',{day:'2-digit',timeZone:'America/Lima'}).format(new Date(value+'T12:00:00-05:00'));
+ const income=d.income.map(m=>({...m,month:m.month.length===10?formatDay(m.month):formatMonth(m.month,true),cents:safeInteger(m.cents)}));
+ const fmt=value=>new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeZone:'America/Lima'}).format(new Date(value));
+ return {...d,monthlyIncomeCents:safeInteger(d.monthlyIncomeCents),income,period:period+' · '+fmt(d.from)+'–'+fmt(Date.parse(d.until)-1),currentMonth:formatMonth(d.currentMonth)};
+}
 export async function getReport(period){const r=(await request('/reportes?period='+encodeURIComponent(period))).data;return {...r,income:safeInteger(r.incomeCents),months:r.months.map(m=>({...m,label:formatMonth(m.label),cents:safeInteger(m.cents)}))};}
 
 function safeInteger(value){const n=Number(value);if(!/^\d+$/.test(String(value))||!Number.isSafeInteger(n))throw new Error("Total fuera del rango de visualización exacta.");return n;}
 
 function formatMonth(value,short=false){if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(value))throw new Error("Mes inválido recibido del servidor.");return new Intl.DateTimeFormat("es-PE",{month:short?"short":"long",...(short?{}:{year:"numeric"}),timeZone:"America/Lima"}).format(new Date(value+"-15T12:00:00-05:00")).replace(".","");}
+
+export async function lookupClients(query='',page=1,signal,module='recepciones'){
+ const args='q='+encodeURIComponent(query)+'&page='+page+'&pageSize=20';
+ return request(realSession()?.permissions.includes('clientes.ver')?'/clientes?'+args:'/frontend/opciones?module='+module+'&resource=clientes&'+args,{signal});
+}
+export async function clientVehicles(clientId,module='recepciones'){
+ if(!clientId)return [];
+ const path=realSession()?.permissions.includes('vehiculos.ver')?'/vehiculos?clientId='+clientId:'/frontend/opciones?module='+module+'&resource=vehiculos&clientId='+clientId;
+ return allPages(path);
+}
+export async function clientByID(id,module){
+ if(realSession()?.permissions.includes('clientes.ver'))return (await request('/clientes/'+id)).data;
+ return (await request('/frontend/opciones?module='+module+'&resource=clientes&clientId='+id)).data[0];
+}
+export async function vehiclePage(query,page=1,signal){return request('/vehiculos?q='+encodeURIComponent(query)+'&page='+page+'&pageSize=10',{signal});}
+export async function saveUnit(input){return (await request('/unidades-auxilio',{method:'POST',body:pick(input,['code','description'])})).data;}
