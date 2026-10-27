@@ -9,6 +9,7 @@ import (
 type Store interface {
 	Workshop
 	Relational
+	AuthorizeDiagnosis(context.Context, string, string, bool) error
 	Ping(context.Context) error
 	FindLogin(context.Context, string) (domain.User, error)
 	User(context.Context, string) (domain.User, error)

@@ -1,8 +1,8 @@
 # Arquitectura del backend
 
 > Documento inicial de arquitectura. El flujo principal ya está implementado:
-> [FASE_C.md](FASE_C.md) describe los módulos relacionales completados y las cinco
-> operaciones MongoDB pendientes. La fase A está implementada con pgx,
+> [FASE_D.md](FASE_D.md) describe las 71 operaciones completadas, MongoDB/GridFS
+> y sus pruebas reales. La fase A está implementada con pgx,
 > JWT y bcrypt; ver [FASE_A.md](FASE_A.md) para estado, configuración y límites
 > actuales. Las referencias inferiores a sesiones opacas y servidor sin drivers
 > describen la propuesta inicial, reemplazada por JWT según la decisión del usuario.

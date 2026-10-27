@@ -1,6 +1,6 @@
 # Estado de las 71 operaciones REST
 
-Estado al completar Fase C. Base de datos real no utilizada. El test TestOriginalCatalogRelationalCoverage comprueba el registro de los 66 handlers relacionales y las cinco reservas MongoDB.
+Estado al completar Fase D. Bases reales del usuario no utilizadas. TestOriginalCatalogRelationalCoverage comprueba los 71 handlers originales y sus permisos. MongoDB, GridFS y PostgreSQL se probaron juntos en instancias temporales.
 
 | Método | Ruta | Módulo | Estado |
 |---|---|---|---|
@@ -28,11 +28,11 @@ Estado al completar Fase C. Base de datos real no utilizada. El test TestOrigina
 | GET | `/api/v1/diagnosticos` | Diagnósticos | Implementada |
 | POST | `/api/v1/diagnosticos` | Diagnósticos | Implementada |
 | GET | `/api/v1/diagnosticos/{id}` | Diagnósticos | Implementada |
-| GET | `/api/v1/diagnosticos/{id}/escaneres` | Diagnósticos | 501: MongoDB pendiente |
-| POST | `/api/v1/diagnosticos/{id}/escaneres` | Diagnósticos | 501: MongoDB pendiente |
-| GET | `/api/v1/diagnosticos/{id}/evidencias` | Diagnósticos | 501: MongoDB pendiente |
-| POST | `/api/v1/diagnosticos/{id}/evidencias` | Diagnósticos | 501: MongoDB pendiente |
-| GET | `/api/v1/diagnosticos/{id}/evidencias/{evidenciaId}/archivo` | Diagnósticos | 501: MongoDB pendiente |
+| GET | `/api/v1/diagnosticos/{id}/escaneres` | Diagnósticos | Implementada |
+| POST | `/api/v1/diagnosticos/{id}/escaneres` | Diagnósticos | Implementada |
+| GET | `/api/v1/diagnosticos/{id}/evidencias` | Diagnósticos | Implementada |
+| POST | `/api/v1/diagnosticos/{id}/evidencias` | Diagnósticos | Implementada |
+| GET | `/api/v1/diagnosticos/{id}/evidencias/{evidenciaId}/archivo` | Diagnósticos | Implementada |
 | GET | `/api/v1/cotizaciones` | Cotizaciones | Implementada |
 | POST | `/api/v1/cotizaciones` | Cotizaciones | Implementada |
 | GET | `/api/v1/cotizaciones/{id}` | Cotizaciones | Implementada |
@@ -82,4 +82,4 @@ Además del catálogo original se implementaron tres operaciones de apoyo:
 - `PATCH /api/v1/auxilios/{id}`: reasignar técnico/unidad o cambiar estado.
 - `DELETE /api/v1/proveedores/{id}/repuestos/{repuestoId}`: desvinculación explícita.
 
-Total: 66/71 originales implementadas; 69 operaciones de negocio reales contando estas tres ampliaciones. GET /healthz y GET /readyz son operacionales y no se cuentan. Un rechazo 401/403/409/422 por reglas de seguridad o validación no es un placeholder.
+Total: 71/71 originales implementadas; 74 operaciones de negocio reales contando estas tres ampliaciones. GET /healthz y GET /readyz son operacionales y no se cuentan. Un rechazo 401/403/409/422 por reglas de seguridad o validación no es un placeholder.

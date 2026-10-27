@@ -19,6 +19,7 @@ import (
 )
 
 type Options struct {
+	Technical     application.Technical
 	Origin        string
 	Key           []byte
 	SecureCookies bool
@@ -83,11 +84,17 @@ func New(store application.Store, opts Options) (http.Handler, error) {
 			writeError(w, 503, "NOT_READY", "PostgreSQL no está disponible.")
 			return
 		}
-		respond(w, 200, map[string]string{"status": "ready"})
+		if opts.Technical != nil {
+			if err := opts.Technical.Ping(r.Context()); err != nil {
+				writeError(w, 503, "NOT_READY", "MongoDB técnico no está disponible o inicializado.")
+				return
+			}
+		}
+		respond(w, 200, map[string]any{"status": "ready", "technicalConfigured": opts.Technical != nil})
 	})
 	mux.HandleFunc("POST /api/v1/auth/login", s.login)
 	implemented := map[string]bool{"POST /api/v1/auth/login": true}
-	for _, e := range append(append(s.endpoints(), s.workshopEndpoints()...), s.relationalEndpoints()...) {
+	for _, e := range append(append(append(s.endpoints(), s.workshopEndpoints()...), s.relationalEndpoints()...), s.technicalEndpoints()...) {
 		implemented[e.method+" "+e.path] = true
 		mux.HandleFunc(e.method+" "+e.path, s.protect(e.permission, e.handler))
 	}
@@ -247,11 +254,14 @@ func (s *server) failure(w http.ResponseWriter, err error) {
 	}
 }
 func decode(w http.ResponseWriter, r *http.Request, v any) bool {
+	return decodeLimit(w, r, v, 64<<10)
+}
+func decodeLimit(w http.ResponseWriter, r *http.Request, v any, limit int64) bool {
 	if strings.TrimSpace(strings.Split(r.Header.Get("Content-Type"), ";")[0]) != "application/json" {
 		writeError(w, 415, "CONTENT_TYPE", "Usa application/json.")
 		return false
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
+	r.Body = http.MaxBytesReader(w, r.Body, limit)
 	d := json.NewDecoder(r.Body)
 	d.DisallowUnknownFields()
 	if err := d.Decode(v); err != nil {

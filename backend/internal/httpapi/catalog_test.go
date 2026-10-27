@@ -5,7 +5,7 @@ import "testing"
 func TestOriginalCatalogRelationalCoverage(t *testing.T) {
 	s := &server{}
 	implemented := map[string]bool{"POST /api/v1/auth/login": true}
-	for _, e := range append(append(s.endpoints(), s.workshopEndpoints()...), s.relationalEndpoints()...) {
+	for _, e := range append(append(append(s.endpoints(), s.workshopEndpoints()...), s.relationalEndpoints()...), s.technicalEndpoints()...) {
 		key := e.method + " " + e.path
 		if implemented[key] {
 			t.Fatal("duplicate route", key)
@@ -25,7 +25,7 @@ func TestOriginalCatalogRelationalCoverage(t *testing.T) {
 			t.Fatal("relational placeholder remains", key)
 		}
 	}
-	if len(Routes) != 71 || n != 66 || len(implemented) != 69 {
+	if len(Routes) != 71 || n != 71 || len(implemented) != 74 {
 		t.Fatal("unexpected catalog", len(Routes), n, len(implemented))
 	}
 }

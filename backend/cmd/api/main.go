@@ -10,8 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/felixgper/elbravodeljac-sistema/backend/internal/application"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/config"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/httpapi"
+	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/mongodb"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -41,7 +43,21 @@ func main() {
 	if err != nil {
 		log.Fatal("PostgreSQL no disponible; comprueba el entorno de pruebas")
 	}
-	handler, err := httpapi.New(&postgres.Store{Pool: pool}, httpapi.Options{Origin: cfg.Origin, Key: cfg.Key, SecureCookies: cfg.SecureCookies})
+	var technical application.Technical
+	if uri := os.Getenv("MONGODB_URI"); uri != "" {
+		name := os.Getenv("MONGODB_DATABASE")
+		mongoStore, openErr := mongodb.Open(uri, name)
+		if openErr != nil {
+			log.Fatal(openErr)
+		}
+		technical = mongoStore
+		defer func() {
+			closeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = mongoStore.Close(closeCtx)
+		}()
+	}
+	handler, err := httpapi.New(&postgres.Store{Pool: pool}, httpapi.Options{Origin: cfg.Origin, Key: cfg.Key, SecureCookies: cfg.SecureCookies, Technical: technical})
 	if err != nil {
 		log.Fatal("No se pudo preparar HTTP")
 	}
@@ -57,7 +73,7 @@ func main() {
 		defer cancel()
 		_ = server.Shutdown(shutdownCtx)
 	}()
-	log.Printf("API fase A: %s", cfg.Addr)
+	log.Printf("API fases A–D: %s; MongoDB configurado: %t", cfg.Addr, technical != nil)
 	if err = server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Print("Servidor HTTP detenido por error")
 	}

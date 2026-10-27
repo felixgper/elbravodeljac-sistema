@@ -1,5 +1,4 @@
-// Catálogo original de 71 operaciones. Las fases A/B/C registran 66 handlers
-// relacionales; únicamente las cinco operaciones MongoDB permanecen reservadas.
+// Catálogo original: 71 operaciones implementadas en las fases A/B/C/D.
 package httpapi
 
 type Route struct {

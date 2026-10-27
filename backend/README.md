@@ -1,10 +1,11 @@
-# Backend Go: fases A, B y C
+# Backend Go: fases A, B, C y D
 
 APIs reales de acceso, Clientes, contactos, Vehículos y proceso del taller:
 recepción, diagnóstico, cotización, OT, asignaciones, avances/pruebas, pagos y entrega.
-[Estado, contratos y pruebas](../docs/backend/FASE_C.md).
+[Estado, contratos y pruebas](../docs/backend/FASE_D.md).
 [Inventario de las 71 operaciones](../docs/backend/ESTADO_ENDPOINTS.md).
-Incluye usuarios/roles/matriz, auxilios, proveedores, catálogos, Dashboard y reportes.
+Incluye usuarios/roles/matriz, auxilios, proveedores, catálogos, Dashboard/reportes
+y resultados de escáner/evidencias con MongoDB y GridFS (71/71 del catálogo).
 Requiere Go 1.26 o superior; verificado con Go 1.27.1.
 
 ## Pruebas unitarias y análisis estático
@@ -92,10 +93,31 @@ frontend utilizará un proxy del mismo origen. La demo y dist/ permanecen intact
 - internal/application: puerto Store tipado.
 - internal/domain: DTO, validadores y precisión decimal.
 - internal/platform/postgres: SQL parametrizado y transacciones.
-- internal/platform/mongodb: preparación para la siguiente fase.
+- internal/platform/mongodb: driver oficial, validadores, índices, GridFS y conciliación.
 - integration: suite HTTP/PostgreSQL aislada.
 
 El permiso efectivo une los códigos de TODOS los roles existentes. No hay bypass
 por nombre de rol ni edición de asignaciones en login. Las sesiones y el limitador
 son de una instancia: reiniciar invalida sesiones. Antes de producción faltan estado
-compartido, despliegue TLS/proxy y observabilidad. No hay refresh token ni MongoDB.
+compartido, despliegue TLS/proxy y observabilidad. No hay refresh token.
+
+## MongoDB y pruebas completas
+
+Configurar MONGODB_URI y MONGODB_DATABASE (_tecnico_dev o _tecnico_test; ver .env.example).
+Desde backend/: `go run ./cmd/mongo-init` inicializa explícitamente validadores e
+índices del entorno separado; `go run ./cmd/api` usa esa configuración sin alterarlos.
+Sin URI, las APIs SQL siguen operativas y las técnicas informan 503, no éxito falso.
+
+Con PostgreSQL 18 y MongoDB instalados, desde la raíz:
+
+```powershell
+./backend/scripts/test-local-databases.ps1
+```
+
+Se puede indicar -PostgresBin y -MongoBin. Crea dos instancias temporales aisladas,
+ejecuta todas las pruebas A–D y las cierra. Sin variables INTEGRATION_MONGODB_URI,
+INTEGRATION_MONGODB_DATABASE e INTEGRATION_DATABASE_URL, la suite D muestra SKIP.
+
+compose.test.yaml incluye ahora ambos motores; compose.dev.yaml ofrece desarrollo
+aislado con inicialización MongoDB explícita. Comandos, configuración privada,
+contratos multipart, reintentos y resultados comprobados en FASE_D.md.
