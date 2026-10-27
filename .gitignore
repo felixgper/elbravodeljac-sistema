@@ -9,4 +9,5 @@ backend/bin/
 backend/coverage.out
 backend/.cache/
 *.test
+!backend/Dockerfile.test
 node_modules/

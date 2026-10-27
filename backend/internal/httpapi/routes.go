@@ -1,4 +1,5 @@
-// Catálogo de contratos propuestos; no implementa operaciones de negocio.
+// Catálogo general. Los handlers de fase A se registran en resources.go y router.go;
+// las rutas restantes están reservadas para fases posteriores.
 package httpapi
 
 type Route struct {

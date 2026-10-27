@@ -1,6 +1,6 @@
 # Endpoints REST propuestos
 
-Base `/api/v1`. 71 operaciones reservadas; todas responden **501 NOT_IMPLEMENTED** en el esqueleto. No implican implementación ni acceso a bases. Contratos de campos y bloqueos: CORRESPONDENCIA.md y ARQUITECTURA.md.
+Base `/api/v1`. Catálogo de 71 operaciones. **Fase A implementada: 17 operaciones:** acceso (3), Clientes y contactos (7), Vehículos, transferencias e historial (7). Las 54 operaciones restantes siguen reservadas. Estado y pruebas actuales: [FASE_A.md](FASE_A.md). Contratos generales: CORRESPONDENCIA.md y ARQUITECTURA.md.
 
 ## Convenciones
 

@@ -1,4 +1,8 @@
-# Adaptador PostgreSQL (pendiente)
+# Adaptador PostgreSQL
+
+`store.go` implementa acceso/roles/permisos, Clientes, contactos y Vehículos con
+pgxpool y transacciones. Las demás operaciones de este documento son el plan
+para fases posteriores. No se ejecuta SQL de inicialización desde el servidor.
 
 Implementar pool, consultas parametrizadas, repositorios y unidad transaccional.
 Esquema de referencia: database/postgresql/esquema_actual.sql, solo lectura.

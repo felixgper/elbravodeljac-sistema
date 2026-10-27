@@ -1,0 +1,7 @@
+.git
+dist
+docs
+backend/.cache
+backend/bin
+**/.env
+**/.env.*

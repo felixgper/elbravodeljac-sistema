@@ -1,5 +1,10 @@
 # Arquitectura del backend
 
+> Documento inicial de arquitectura. La fase A ya está implementada con pgx,
+> JWT y bcrypt; ver [FASE_A.md](FASE_A.md) para estado, configuración y límites
+> actuales. Las referencias inferiores a sesiones opacas y servidor sin drivers
+> describen la propuesta inicial, reemplazada por JWT según la decisión del usuario.
+
 Preparación sobre la rama `backend/arquitectura-go-mongodb`. Repositorio:
 `felixgper/elbravodeljac-sistema`. No se ejecutó el dump ni se conectó a bases.
 
