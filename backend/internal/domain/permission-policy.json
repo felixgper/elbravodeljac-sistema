@@ -21,7 +21,9 @@
     ],
     "diagnosticos": [
       "ver",
-      "crear"
+      "crear",
+      "asignar",
+      "supervisar"
     ],
     "cotizaciones": [
       "ver",
@@ -86,8 +88,10 @@
         "crear"
       ],
       "diagnosticos": [
-        "ver",
-        "crear"
+        "asignar",
+        "crear",
+        "supervisar",
+        "ver"
       ],
       "cotizaciones": [
         "ver",
@@ -151,8 +155,10 @@
         "crear"
       ],
       "diagnosticos": [
-        "ver",
-        "crear"
+        "asignar",
+        "crear",
+        "supervisar",
+        "ver"
       ],
       "cotizaciones": [
         "ver",
@@ -209,8 +215,10 @@
         "ver"
       ],
       "diagnosticos": [
-        "ver",
-        "crear"
+        "asignar",
+        "crear",
+        "supervisar",
+        "ver"
       ],
       "cotizaciones": [
         "ver",
@@ -253,7 +261,9 @@
         "crear"
       ],
       "cotizaciones": [
-        "ver"
+        "ver",
+        "crear",
+        "editar"
       ],
       "ordenes": [
         "ver"
@@ -266,6 +276,11 @@
         "ver",
         "registrar",
         "entregar"
+      ],
+      "diagnosticos": [
+        "asignar",
+        "supervisar",
+        "ver"
       ]
     },
     "Mecánico": {

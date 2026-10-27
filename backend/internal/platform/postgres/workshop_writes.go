@@ -35,8 +35,19 @@ func (s *Store) CreateReception(ctx context.Context, v domain.ReceptionInput, u 
 	if _, err = tx.Exec(ctx, `UPDATE vehiculos SET kilometraje_actual=$2 WHERE id_vehiculo=$1`, v.VehicleID, v.Mileage); err != nil {
 		return nil, translate(err)
 	}
+	if v.TechnicianID != "" {
+		if v.AttentionType != "Diagnostico" {
+			return nil, domain.Invalid("technicianId", "El servicio directo no lleva asignación de diagnóstico.")
+		}
+		if !u.Can("diagnosticos.asignar") {
+			return nil, domain.ErrForbidden
+		}
+		if err = technicalUser(ctx, tx, v.TechnicianID, false); err != nil {
+			return nil, err
+		}
+	}
 	var id string
-	if err = tx.QueryRow(ctx, `INSERT INTO recepciones(id_vehiculo,id_cliente_atencion,id_recepcionista,km_ingreso,sintomas,tipo_atencion) VALUES($1,$2,$3,$4,$5,$6) RETURNING id_recepcion::text`, v.VehicleID, v.ClientID, u.ID, v.Mileage, v.Symptoms, v.AttentionType).Scan(&id); err != nil {
+	if err = tx.QueryRow(ctx, `INSERT INTO recepciones(id_vehiculo,id_cliente_atencion,id_recepcionista,km_ingreso,sintomas,tipo_atencion,id_mecanico_diagnostico,diagnostico_asignado_por,diagnostico_asignado_en,asignacion_version,historial_asignaciones) VALUES($1,$2,$3::bigint,$4,$5,$6,nullif($7,'')::bigint,CASE WHEN $7<>'' THEN $3::bigint END,CASE WHEN $7<>'' THEN clock_timestamp() END,CASE WHEN $7<>'' THEN 1 ELSE 0 END,CASE WHEN $7<>'' THEN jsonb_build_array(jsonb_build_object('technicianId',$7::text,'by',$3::text,'at',clock_timestamp())) ELSE '[]'::jsonb END) RETURNING id_recepcion::text`, v.VehicleID, v.ClientID, u.ID, v.Mileage, v.Symptoms, v.AttentionType, v.TechnicianID).Scan(&id); err != nil {
 		return nil, translate(err)
 	}
 	out, err := readJSON(ctx, tx, "SELECT "+receptionJSON+" FROM recepciones r WHERE r.id_recepcion=$1", id)
@@ -46,32 +57,9 @@ func (s *Store) CreateReception(ctx context.Context, v domain.ReceptionInput, u 
 	return out, translate(tx.Commit(ctx))
 }
 func (s *Store) CreateDiagnosis(ctx context.Context, v domain.DiagnosisInput, u domain.User) (any, error) {
-	if err := v.Validate(); err != nil {
-		return nil, err
-	}
-	explicit := v.TechnicianID != ""
-	if !explicit {
-		v.TechnicianID = u.ID
-	}
-	if v.TechnicianID != u.ID && !u.Can("ordenes.asignar") {
-		return nil, domain.ErrForbidden
-	}
-	tx, err := s.Pool.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-	if explicit {
-		if err = technicalUser(ctx, tx, v.TechnicianID, false); err != nil {
-			return nil, err
-		}
-	}
-	out, err := readJSON(ctx, tx, `WITH inserted AS (INSERT INTO diagnosticos(id_recepcion,id_tecnico,resumen) VALUES($1,$2,$3) RETURNING *) SELECT `+diagnosisJSON+` FROM inserted d`, v.ReceptionID, v.TechnicianID, v.Findings)
-	if err != nil {
-		return nil, err
-	}
-	return out, translate(tx.Commit(ctx))
+	return s.SaveDiagnosis(ctx, "", v, u)
 }
+
 func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u domain.User) (any, error) {
 	if err := v.Validate(); err != nil {
 		return nil, err
@@ -82,9 +70,12 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 	}
 	defer tx.Rollback(ctx)
 	if v.DiagnosisID != "" {
-		var reception string
-		if err = tx.QueryRow(ctx, `SELECT id_recepcion::text FROM diagnosticos WHERE id_diagnostico=$1 FOR KEY SHARE`, v.DiagnosisID).Scan(&reception); err != nil {
+		var reception, state string
+		if err = tx.QueryRow(ctx, `SELECT id_recepcion::text,estado FROM diagnosticos WHERE id_diagnostico=$1 FOR KEY SHARE`, v.DiagnosisID).Scan(&reception, &state); err != nil {
 			return nil, translate(err)
+		}
+		if state != "Finalizado" {
+			return nil, domain.Invalid("diagnosisId", "Finaliza el diagnóstico antes de cotizar.")
 		}
 		if v.ReceptionID != "" && v.ReceptionID != reception {
 			return nil, domain.Invalid("receptionId", "Diagnóstico y recepción no corresponden.")

@@ -103,17 +103,21 @@ func TestPhaseDMongoDBAndPostgreSQL(t *testing.T) {
 	api := httptest.NewServer(handler)
 	defer api.Close()
 	h := workshopHarness{pool: pool, api: api, ctx: ctx, password: rand.Text(), suffix: rand.Text()[:10]}
-	_, creator := h.user(t, "dcreator", "DCreator_"+h.suffix, []string{"diagnosticos.ver", "diagnosticos.crear", "clientes.crear", "vehiculos.crear", "recepciones.crear"})
-	_, other := h.user(t, "dother", "DOther_"+h.suffix, []string{"diagnosticos.ver", "diagnosticos.crear"})
-	_, manager := h.user(t, "dmanager", "DManager_"+h.suffix, []string{"diagnosticos.ver", "diagnosticos.crear", "ordenes.asignar"})
+	creatorID, creator := h.user(t, "dcreator", "DCreator_"+h.suffix, []string{"diagnosticos.ver", "diagnosticos.crear", "clientes.crear", "vehiculos.crear", "recepciones.crear"})
+	otherID, other := h.user(t, "dother", "DOther_"+h.suffix, []string{"diagnosticos.ver", "diagnosticos.crear"})
+	_, manager := h.user(t, "dmanager", "DManager_"+h.suffix, []string{"diagnosticos.ver", "diagnosticos.crear", "ordenes.asignar", "diagnosticos.asignar", "diagnosticos.supervisar"})
 	client := responseID(t, h.call(t, creator, "POST", "/clientes", map[string]string{"name": "Diagnóstico fixture", "documentType": "Pasaporte", "documentNumber": "D" + strings.ToUpper(h.suffix), "phone": "+51987654321", "address": "Lima"}, 201))
 	vehicle := responseID(t, h.call(t, creator, "POST", "/vehiculos", map[string]any{"clientId": client, "plate": "D-" + strings.ToUpper(h.suffix[:6]), "brand": "JAC", "model": "T8", "year": 2024, "mileage": "10"}, 201))
-	makeDiagnosis := func(s workshopSession) string {
+	// Both owners are technical workers; retain their separate permission roles.
+	h.exec(t, `INSERT INTO roles(nombre_rol) VALUES('Mecánico') ON CONFLICT DO NOTHING`)
+	h.exec(t, `INSERT INTO usuario_roles(id_usuario,id_rol) SELECT x.id::bigint,r.id_rol FROM unnest($1::text[]) x(id) CROSS JOIN roles r WHERE r.nombre_rol='Mecánico' ON CONFLICT DO NOTHING`, []string{creatorID, otherID})
+	makeDiagnosis := func(s workshopSession, technician string) string {
 		r := responseID(t, h.call(t, creator, "POST", "/recepciones", map[string]string{"clientId": client, "vehicleId": vehicle, "mileage": "10", "symptoms": "Scanner fixture"}, 201))
-		return responseID(t, h.call(t, s, "POST", "/diagnosticos", map[string]string{"receptionId": r, "findings": "Evaluación técnica"}, 201))
+		h.call(t, manager, "PATCH", "/recepciones/"+r+"/mecanico", map[string]any{"technicianId": technician, "version": 0}, 200)
+		return responseID(t, h.call(t, s, "POST", "/diagnosticos", map[string]string{"status": "Finalizado", "evaluation": "Evaluación técnica de prueba", "recommendations": "Servicios recomendados de prueba", "receptionId": r, "findings": "Evaluación técnica"}, 201))
 	}
-	diagnosis := makeDiagnosis(creator)
-	otherDiagnosis := makeDiagnosis(other)
+	diagnosis := makeDiagnosis(creator, creatorID)
+	otherDiagnosis := makeDiagnosis(other, otherID)
 	base := "/diagnosticos/" + diagnosis
 	scan := map[string]any{"requestId": "scan-" + h.suffix, "equipo": map[string]string{"nombre": "Scanner fixture", "version": "1"}, "dtcs": []map[string]string{{"codigo": "P0300"}}, "mediciones": map[string]any{"rpm": float64(1234), "temperatura": map[string]any{"valor": float64(85.5)}}}
 	t.Run("scanner BSON validadores reintentos y concurrencia", func(t *testing.T) {

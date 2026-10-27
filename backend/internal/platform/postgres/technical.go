@@ -21,7 +21,7 @@ func (s *Store) AuthorizeDiagnosis(ctx context.Context, id, actor string, write 
 	if !u.Active || !u.Can(permission) {
 		return domain.ErrForbidden
 	}
-	if technician == actor || u.Can("ordenes.asignar") || u.Can("usuarios.roles") {
+	if technician == actor || diagnosisSupervisor(u) || u.Can("usuarios.roles") {
 		return nil
 	}
 	var assigned bool

@@ -11,6 +11,9 @@ func (s *Store) FrontendOptions(ctx context.Context, module, resource string, p 
 	// Staff updating work sees only entities belonging to their assigned orders.
 	// Reception/diagnosis/quotation creation and dispatch need selectable records.
 	scoped := (module == "ordenes" || module == "auxilio" || module == "mecanicos") && !orderVisible(u) && !u.Can("auxilio.crear") && !u.Can("mecanicos.ver")
+	if resource == "recepciones" || resource == "diagnosticos" {
+		return s.WorkshopList(ctx, resource, domain.WorkshopFilter{Page: p}, u)
+	}
 	var expr, from, where, sort string
 	switch resource {
 	case "clientes":
@@ -56,6 +59,17 @@ func (s *Store) FrontendOptions(ctx context.Context, module, resource string, p 
 		return nil, domain.Invalid("orderId", "Consulta contactos desde la orden seleccionada.")
 	default:
 		return nil, domain.ErrForbidden
+	}
+	if (module == "diagnosticos" || module == "recepciones") && !receptionGlobal(u) {
+		switch resource {
+		case "clientes":
+			where = "c.id_cliente IN (SELECT r.id_cliente_atencion FROM recepciones r WHERE r.id_mecanico_diagnostico::text=$2) AND $1"
+		case "vehiculos":
+			where = "v0.id_vehiculo IN (SELECT r.id_vehiculo FROM recepciones r WHERE r.id_mecanico_diagnostico::text=$2) AND $1"
+		case "mecanicos":
+			return s.WorkshopList(ctx, "mecanicos", domain.WorkshopFilter{Page: p}, u)
+		}
+		scoped = true
 	}
 	args := []any{scoped, u.ID}
 	if resource == "clientes" {

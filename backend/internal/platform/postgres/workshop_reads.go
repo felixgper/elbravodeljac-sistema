@@ -20,8 +20,8 @@ func readJSON(ctx context.Context, q queryer, sql string, args ...any) (any, err
 	return json.RawMessage(raw), nil
 }
 
-const receptionJSON = `jsonb_build_object('id',r.id_recepcion::text,'attentionType',r.tipo_atencion,'clientId',r.id_cliente_atencion::text,'clientName',(SELECT c.nombre FROM clientes c WHERE c.id_cliente=r.id_cliente_atencion),'vehicleId',r.id_vehiculo::text,'vehiclePlate',(SELECT cv.placa FROM vehiculos cv WHERE cv.id_vehiculo=r.id_vehiculo),'vehicleBrand',(SELECT cv.marca FROM vehiculos cv WHERE cv.id_vehiculo=r.id_vehiculo),'vehicleModel',(SELECT cv.modelo FROM vehiculos cv WHERE cv.id_vehiculo=r.id_vehiculo),'mileage',r.km_ingreso::text,'symptoms',r.sintomas,'createdAt',r.fecha_ingreso,'createdBy',r.id_recepcionista::text)`
-const diagnosisJSON = `jsonb_build_object('id',d.id_diagnostico::text,'receptionId',d.id_recepcion::text,'findings',d.resumen,'technicianId',d.id_tecnico::text,'createdAt',d.fecha)`
+const receptionJSON = `jsonb_build_object('id',r.id_recepcion::text,'attentionType',r.tipo_atencion,'technicianId',r.id_mecanico_diagnostico::text,'technicianName',(SELECT u.nombre FROM usuarios u WHERE u.id_usuario=r.id_mecanico_diagnostico),'assignmentVersion',r.asignacion_version,'assignmentHistory',r.historial_asignaciones,'evaluationState',CASE WHEN r.tipo_atencion='Directo' THEN 'Servicio directo' WHEN r.id_mecanico_diagnostico IS NULL THEN 'Sin asignar' ELSE coalesce((SELECT d.estado FROM diagnosticos d WHERE d.id_recepcion=r.id_recepcion),'Pendiente de diagnóstico') END,'clientId',r.id_cliente_atencion::text,'clientName',(SELECT c.nombre FROM clientes c WHERE c.id_cliente=r.id_cliente_atencion),'vehicleId',r.id_vehiculo::text,'vehiclePlate',(SELECT cv.placa FROM vehiculos cv WHERE cv.id_vehiculo=r.id_vehiculo),'vehicleBrand',(SELECT cv.marca FROM vehiculos cv WHERE cv.id_vehiculo=r.id_vehiculo),'vehicleModel',(SELECT cv.modelo FROM vehiculos cv WHERE cv.id_vehiculo=r.id_vehiculo),'mileage',r.km_ingreso::text,'symptoms',r.sintomas,'createdAt',r.fecha_ingreso,'createdBy',r.id_recepcionista::text)`
+const diagnosisJSON = `jsonb_build_object('id',d.id_diagnostico::text,'receptionId',d.id_recepcion::text,'findings',d.resumen,'evaluation',d.evaluacion,'recommendations',d.recomendaciones,'notes',d.observaciones,'status',d.estado,'version',d.version,'finishedAt',d.finalizado_en,'updatedAt',d.actualizado_en,'history',d.historial,'technicianName',(SELECT u.nombre FROM usuarios u WHERE u.id_usuario=d.id_tecnico),'technicianId',d.id_tecnico::text,'createdAt',d.fecha)`
 const quoteJSON = `jsonb_build_object('id',q.id_cotizacion::text,'diagnosisId',q.id_diagnostico::text,'receptionId',q.id_recepcion::text,'status',CASE q.estado WHEN 'aprobada' THEN 'Aprobada' WHEN 'rechazada' THEN 'Rechazada' ELSE 'Pendiente' END,'total',q.total::text,'createdAt',q.fecha_emision,'approvedAt',q.aprobada_en,
  'items',coalesce((SELECT jsonb_agg(jsonb_build_object('id',l.id_detalle::text,'serviceId',l.id_servicio::text,'sparePartId',l.id_repuesto::text,'concept',l.descripcion,'type',coalesce(l.tipo_concepto,CASE WHEN l.id_servicio IS NULL THEN 'Repuesto' ELSE 'Servicio' END),'partKind',l.tipo_repuesto,'discount',l.descuento_unitario::text,'origin',l.origen_repuesto,'quantity',l.cantidad::text,'unitPrice',l.precio_unitario::text,'subtotal',l.subtotal::text) ORDER BY l.id_detalle) FROM detalle_cotizacion l WHERE l.id_cotizacion=q.id_cotizacion),'[]'::jsonb))`
 const orderFrom = `ordenes_trabajo o JOIN cotizaciones q ON q.id_cotizacion=o.id_cotizacion LEFT JOIN diagnosticos d ON d.id_diagnostico=q.id_diagnostico JOIN recepciones r ON r.id_recepcion=q.id_recepcion JOIN vehiculos v ON v.id_vehiculo=r.id_vehiculo JOIN clientes cl ON cl.id_cliente=r.id_cliente_atencion`
@@ -72,6 +72,14 @@ func (s *Store) WorkshopList(ctx context.Context, resource string, f domain.Work
 	default:
 		return nil, domain.ErrNotFound
 	}
+	if resource == "recepciones" {
+		where += " AND " + receptionScope("$"+itoa(len(args)+1), "$"+itoa(len(args)+2))
+		args = append(args, receptionGlobal(u), u.ID)
+	}
+	if resource == "diagnosticos" {
+		where += " AND " + diagnosisScope("$"+itoa(len(args)+1), "$"+itoa(len(args)+2))
+		args = append(args, diagnosisSupervisor(u), u.ID)
+	}
 	out := domain.List[json.RawMessage]{Data: []json.RawMessage{}, Meta: domain.Meta{Page: f.Number, PageSize: f.Size}}
 	// Count and rows share one read snapshot, including nested JSON projections.
 	tx, err := s.Pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
@@ -106,9 +114,9 @@ func (s *Store) WorkshopList(ctx context.Context, resource string, f domain.Work
 func (s *Store) WorkshopItem(ctx context.Context, resource, id string, u domain.User) (any, error) {
 	switch resource {
 	case "recepciones":
-		return readJSON(ctx, s.Pool, "SELECT "+receptionJSON+" FROM recepciones r WHERE r.id_recepcion=$1", id)
+		return readJSON(ctx, s.Pool, "SELECT "+receptionJSON+" FROM recepciones r WHERE r.id_recepcion=$1 AND "+receptionScope("$2", "$3"), id, receptionGlobal(u), u.ID)
 	case "diagnosticos":
-		return readJSON(ctx, s.Pool, "SELECT "+diagnosisJSON+" FROM diagnosticos d WHERE d.id_diagnostico=$1", id)
+		return readJSON(ctx, s.Pool, "SELECT "+diagnosisJSON+" FROM diagnosticos d WHERE d.id_diagnostico=$1 AND "+diagnosisScope("$2", "$3"), id, diagnosisSupervisor(u), u.ID)
 	case "cotizaciones":
 		return readJSON(ctx, s.Pool, "SELECT "+quoteJSON+" FROM cotizaciones q WHERE q.id_cotizacion=$1", id)
 	case "ordenes":
@@ -119,4 +127,11 @@ func (s *Store) WorkshopItem(ctx context.Context, resource, id string, u domain.
 		return readJSON(ctx, s.Pool, "SELECT "+deliveryJSON+" FROM entregas e WHERE e.id_orden=$1", id)
 	}
 	return nil, domain.ErrNotFound
+}
+
+func receptionScope(global, actor string) string {
+	return "(" + global + " OR r.id_mecanico_diagnostico::text=" + actor + " OR EXISTS(SELECT 1 FROM cotizaciones cq JOIN ordenes_trabajo co USING(id_cotizacion) JOIN asignaciones_ot ca USING(id_orden) WHERE cq.id_recepcion=r.id_recepcion AND ca.activo AND ca.id_usuario::text=" + actor + "))"
+}
+func diagnosisScope(global, actor string) string {
+	return "(" + global + " OR d.id_tecnico::text=" + actor + " OR EXISTS(SELECT 1 FROM cotizaciones cq JOIN ordenes_trabajo co USING(id_cotizacion) JOIN asignaciones_ot ca USING(id_orden) WHERE cq.id_diagnostico=d.id_diagnostico AND ca.activo AND ca.id_usuario::text=" + actor + "))"
 }

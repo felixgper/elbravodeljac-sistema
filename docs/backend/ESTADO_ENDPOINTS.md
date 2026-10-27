@@ -113,3 +113,29 @@ las ampliaciones anteriores; las 71 originales siguen implementadas. Control
 requiere ordenes.ver/editar y alcance de asignación; PDF exige pagos.ver, saldo cero
 y entrega. Reportes entrega días en Semana/Mes y meses en Año. Ver
 [contratos, migración 003 y pruebas](ATENCIONES_REPORTES_FICHA.md).
+
+
+## Asignación y diagnósticos (27/10/2026)
+
+Se incorporaron cuatro operaciones funcionales, verificadas con PostgreSQL:
+
+| Método | Ruta | Permiso y alcance |
+|---|---|---|
+| PATCH | `/api/v1/recepciones/{id}/mecanico` | `diagnosticos.asignar`; mecánico activo, versión de asignación |
+| GET | `/api/v1/me/diagnosticos` | `diagnosticos.ver`; pendientes propios o supervisión explícita |
+| PUT | `/api/v1/diagnosticos/{id}` | `diagnosticos.crear`; asignado o supervisor, versión de borrador |
+| GET | `/api/v1/diagnosticos/pendientes-cotizacion` | `diagnosticos.ver`; finalizados sin cotización, propios o supervisión |
+
+Total acumulado: **83 operaciones de aplicación**, incluidas `frontend/opciones` y
+las ampliaciones previas; las 71 originales permanecen implementadas. No se agregan
+respuestas 501. El test de catálogo cubre 82 entradas de negocio y la ruta auxiliar
+`frontend/opciones` se verifica por separado.
+
+`POST /recepciones` admite `technicianId` para tipo `Diagnostico`, con permiso de
+asignación. `POST /diagnosticos` crea borrador por defecto; `status: Finalizado`
+requiere hallazgos, evaluación y recomendaciones. El servidor registra actor y
+fechas; `PUT` exige la versión vigente. Finalizados inmutables. Las consultas de
+recepciones/diagnósticos y sus opciones auxiliares verifican alcance en Go.
+`POST /cotizaciones` rechaza borradores; Directo sigue sin diagnóstico.
+
+[Flujo, compatibilidad de datos, migración y pruebas](FLUJO_DIAGNOSTICOS_ASIGNADOS.md).

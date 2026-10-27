@@ -20,7 +20,7 @@ export const PERMISSION_MODULES = [
   {id: 'clientes', label: 'Clientes', icon: 'users', actions: [['ver', 'Ver clientes'], ['crear', 'Crear clientes'], ['editar', 'Editar clientes'], ['eliminar', 'Eliminar clientes']]},
   {id: 'vehiculos', label: 'Vehículos', icon: 'car', actions: [['ver', 'Ver vehículos'], ['crear', 'Crear vehículos'], ['editar', 'Editar vehículos'], ['eliminar', 'Eliminar vehículos']]},
   {id: 'recepciones', label: 'Recepciones', icon: 'reception', actions: [['ver', 'Ver recepciones'], ['crear', 'Crear recepciones']]},
-  {id: 'diagnosticos', label: 'Diagnósticos', icon: 'diagnosis', actions: [['ver', 'Ver diagnósticos'], ['crear', 'Crear diagnósticos']]},
+  {id: 'diagnosticos', label: 'Diagnósticos', icon: 'diagnosis', actions: [['ver', 'Ver diagnósticos'], ['crear', 'Guardar y finalizar evaluaciones'], ['asignar','Asignar mecánico de diagnóstico'], ['supervisar','Supervisar diagnósticos de otros trabajadores']]},
   {id: 'cotizaciones', label: 'Cotizaciones', icon: 'quote', actions: [['ver', 'Ver cotizaciones'], ['crear', 'Crear cotizaciones'], ['editar', 'Editar cotizaciones']]},
   {id: 'ordenes', label: 'Órdenes de trabajo', icon: 'orders', actions: [['ver', 'Ver órdenes'], ['crear', 'Crear órdenes'], ['editar', 'Editar órdenes'], ['eliminar', 'Eliminar órdenes'], ['asignar', 'Reasignar mecánicos']]},
   {id: 'auxilio', label: 'Auxilio mecánico', icon: 'rescue', actions: [['ver', 'Ver auxilios y tareas'], ['crear', 'Registrar auxilios']]},
@@ -42,7 +42,7 @@ export function defaultPermissions() {
     Administrador: all(),
     Supervisor: only({
       inicio: ['ver'], clientes: ['ver'], vehiculos: ['ver'], recepciones: ['ver'],
-      diagnosticos: ['ver', 'crear'], cotizaciones: ['ver', 'crear', 'editar'],
+      diagnosticos: ['ver', 'crear','asignar','supervisar'], cotizaciones: ['ver', 'crear', 'editar'],
       ordenes: ['ver', 'crear', 'editar', 'asignar'], auxilio: ['ver', 'crear'],
       mecanicos: ['ver'], reportes: ['ver'],
     }),

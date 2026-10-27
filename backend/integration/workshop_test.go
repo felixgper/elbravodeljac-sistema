@@ -170,7 +170,7 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 	api := httptest.NewServer(handler)
 	defer api.Close()
 	h := workshopHarness{pool: pool, api: api, ctx: ctx, password: rand.Text(), suffix: rand.Text()[:10]}
-	permissions := []string{"clientes.ver", "clientes.crear", "clientes.editar", "vehiculos.ver", "vehiculos.crear", "vehiculos.editar", "recepciones.ver", "recepciones.crear", "diagnosticos.ver", "diagnosticos.crear", "cotizaciones.ver", "cotizaciones.crear", "cotizaciones.editar", "ordenes.ver", "ordenes.crear", "ordenes.editar", "ordenes.eliminar", "ordenes.asignar", "mecanicos.ver", "auxilio.ver", "pagos.ver", "pagos.registrar", "pagos.entregar"}
+	permissions := []string{"diagnosticos.asignar", "diagnosticos.supervisar", "clientes.ver", "clientes.crear", "clientes.editar", "vehiculos.ver", "vehiculos.crear", "vehiculos.editar", "recepciones.ver", "recepciones.crear", "diagnosticos.ver", "diagnosticos.crear", "cotizaciones.ver", "cotizaciones.crear", "cotizaciones.editar", "ordenes.ver", "ordenes.crear", "ordenes.editar", "ordenes.eliminar", "ordenes.asignar", "mecanicos.ver", "auxilio.ver", "pagos.ver", "pagos.registrar", "pagos.entregar"}
 	_, admin := h.user(t, "manager", "Manager_"+h.suffix, permissions)
 	mechanic, mechanicSession := h.user(t, "mechanic", "Mecánico", []string{"ordenes.ver", "ordenes.editar"})
 	mechanic2, mechanic2Session := h.user(t, "technician", "Supervisor", []string{"ordenes.ver", "ordenes.editar"})
@@ -203,9 +203,10 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 		}
 		h.call(t, admin, "GET", "/recepciones?pendienteDiagnostico=true", nil, 200)
 		h.call(t, admin, "GET", "/recepciones/"+reception, nil, 200)
-		diagnosis = responseID(t, h.call(t, admin, "POST", "/diagnosticos", map[string]string{"receptionId": reception, "findings": "Frenos y mantenimiento"}, 201))
+		h.call(t, admin, "PATCH", "/recepciones/"+reception+"/mecanico", map[string]any{"technicianId": mechanic, "version": 0}, 200)
+		diagnosis = responseID(t, h.call(t, admin, "POST", "/diagnosticos", map[string]string{"status": "Finalizado", "evaluation": "Evaluación técnica de prueba", "recommendations": "Servicios recomendados de prueba", "receptionId": reception, "findings": "Frenos y mantenimiento"}, 201))
 		h.call(t, admin, "POST", "/diagnosticos", map[string]string{"receptionId": reception, "findings": "Duplicado"}, 409)
-		h.call(t, admin, "POST", "/diagnosticos", map[string]string{"receptionId": "9223372036854775807", "findings": "Sin recepción"}, 409)
+		h.call(t, admin, "POST", "/diagnosticos", map[string]string{"receptionId": "9223372036854775807", "findings": "Sin recepción"}, 404)
 		h.call(t, admin, "GET", "/diagnosticos?recepcionId="+reception, nil, 200)
 		h.call(t, admin, "GET", "/diagnosticos/"+diagnosis, nil, 200)
 	})
@@ -376,7 +377,7 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 		if got := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); got != "26" {
 			t.Fatal(got)
 		}
-		if got := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); got != "44" {
+		if got := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); got != "46" {
 			t.Fatal(got)
 		}
 	})

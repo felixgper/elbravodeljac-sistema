@@ -1,3 +1,4 @@
+import {mountDiagnosisDashboard,refreshVisibleDiagnosisInboxes} from './components/diagnosis-inbox.js';
 import {realMode} from './services/api-service.js';
 import {loadModule} from './services/real-workshop.js';
 import {clearRealStore} from './services/real-state.js';
@@ -156,6 +157,7 @@ async function renderDashboard(currentRender,period='Mes') {
       const width = Math.floor(chart.getBoundingClientRect().width);
       if (width !== lastWidth && width > 0) { lastWidth = width; chart.outerHTML = incomeChart(data.income,width); }
     }
+    await mountDiagnosisDashboard(content);
     fitIncomeChart();
     chartObserver = new ResizeObserver(fitIncomeChart); chartObserver.observe(panel);
   } catch {
@@ -236,3 +238,7 @@ document.querySelector('.skip-link').addEventListener('click', event => {
 window.addEventListener('bravo:unauthorized',()=>{clearRealStore();if(location.hash!=='#/login')go('login');});
 window.addEventListener('hashchange', render);
 render();
+
+window.addEventListener('focus',refreshVisibleDiagnosisInboxes);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleDiagnosisInboxes();});
+setInterval(refreshVisibleDiagnosisInboxes,60000);

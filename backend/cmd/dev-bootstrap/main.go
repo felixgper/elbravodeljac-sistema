@@ -58,8 +58,8 @@ func provision(ctx context.Context) error {
 	if err = tx.QueryRow(ctx, `SELECT count(*) FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`).Scan(&fks); err != nil {
 		return err
 	}
-	if tables != 26 || fks != 44 {
-		return errors.New("El esquema de desarrollo no coincide con las 26 tablas y 44 FK (42 originales y dos referencias de atención/ficha)")
+	if tables != 26 || fks != 46 {
+		return errors.New("El esquema de desarrollo no coincide con las 26 tablas y 46 FK (42 originales y cuatro referencias aditivas)")
 	}
 	if err = tx.QueryRow(ctx, `SELECT count(*) FROM usuarios`).Scan(&users); err != nil {
 		return err

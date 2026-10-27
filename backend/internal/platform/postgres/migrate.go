@@ -14,7 +14,10 @@ var BrandsMigration string
 //go:embed migrations/003_atencion_ficha.sql
 var AttentionMigration string
 
+//go:embed migrations/004_flujo_diagnosticos.sql
+var DiagnosisWorkflowMigration string
+
 func (s *Store) Migrate(ctx context.Context) error {
-	_, err := s.Pool.Exec(ctx, FunctionalMigration+"\n"+BrandsMigration+"\n"+AttentionMigration)
+	_, err := s.Pool.Exec(ctx, FunctionalMigration+"\n"+BrandsMigration+"\n"+AttentionMigration+"\n"+DiagnosisWorkflowMigration)
 	return err
 }

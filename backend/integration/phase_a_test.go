@@ -50,7 +50,7 @@ func TestPhaseAWithPostgreSQL(t *testing.T) {
 	if err = pool.QueryRow(ctx, `SELECT count(*) FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`).Scan(&fks); err != nil {
 		t.Fatal(err)
 	}
-	if tables != 26 || fks != 44 {
+	if tables != 26 || fks != 46 {
 		t.Fatalf("Esquema inesperado: %d tablas, %d FK", tables, fks)
 	}
 	random := make([]byte, 16)

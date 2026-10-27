@@ -59,7 +59,8 @@ func TestAttentionInspectionAndOriginalSheet(t *testing.T) {
 				h.call(t, mechanic, "POST", "/diagnosticos", map[string]string{"receptionId": reception, "findings": "No debe crearse"}, 422)
 			} else {
 				h.call(t, manager, "POST", "/cotizaciones", source, 422)
-				diagnosis := responseID(t, h.call(t, manager, "POST", "/diagnosticos", map[string]string{"receptionId": reception, "findings": "Diagnóstico técnico real", "technicianId": technician}, 201))
+				h.call(t, manager, "PATCH", "/recepciones/"+reception+"/mecanico", map[string]any{"technicianId": technician, "version": 0}, 200)
+				diagnosis := responseID(t, h.call(t, manager, "POST", "/diagnosticos", map[string]string{"status": "Finalizado", "evaluation": "Evaluación técnica de prueba", "recommendations": "Servicios recomendados de prueba", "receptionId": reception, "findings": "Diagnóstico técnico real", "technicianId": technician}, 201))
 				source["diagnosisId"] = diagnosis
 				if got := dataObject(t, h.call(t, manager, "GET", "/diagnosticos/"+diagnosis, nil, 200))["technicianId"]; got != technician {
 					t.Fatal("No responsible mechanic", got)

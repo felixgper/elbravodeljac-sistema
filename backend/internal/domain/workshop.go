@@ -8,6 +8,7 @@ import (
 )
 
 type ReceptionInput struct {
+	TechnicianID  string `json:"technicianId"`
 	AttentionType string `json:"attentionType"`
 	ClientID      string `json:"clientId"`
 	VehicleID     string `json:"vehicleId"`
@@ -16,6 +17,11 @@ type ReceptionInput struct {
 }
 
 func (v *ReceptionInput) Validate() error {
+	if v.TechnicianID != "" {
+		if _, err := ID(v.TechnicianID); err != nil {
+			return Invalid("technicianId", "Mecánico inválido.")
+		}
+	}
 	if v.AttentionType == "" {
 		v.AttentionType = "Diagnostico"
 	}
@@ -37,9 +43,14 @@ func (v *ReceptionInput) Validate() error {
 }
 
 type DiagnosisInput struct {
-	TechnicianID string `json:"technicianId"`
-	ReceptionID  string `json:"receptionId"`
-	Findings     string `json:"findings"`
+	Status          string `json:"status"`
+	Evaluation      string `json:"evaluation"`
+	Recommendations string `json:"recommendations"`
+	Notes           string `json:"notes"`
+	Version         int64  `json:"version"`
+	TechnicianID    string `json:"technicianId"`
+	ReceptionID     string `json:"receptionId"`
+	Findings        string `json:"findings"`
 }
 
 func (v DiagnosisInput) Validate() error {
@@ -51,7 +62,18 @@ func (v DiagnosisInput) Validate() error {
 	if _, err := ID(v.ReceptionID); err != nil {
 		return Invalid("receptionId", "Recepción inválida.")
 	}
-	return text("findings", v.Findings, 4000, true)
+	if v.Status != "" && v.Status != "Borrador" && v.Status != "Finalizado" {
+		return Invalid("status", "Estado de evaluación inválido.")
+	}
+	if v.Version < 0 {
+		return Invalid("version", "Versión inválida.")
+	}
+	for _, value := range []struct{ k, v string }{{"findings", v.Findings}, {"evaluation", v.Evaluation}, {"recommendations", v.Recommendations}, {"notes", v.Notes}} {
+		if err := text(value.k, value.v, 4000, v.Status == "Finalizado" && value.k != "notes"); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // NUMERIC(12,2), transported as a decimal string, never a JSON float.
@@ -355,4 +377,9 @@ type WorkshopFilter struct {
 	Page
 	ParentID, State       string
 	Pending, WithoutOrder bool
+}
+
+type DiagnosisAssignment struct {
+	TechnicianID string `json:"technicianId"`
+	Version      int64  `json:"version"`
 }

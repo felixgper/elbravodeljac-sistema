@@ -76,7 +76,8 @@ func TestFunctionalReviewPostgreSQL(t *testing.T) {
 		h.call(t, admin, "POST", "/recepciones", map[string]string{"clientId": "9223372036854775807", "vehicleId": vehicle, "mileage": "10", "symptoms": "Inválido"}, 422)
 	})
 	reception := responseID(t, h.call(t, admin, "POST", "/recepciones", map[string]string{"clientId": client, "vehicleId": vehicle, "mileage": "10", "symptoms": "Revisión"}, 201))
-	diagnosis := responseID(t, h.call(t, admin, "POST", "/diagnosticos", map[string]string{"receptionId": reception, "findings": "Revisión manual"}, 201))
+	h.call(t, admin, "PATCH", "/recepciones/"+reception+"/mecanico", map[string]any{"technicianId": mechanic, "version": 0}, 200)
+	diagnosis := responseID(t, h.call(t, admin, "POST", "/diagnosticos", map[string]string{"status": "Finalizado", "evaluation": "Evaluación técnica de prueba", "recommendations": "Servicios recomendados de prueba", "receptionId": reception, "findings": "Revisión manual"}, 201))
 	q := h.call(t, admin, "POST", "/cotizaciones", map[string]any{"diagnosisId": diagnosis, "status": "Aprobada", "items": []map[string]string{
 		{"concept": "Mano de obra negociada", "type": "Servicio", "quantity": "1.25", "unitPrice": "100.00", "discount": "10.00"},
 		{"concept": "Repuesto fuera de catálogo", "type": "Repuesto", "partKind": "Alternativo", "origin": "Taller", "quantity": "2", "unitPrice": "50.00", "discount": "5.00"},
@@ -104,7 +105,8 @@ func TestFunctionalReviewPostgreSQL(t *testing.T) {
 	t.Run("snapshot independiente del precio del catálogo", func(t *testing.T) {
 		service := responseID(t, h.call(t, admin, "POST", "/servicios", map[string]string{"name": "Precio snapshot " + h.suffix, "referencePrice": "100.00"}, 201))
 		rx := responseID(t, h.call(t, admin, "POST", "/recepciones", map[string]string{"clientId": client, "vehicleId": vehicle, "mileage": "10", "symptoms": "Snapshot"}, 201))
-		dx := responseID(t, h.call(t, admin, "POST", "/diagnosticos", map[string]string{"receptionId": rx, "findings": "Snapshot"}, 201))
+		h.call(t, admin, "PATCH", "/recepciones/"+rx+"/mecanico", map[string]any{"technicianId": mechanic, "version": 0}, 200)
+		dx := responseID(t, h.call(t, admin, "POST", "/diagnosticos", map[string]string{"status": "Finalizado", "evaluation": "Evaluación técnica de prueba", "recommendations": "Servicios recomendados de prueba", "receptionId": rx, "findings": "Snapshot"}, 201))
 		qx := responseID(t, h.call(t, admin, "POST", "/cotizaciones", map[string]any{"diagnosisId": dx, "status": "Pendiente", "items": []map[string]string{{"serviceId": service, "quantity": "2", "unitPrice": "70.00", "discount": "10.00"}}}, 201))
 		h.exec(t, `UPDATE servicios SET precio_referencia=999 WHERE id_servicio=$1`, service)
 		saved := dataObject(t, h.call(t, admin, "GET", "/cotizaciones/"+qx, nil, 200))
@@ -149,7 +151,7 @@ func TestFunctionalReviewPostgreSQL(t *testing.T) {
 	if n := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); n != "26" {
 		t.Fatal(n)
 	}
-	if n := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); n != "44" {
+	if n := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); n != "46" {
 		t.Fatal(n)
 	}
 }

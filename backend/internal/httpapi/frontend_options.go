@@ -17,7 +17,7 @@ func (s *server) frontendOptions(w http.ResponseWriter, r *http.Request, u domai
 	module, resource := r.URL.Query().Get("module"), r.URL.Query().Get("resource")
 	allowed := map[string]string{
 		"clientes": "vehiculos", "vehiculos": "clientes",
-		"recepciones":  "clientes vehiculos diagnosticos",
+		"recepciones":  "clientes vehiculos diagnosticos mecanicos",
 		"diagnosticos": "clientes vehiculos recepciones mecanicos",
 		"cotizaciones": "clientes vehiculos recepciones diagnosticos ordenes",
 		"ordenes":      "clientes vehiculos recepciones diagnosticos cotizaciones mecanicos",

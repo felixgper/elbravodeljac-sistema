@@ -19,7 +19,7 @@ export function order(v) {
   return {...v,mechanicId:assignments.find(a=>a.role==='MECANICO')?.userId||'',assistantId:assignments.find(a=>a.role==='AUXILIAR')?.userId||'',updates,delivery:v.delivered?{pendingDetails:true}:null};
 }
 const specs={clients:['clientes','clientes'],vehicles:['vehiculos','vehiculos'],receptions:['recepciones','recepciones'],diagnoses:['diagnosticos','diagnosticos'],quotes:['cotizaciones','cotizaciones'],orders:['ordenes','ordenes'],rescues:['auxilios','auxilio'],suppliers:['proveedores','proveedores'],services:['servicios','cotizaciones'],spareParts:['repuestos','cotizaciones'],units:['unidades-auxilio','auxilio'],users:['mecanicos','mecanicos']};
-const needs={clientes:['clients','vehicles'],vehiculos:['clients','vehicles'],recepciones:['clients','vehicles','receptions','diagnoses'],diagnosticos:['clients','vehicles','receptions','diagnoses','users'],cotizaciones:['clients','vehicles','receptions','diagnoses','quotes','orders','services','spareParts'],ordenes:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],pagos:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],auxilio:['clients','vehicles','rescues','units','users','orders','quotes','diagnoses','receptions'],mecanicos:['users','orders','clients','vehicles','receptions','diagnoses','quotes'],proveedores:['suppliers']};
+const needs={clientes:['clients','vehicles'],vehiculos:['clients','vehicles'],recepciones:['clients','vehicles','receptions','diagnoses','users'],diagnosticos:['clients','vehicles','receptions','diagnoses','users'],cotizaciones:['clients','vehicles','receptions','diagnoses','quotes','orders','services','spareParts'],ordenes:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],pagos:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],auxilio:['clients','vehicles','rescues','units','users','orders','quotes','diagnoses','receptions'],mecanicos:['users','orders','clients','vehicles','receptions','diagnoses','quotes'],proveedores:['suppliers']};
 let generation=0;
 export async function loadModule(module,params=new URLSearchParams(),path=[]) {
   const current=++generation,sessionRef=realSession(),s={},permissions=sessionRef?.permissions||[],can=m=>permissions.includes(m+'.ver');
@@ -77,6 +77,7 @@ export async function loadModule(module,params=new URLSearchParams(),path=[]) {
     }));
     if(module==='vehiculos')s.brands=(await request('/vehiculos/marcas')).data;
   }
+  if(module==='diagnosticos'){s.diagnosisTasks=await allPages('/me/diagnosticos');if(params.get('recepcion')&&!s.receptions?.some(r=>r.id===params.get('recepcion')))throw Error('No se encontró una recepción autorizada para este usuario.');}
   if(module==='proveedores')await Promise.all((s.suppliers||[]).map(async p=>{p.linkedParts=await allPages('/proveedores/'+p.id+'/repuestos');p.parts=p.linkedParts.map(r=>r.name).join(', ');}));
   s.unavailable=[...new Set(unavailable)];
   if(current===generation&&realSession()===sessionRef)replaceRealStore(s);
@@ -93,8 +94,8 @@ export async function saveVehicle(input,id) {
   }
   return (await request('/vehiculos'+(id?'/'+id:''),{method:id?'PATCH':'POST',body})).data;
 }
-export async function saveReception(input){return (await request('/recepciones',{method:'POST',body:pick(input,['clientId','vehicleId','mileage','symptoms','attentionType'])})).data;}
-export async function saveDiagnosis(input){return (await request('/diagnosticos',{method:'POST',body:pick(input,['receptionId','findings','technicianId'])})).data;}
+export async function saveReception(input){return (await request('/recepciones',{method:'POST',body:pick(input,['clientId','vehicleId','mileage','symptoms','attentionType','technicianId'])})).data;}
+export async function saveDiagnosis(input){return (await request('/diagnosticos'+(input.id?'/'+input.id:''),{method:input.id?'PUT':'POST',body:pick(input,['receptionId','findings','technicianId','evaluation','recommendations','notes','status','version'])})).data;}
 export async function saveQuote(input,id){
   const items=input.items.map(i=>({...pick(i,['concept','type','quantity','unitPrice','partKind','discount','serviceId','sparePartId']),origin:i.type==='Servicio'?'':i.origin}));
   return quote((await request('/cotizaciones'+(id?'/'+id:''),{method:id?'PUT':'POST',body:{diagnosisId:input.diagnosisId||'',receptionId:input.receptionId||'',status:input.status,items}})).data);
@@ -152,3 +153,7 @@ export async function clientByID(id,module){
 }
 export async function vehiclePage(query,page=1,signal){return request('/vehiculos?q='+encodeURIComponent(query)+'&page='+page+'&pageSize=10',{signal});}
 export async function saveUnit(input){return (await request('/unidades-auxilio',{method:'POST',body:pick(input,['code','description'])})).data;}
+
+export const assignDiagnosis=(id,technicianId,version)=>request('/recepciones/'+id+'/mecanico',{method:'PATCH',body:{technicianId,version}});
+export const pendingDiagnoses=()=>allPages('/me/diagnosticos');
+export const diagnosesToQuote=()=>allPages('/diagnosticos/pendientes-cotizacion');

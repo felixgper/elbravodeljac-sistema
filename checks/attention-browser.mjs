@@ -28,10 +28,10 @@ try{
  await route('vehiculos/nuevo?cliente='+client.id);await fill({plate:'FT'+suffix.slice(0,5),brand:'Toyota',model:'Prueba ficha',year:2025,mileage:'100'});const vehicle=await save('/vehiculos');report.vehicleId=vehicle.id;
  report.orders=[];
  for(const attention of ['Directo','Diagnostico']){
-  await route('recepciones?cliente='+client.id+'&vehiculo='+vehicle.id);await fill({attentionType:attention,symptoms:'Mantenimiento autorizado',mileage:'100'});const reception=await save('/recepciones');assert.equal(reception.attentionType,attention);
+  await route('recepciones?cliente='+client.id+'&vehiculo='+vehicle.id);await fill({attentionType:attention,symptoms:'Mantenimiento autorizado',mileage:'100',...(attention==='Diagnostico'?{technicianId:mechanic.id}:{})});const reception=await save('/recepciones');assert.equal(reception.attentionType,attention);
   let diagnosis;
   if(attention==='Directo'){await page.getByRole('link',{name:'Ir a cotización',exact:false}).first().click();await page.locator('#add-line').waitFor();assert.equal(await page.locator('select[name=diagnosisId]').count(),0);}
-  else{await route('diagnosticos?recepcion='+reception.id);await fill({technicianId:mechanic.id,findings:'Evaluación técnica registrada'});diagnosis=await save('/diagnosticos');assert.equal(diagnosis.technicianId,mechanic.id);await route('cotizaciones?diagnostico='+diagnosis.id);}
+  else{await route('diagnosticos?recepcion='+reception.id);await fill({evaluation:'Evaluación técnica realizada',recommendations:'Servicio recomendado tras la inspección',findings:'Evaluación técnica registrada'});diagnosis=await save('/diagnosticos','POST','#edit-form button[value=Finalizado]');assert.equal(diagnosis.technicianId,mechanic.id);await route('cotizaciones?diagnostico='+diagnosis.id);}
   await page.locator('#add-line').click();await page.locator('[data-key=concept]').fill('Mantenimiento ejecutado');await page.locator('[data-key=unitPrice]').fill('100');await page.locator('[data-key=discount]').fill('10');await fill({status:'Aprobada'});const quote=await save('/cotizaciones');assert.equal(quote.total,'90.00');if(attention==='Directo')assert.equal(quote.diagnosisId,null);
   await route('ordenes/nueva?cotizacion='+quote.id);await fill({mechanicId:mechanic.id});const order=await save('/ordenes');report.orders.push({attention,id:order.id});
   const workerContext=await browser.newContext(),worker=await workerContext.newPage();await login(worker,username,password);

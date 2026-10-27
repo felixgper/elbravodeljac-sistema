@@ -166,7 +166,8 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 		customer := responseID(t, h.call(t, admin, "POST", "/clientes", map[string]string{"name": "Estadística fixture", "documentType": "Pasaporte", "documentNumber": "S" + strings.ToUpper(h.suffix), "phone": "+51987654321", "address": "Lima"}, 201))
 		car := responseID(t, h.call(t, admin, "POST", "/vehiculos", map[string]any{"clientId": customer, "plate": "S-" + strings.ToUpper(h.suffix[:6]), "brand": "JAC", "model": "T8", "year": 2024, "mileage": "10"}, 201))
 		reception := responseID(t, h.call(t, admin, "POST", "/recepciones", map[string]string{"clientId": customer, "vehicleId": car, "mileage": "10", "symptoms": "Estadística"}, 201))
-		diagnosis := responseID(t, h.call(t, admin, "POST", "/diagnosticos", map[string]string{"receptionId": reception, "findings": "Fixture de agregación"}, 201))
+		h.call(t, admin, "PATCH", "/recepciones/"+reception+"/mecanico", map[string]any{"technicianId": tech, "version": 0}, 200)
+		diagnosis := responseID(t, h.call(t, admin, "POST", "/diagnosticos", map[string]string{"status": "Finalizado", "evaluation": "Evaluación técnica de prueba", "recommendations": "Servicios recomendados de prueba", "receptionId": reception, "findings": "Fixture de agregación"}, 201))
 		service := responseID(t, h.call(t, admin, "POST", "/servicios", map[string]string{"name": "Stats_" + h.suffix, "referencePrice": "100"}, 201))
 		quote := responseID(t, h.call(t, admin, "POST", "/cotizaciones", map[string]any{"diagnosisId": diagnosis, "status": "Aprobada", "items": []map[string]string{{"serviceId": service, "quantity": "1", "unitPrice": "100"}, {"serviceId": service, "quantity": "1", "unitPrice": "100"}}}, 201))
 		order := responseID(t, h.call(t, admin, "POST", "/ordenes", map[string]string{"quoteId": quote, "mechanicId": tech}, 201))
@@ -235,7 +236,7 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 	if tables := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); tables != "26" {
 		t.Fatal(tables)
 	}
-	if fks := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); fks != "44" {
+	if fks := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); fks != "46" {
 		t.Fatal(fks)
 	}
 }

@@ -38,12 +38,15 @@ export function saveReception(input,by){if(realMode)return real.saveReception(in
   const client=requireRecord(s.clients,input.clientId,'un cliente'),vehicle=requireRecord(s.vehicles,input.vehicleId,'un vehículo');
   if(vehicle.clientId!==client.id)throw new Error('El vehículo debe pertenecer al cliente seleccionado.');
   const mileage=decimalString(input.mileage);if(decimalMinor(mileage)<decimalMinor(vehicle.mileage))throw new Error('El kilometraje de ingreso no puede ser menor al actual.');
-  const record={id:nextCode(s.receptions,'RX',s),clientId:client.id,vehicleId:vehicle.id,mileage,attentionType:input.attentionType||'Diagnostico',symptoms:text(input.symptoms,'el motivo de ingreso / síntomas',4000),createdAt:nowISO(),createdBy:by};vehicle.mileage=mileage;s.receptions.push(record);return record;
+  const record={id:nextCode(s.receptions,'RX',s),clientId:client.id,vehicleId:vehicle.id,mileage,attentionType:input.attentionType||'Diagnostico',technicianId:input.technicianId||'',symptoms:text(input.symptoms,'el motivo de ingreso / síntomas',4000),createdAt:nowISO(),createdBy:by};vehicle.mileage=mileage;s.receptions.push(record);return record;
 });}
 export function saveDiagnosis(input,by){if(realMode)return real.saveDiagnosis(input,by);return transaction(s=>{
-  const reception=requireRecord(s.receptions,input.receptionId,'una recepción guardada');if(s.diagnoses.some(d=>d.receptionId===reception.id))throw new Error('La recepción ya tiene un diagnóstico guardado. Selecciona otra pendiente.');
-  const record={id:nextCode(s.diagnoses,'DX',s),receptionId:reception.id,findings:text(input.findings,'el diagnóstico técnico',6000),createdAt:nowISO(),createdBy:by};s.diagnoses.push(record);return record;
-});}
+ const reception=requireRecord(s.receptions,input.receptionId,'una recepción guardada');if(reception.attentionType==='Directo')throw Error('Servicio directo sin diagnóstico.');
+ const old=s.diagnoses.find(d=>d.receptionId===reception.id);if(old&&!input.id)throw Error('La recepción ya tiene un diagnóstico guardado.');if(old&&(old.status||'Finalizado')==='Finalizado')throw Error('El diagnóstico finalizado no se sobrescribe.');
+ const data={receptionId:reception.id,findings:input.status==='Borrador'?String(input.findings||''):text(input.findings,'los hallazgos',4000),evaluation:input.evaluation||'',recommendations:input.recommendations||'',notes:input.notes||'',status:input.status||'Finalizado',technicianId:reception.technicianId||by,version:(old?.version||0)+1,finishedAt:input.status==='Borrador'?null:nowISO(),createdBy:by};
+ if(old){Object.assign(old,data);return old;}const record={id:nextCode(s.diagnoses,'DX',s),createdAt:nowISO(),...data};s.diagnoses.push(record);return record;
+ });}
+
 export function saveQuote(input,id){if(realMode)return real.saveQuote(input,id);return transaction(s=>{
   const current=id?requireRecord(s.quotes,id,'una cotización'):null;
   if(current&&s.orders.some(o=>o.quoteId===id))throw new Error('La cotización ya originó una orden y conserva sus trabajos autorizados.');
