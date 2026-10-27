@@ -1,5 +1,4 @@
 .git
-dist
 docs
 backend/.cache
 backend/bin

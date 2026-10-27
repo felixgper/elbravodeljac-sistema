@@ -57,7 +57,11 @@ func main() {
 			_ = mongoStore.Close(closeCtx)
 		}()
 	}
-	handler, err := httpapi.New(&postgres.Store{Pool: pool}, httpapi.Options{Origin: cfg.Origin, Key: cfg.Key, SecureCookies: cfg.SecureCookies, Technical: technical})
+	frontendDir := os.Getenv("FRONTEND_DIR")
+	if frontendDir == "" {
+		frontendDir = "../dist"
+	}
+	handler, err := httpapi.New(&postgres.Store{Pool: pool}, httpapi.Options{FrontendDir: frontendDir, Origin: cfg.Origin, Key: cfg.Key, SecureCookies: cfg.SecureCookies, Technical: technical})
 	if err != nil {
 		log.Fatal("No se pudo preparar HTTP")
 	}
@@ -73,7 +77,7 @@ func main() {
 		defer cancel()
 		_ = server.Shutdown(shutdownCtx)
 	}()
-	log.Printf("API fases A–D: %s; MongoDB configurado: %t", cfg.Addr, technical != nil)
+	log.Printf("Aplicación fases A–E: %s; MongoDB configurado: %t", cfg.Addr, technical != nil)
 	if err = server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Print("Servidor HTTP detenido por error")
 	}

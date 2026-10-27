@@ -23,6 +23,7 @@ type workshopSession struct {
 	csrf   string
 }
 type workshopHarness struct {
+	origin   string
 	pool     *pgxpool.Pool
 	api      *httptest.Server
 	ctx      context.Context
@@ -50,7 +51,11 @@ func (h *workshopHarness) send(session workshopSession, method, path string, pay
 		return workshopResponse{err: err}
 	}
 	r.Header.Set("Content-Type", "application/json")
-	r.Header.Set("Origin", "http://localhost:8080")
+	origin := h.origin
+	if origin == "" {
+		origin = "http://localhost:8080"
+	}
+	r.Header.Set("Origin", origin)
 	r.Header.Set("X-CSRF-Token", session.csrf)
 	if session.cookie != nil {
 		r.AddCookie(session.cookie)

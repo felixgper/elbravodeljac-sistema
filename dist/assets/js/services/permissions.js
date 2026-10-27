@@ -1,14 +1,17 @@
+import {realMode,realSession} from './api-service.js';
 import {getStore} from './store-service.js';
 import {modules} from '../components/navigation.js';
 import {ROLES,defaultPermissions,sanitizePermissions} from '../data/permissions.js';
 
 // Matriz completa de permisos por rol (valores guardados + valores iniciales).
 export function rolePermissions(state=getStore()){
+  if(realMode)return state.rolePermissions||{};
   const defaults=defaultPermissions(),saved=state.rolePermissions||{};
   return Object.fromEntries(ROLES.map(role=>[role,saved[role]?sanitizePermissions(saved[role]):defaults[role]||{}]));
 }
 // Devuelve una función can(módulo, acción) para el rol indicado.
 export function permissionChecker(role,matrix=rolePermissions()){
+  if(realMode){const granted=new Set(realSession()?.permissions||[]);return (module,action='ver')=>granted.has(module+'.'+action);}
   const own=matrix[role]||{};
   return (module,action='ver')=>Boolean(own[module]?.includes(action));
 }

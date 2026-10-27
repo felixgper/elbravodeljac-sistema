@@ -1,7 +1,10 @@
+import {realMode} from './services/api-service.js';
+import {loadModule} from './services/real-workshop.js';
+import {clearRealStore} from './services/real-state.js';
 import { icon } from './components/icons.js';
 import { modules } from './components/navigation.js';
 import { incomeChart, donutChart, verticalBars, horizontalBars } from './components/charts.js';
-import { getSession, getRememberedUser, login, logout, demoCredentials } from './services/auth-service.js';
+import { refreshSession, getSession, getRememberedUser, login, logout, demoCredentials } from './services/auth-service.js';
 import { getDashboard, getActiveOrders } from './services/dashboard-service.js';
 import { renderClients, renderVehicles } from './views/clients-vehicles.js';
 import { renderReceptions, renderDiagnoses, renderQuotes, renderOrders, renderRescues } from './views/operations.js';
@@ -23,6 +26,7 @@ function brand() {
   return `<span class="atelier-brand" role="img" aria-label="El Bravo del JAC · Taller automotriz"><img class="brand-bull" src="./assets/images/bravo-borgona.svg" alt="" width="72" height="62"><span class="brand-wordmark">EL BRAVO DEL JAC<small>TALLER AUTOMOTRIZ</small></span></span>`;
 }
 function renderLogin() {
+  root.setAttribute('aria-busy','false');root.dataset.route='#/login';
   const remembered = getRememberedUser();
   document.title = 'Iniciar sesión · El Bravo del JAC';
   root.innerHTML = `<main class="login-page" id="main-content"><div class="login-glow" aria-hidden="true"></div>
@@ -30,13 +34,13 @@ function renderLogin() {
       <div class="login-brand">${brand()}</div>
       <div class="login-heading"><span class="eyebrow">GESTIÓN DEL TALLER</span><h1 id="login-title">Iniciar sesión</h1><p>Acceso exclusivo para trabajadores del taller</p></div>
       <form id="login-form">
-        <label class="field-label" for="username">Correo o usuario</label><div class="input-wrap">${icon('user')}<input id="username" name="username" autocomplete="username" placeholder="Ingrese su usuario" value="${escapeHtml(remembered)}" required maxlength="120" autocapitalize="none" spellcheck="false"></div>
-        <label class="field-label" for="password">Contraseña</label><div class="input-wrap">${icon('lock')}<input id="password" name="password" type="password" autocomplete="current-password" placeholder="Ingrese su contraseña" required maxlength="128"><button type="button" class="password-toggle" id="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false">${icon('eye')}</button></div>
+        <label class="field-label" for="username">Correo o usuario</label><div class="input-wrap">${icon('user')}<input id="username" name="username" autocomplete="username" placeholder="Ingrese su usuario" value="${escapeHtml(remembered)}" required maxlength="${realMode?150:120}" autocapitalize="none" spellcheck="false"></div>
+        <label class="field-label" for="password">Contraseña</label><div class="input-wrap">${icon('lock')}<input id="password" name="password" type="password" autocomplete="current-password" placeholder="Ingrese su contraseña" required maxlength="${realMode?72:128}"><button type="button" class="password-toggle" id="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false">${icon('eye')}</button></div>
         <label class="remember"><input type="checkbox" name="remember" ${remembered ? 'checked' : ''}> Recordarme</label>
         <p id="login-error" class="form-error" role="alert" hidden></p>
         <button class="primary-button login-submit" type="submit">Iniciar sesión ${icon('arrow')}</button>
       </form>
-      <div class="demo-access">${icon('info')}<div><strong>Acceso de demostración</strong><p>Usuario: <code>${demoCredentials.username}</code> <span>·</span> Contraseña: <code>${demoCredentials.password}</code></p><p>Auxiliar: <code>kevin</code> · <code>Auxiliar2026!</code></p></div></div>
+      <div class="demo-access">${icon('info')}<div><strong>${realMode?'Acceso al taller':'Acceso de demostración'}</strong>${realMode?'<p>Modo real · Usa tu cuenta del taller. Los cambios se guardan en el servidor. <a href="/demo/">Abrir demostración separada</a></p>':`<p>Usuario: <code>${demoCredentials.username}</code> <span>·</span> Contraseña: <code>${demoCredentials.password}</code></p><p>Auxiliar: <code>kevin</code> · <code>Auxiliar2026!</code></p>`}</div></div>
       <p class="login-hint">El menú del sistema se muestra después de iniciar sesión.</p>
     </section><footer class="login-footer">EL BRAVO DEL JAC <span>·</span> Proyecto universitario <span>·</span> Etapa 1</footer>
   </main>`;
@@ -63,11 +67,11 @@ function shell(session, module) {
   root.innerHTML = `<div class="app-shell">
     <header class="topbar"><div class="topbar-brand"><button class="icon-button menu-button" id="menu-toggle" aria-label="Abrir o contraer menú" aria-expanded="false" aria-controls="sidebar">${icon('menu')}</button><a class="brand-link" href="#/inicio" aria-label="Inicio de El Bravo del JAC">${brand()}</a></div>
       <div class="module-search"><label class="sr-only" for="module-search">Buscar módulo</label>${icon('search')}<input id="module-search" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" placeholder="Buscar módulo…" autocomplete="off" aria-controls="search-results" aria-expanded="false"><kbd>/</kbd><div id="search-results" class="search-results" role="listbox" aria-label="Módulos encontrados" hidden></div></div>
-      <span class="topbar-demo"><span></span>Demostración</span><div class="profile-wrap"><button class="profile-button" id="profile-toggle" aria-label="Opciones de ${escapeHtml(session.name)}" aria-expanded="false" aria-controls="profile-menu"><span class="profile-avatar">${escapeHtml(session.name.trim().charAt(0).toUpperCase())}</span><span>${escapeHtml(session.name)}</span>${icon('down')}</button><div class="profile-menu" id="profile-menu" hidden><span>${escapeHtml(session.role)}</span><button id="export-demo">${icon('quote')} Descargar datos demo</button><button id="reset-demo">${icon('info')} Reiniciar datos demo</button><button id="logout">${icon('logout')} Cerrar sesión</button></div></div>
+      <span class="topbar-demo"><span></span>${realMode?'Modo real':'Demostración'}</span><div class="profile-wrap"><button class="profile-button" id="profile-toggle" aria-label="Opciones de ${escapeHtml(session.name)}" aria-expanded="false" aria-controls="profile-menu"><span class="profile-avatar">${escapeHtml(session.name.trim().charAt(0).toUpperCase())}</span><span>${escapeHtml(session.name)}</span>${icon('down')}</button><div class="profile-menu" id="profile-menu" hidden><span>${escapeHtml(session.role)}</span><button id="export-demo" ${realMode?'hidden':''}>${icon('quote')} Descargar datos demo</button><button id="reset-demo" ${realMode?'hidden':''}>${icon('info')} Reiniciar datos demo</button><button id="logout">${icon('logout')} Cerrar sesión</button></div></div>
     </header>
     <button class="sidebar-scrim" id="sidebar-scrim" aria-label="Cerrar menú" hidden></button>
     <aside class="sidebar" id="sidebar" aria-label="Menú principal"><a class="sidebar-brand" href="#/${homePath(session.role)}" aria-label="Inicio de El Bravo del JAC">${brand()}</a><div class="sidebar-caption">GESTIÓN DEL TALLER</div><nav>${allowed.map(m => `${m.id === 'mecanicos' && allowed.indexOf(m) > 0 ? '<div class="nav-divider"></div>' : ''}<a class="nav-item ${m.id === module.id ? 'active' : ''}" href="#/${m.id}" ${m.id === module.id ? 'aria-current="page"' : ''} title="${m.label}">${icon(m.icon)}<span>${m.label}</span>${!m.ready ? '<span class="nav-pending" aria-label="Próxima etapa"></span>' : ''}</a>`).join('')}</nav><div class="sidebar-footer"><span>EL BRAVO DEL JAC</span><small>Cuidado experto. En cada detalle.</small></div></aside>
-    <main class="workspace" id="main-content"><div class="page-heading"><div><div class="breadcrumb">El Bravo del JAC ${icon('chevron')} <span>${module.id === 'inicio' ? 'Dashboard' : module.label}</span></div><h1>${module.id === 'inicio' ? `Bienvenido, ${escapeHtml(session.name)}` : module.label}</h1><p>${module.id === 'inicio' ? 'Panel de control del taller' : 'Sistema de gestión del taller automotriz'}</p></div><div class="page-date">${icon('clock')}<span>${date}</span></div></div><div id="page-content"></div><footer class="workspace-footer"><span>El Bravo del JAC · Gestión del taller</span><span>Frontend demo <span class="footer-dot">•</span> Datos ilustrativos</span></footer></main>
+    <main class="workspace" id="main-content"><div class="page-heading"><div><div class="breadcrumb">El Bravo del JAC ${icon('chevron')} <span>${module.id === 'inicio' ? 'Dashboard' : module.label}</span></div><h1>${module.id === 'inicio' ? `Bienvenido, ${escapeHtml(session.name)}` : module.label}</h1><p>${module.id === 'inicio' ? 'Panel de control del taller' : 'Sistema de gestión del taller automotriz'}</p></div><div class="page-date">${icon('clock')}<span>${date}</span></div></div><div id="page-content"></div><footer class="workspace-footer"><span>El Bravo del JAC · Gestión del taller</span><span>${realMode?'Modo real':'Frontend demo'} <span class="footer-dot">•</span> ${realMode?'Datos del taller':'Datos ilustrativos'}</span></footer></main>
   </div>`;
   bindShell();
 }
@@ -94,16 +98,18 @@ function bindShell() {
   scrim.addEventListener('click', () => { closeMenu(); toggle.focus(); });
   profileButton.addEventListener('click', () => { const open = profileMenu.hidden; profileMenu.hidden = !open; profileButton.setAttribute('aria-expanded', String(open)); });
   document.getElementById('export-demo').addEventListener('click', () => {
+    if(realMode)return;
     const data = getStore(); data.users = data.users.map(({passwordDigest,...user}) => user);
     const url = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
     const a = document.createElement('a'); a.href=url; a.download='El_Bravo_del_JAC_Datos_Demo.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); notify('Datos de demostración descargados.');
   });
   document.getElementById('reset-demo').addEventListener('click', () => {
+    if(realMode)return;
     const dialog=showModal('Reiniciar datos de demostración',form('CONFIRMAR REINICIO','<p class="full-width">Se reemplazarán los registros de este navegador por los ejemplos iniciales. Puedes descargar tus datos antes de continuar.</p>',submit('Reiniciar datos')+button('Cancelar','cancel'),'reset-form'));
     dialog.querySelector('[data-action="cancel"]').onclick=()=>dialog.close();
     bindForm('reset-form',()=>{resetDemo();dialog.close();notify('Datos de demostración reiniciados.');go('inicio');});
   });
-  document.getElementById('logout').addEventListener('click', () => { logout(); location.hash = '#/login'; });
+  document.getElementById('logout').addEventListener('click', async () => { try {await logout(); location.hash = '#/login';}catch(error){notify(error.message);} });
   search.addEventListener('input', () => {
     const query = search.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const matches = allowed.filter(m => m.label.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(query));
@@ -134,9 +140,9 @@ async function renderDashboard(currentRender) {
       {label:'Ingresos del mes',value:currency(data.monthlyIncomeCents),icon:'wallet',class:'copper',note:data.currentMonth},
       {label:'Órdenes activas',value:getActiveOrders(data),icon:'wrench',class:'copper',note:'Pendientes, reparación y pruebas'},
       {label:'Servicios finalizados',value:data.completedServices,icon:'check',class:'green',note:'Atenciones concluidas'},
-      {label:'Auxilios de hoy',value:data.rescuesToday,icon:'rescue',class:'blue',note:'Solicitudes de demostración'},
+      {label:'Auxilios de hoy',value:data.rescuesToday,icon:'rescue',class:'blue',note:realMode?'Solicitudes registradas':'Solicitudes de demostración'},
     ];
-    content.innerHTML = `<div class="dashboard-note"><span class="live-dot"></span>Dashboard general <span class="note-divider">/</span><span>Datos de este navegador · ${escapeHtml(data.period)}</span></div>
+    content.innerHTML = `<div class="dashboard-note"><span class="live-dot"></span>Dashboard general <span class="note-divider">/</span><span>${realMode?'Datos del servidor':'Datos de este navegador'} · ${escapeHtml(data.period)}</span></div>
       <section class="kpi-grid" aria-label="Resumen de actividad">${cards.map(card => `<article class="kpi-card"><span class="kpi-icon ${card.class}">${icon(card.icon)}</span><div><strong class="kpi-value">${card.value}</strong><h2>${card.label}</h2><p>${card.note}</p></div></article>`).join('')}</section>
       <div class="main-charts"><section class="panel income-panel"><div class="panel-heading"><div><h2>Ingresos de los últimos 6 meses</h2><p>Evolución de ingresos registrados</p></div><span class="panel-chip">${escapeHtml(String(new Date().getFullYear()))}</span></div>${incomeChart(data.income)}<div class="chart-caption"><span>${escapeHtml(data.period)}</span><strong>Último mes: ${currency(data.monthlyIncomeCents)}</strong></div></section>
       <section class="panel states-panel"><div class="panel-heading"><div><h2>Estados del servicio</h2><p>Distribución de las órdenes de trabajo</p></div>${icon('orders')}</div>${donutChart(data.states)}</section></div>
@@ -165,6 +171,7 @@ function gateForms(id, path, can, content) {
 }
 function contentSubtitle(){return document.querySelector('.module-heading p');}
 async function render() {
+  root.setAttribute('aria-busy','true');
   chartObserver?.disconnect();
   disposeShell?.();
   const currentRender = ++renderId;
@@ -173,7 +180,9 @@ async function render() {
   const [pathname, query = ''] = route.split('?');
   const path = pathname.split('/');
   const params = new URLSearchParams(query);
-  const session = getSession();
+  let session;
+  try {session=await refreshSession();}catch(error){if(currentRender===renderId)root.innerHTML='<section class="panel error-state" role="alert"><h2>No se pudo comprobar la sesión</h2><p>'+escapeHtml(error.message)+'</p><a href="">Reintentar</a></section>';return;}
+  if(currentRender!==renderId)return;
   if (!session) { if (route !== 'login') { history.replaceState(null,'','#/login'); } renderLogin(); return; }
   if (route === 'login') { history.replaceState(null,'','#/inicio'); }
   const can = permissionChecker(session.role);
@@ -192,8 +201,10 @@ async function render() {
     else if (module.id === 'inicio') await renderDashboard(currentRender);
     else {
       const views={clientes:renderClients,vehiculos:renderVehicles,recepciones:renderReceptions,diagnosticos:renderDiagnoses,cotizaciones:renderQuotes,ordenes:renderOrders,auxilio:renderRescues,pagos:renderPayments,mecanicos:renderMechanics,proveedores:renderSuppliers,usuarios:renderUsers,reportes:renderReports};
-      views[module.id]({root:document.getElementById('page-content'),path,params,session});
+      if(realMode){document.getElementById('page-content').innerHTML='<div class="loading-state" role="status">Cargando datos del servidor…</div>';if(!await loadModule(module.id,params)||currentRender!==renderId)return;}
+      await views[module.id]({root:document.getElementById('page-content'),path,params,session});
       gateForms(module.id, path, can, document.getElementById('page-content'));
+      if(realMode){const missing=getStore().unavailable||[];if(missing.length){document.getElementById('page-content').insertAdjacentHTML('afterbegin','<div class="inline-note" role="status">Tu acceso no incluye las consultas auxiliares: '+escapeHtml(missing.join(', '))+'. Los datos no autorizados no se cargan.</div>');}}
       const viewTitle=document.querySelector('.module-heading h2');
       if(viewTitle){
         const heading=document.querySelector('.page-heading');
@@ -206,9 +217,12 @@ async function render() {
       }
     }
   } catch(reason) {
+    if(currentRender!==renderId)return;
     document.getElementById('page-content').innerHTML='<section class="panel error-state" role="alert"><h2>No se pudo abrir esta vista</h2><p>'+escapeHtml(reason.message)+'</p><a class="primary-button" href="#/'+module.id+'">Volver a '+escapeHtml(module.label)+'</a></section>';
   }
+  if(currentRender!==renderId)return;
   document.querySelectorAll('#page-content a').forEach(a=>a.addEventListener('click',()=>document.getElementById('workshop-dialog')?.close()));
+  root.dataset.route=location.hash;root.setAttribute('aria-busy','false');
   window.scrollTo({top:0,behavior:'instant'});
   const pageTitle = document.querySelector('.page-heading h1');
   if (pageTitle) { pageTitle.tabIndex = -1; pageTitle.focus({preventScroll:true}); }
@@ -218,5 +232,6 @@ document.querySelector('.skip-link').addEventListener('click', event => {
   const main = document.getElementById('main-content');
   main.setAttribute('tabindex','-1'); main.focus(); main.scrollIntoView();
 });
+window.addEventListener('bravo:unauthorized',()=>{clearRealStore();if(location.hash!=='#/login')go('login');});
 window.addEventListener('hashchange', render);
 render();

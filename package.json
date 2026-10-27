@@ -1,1 +1,9 @@
-{"name":"el-bravo-del-jac-gestion","version":"1.0.0","private":true,"type":"module","scripts":{"check":"node checks/verify.mjs && node checks/workflow.mjs && node checks/edge-cases.mjs"}}
+{
+  "name": "el-bravo-del-jac-gestion",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node checks/run.mjs"
+  }
+}

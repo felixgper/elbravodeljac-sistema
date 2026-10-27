@@ -1,8 +1,23 @@
-# El Bravo del JAC · Frontend completo v1.0
+# El Bravo del JAC · Frontend y backend Go · Fase E
 
 Sistema web universitario de gestión del taller automotriz, realizado en **HTML, CSS y JavaScript**. Conserva la referencia funcional **Balsamiq V14.1 reparado** (23 pantallas y ventanas, notas internas V14.1.1) y adopta el estilo **Borgoña contemporáneo**: navegación color vino, superficies claras y títulos sans serif.
 
-Las **13 opciones del menú están operativas con datos de demostración**. Se puede recorrer el proceso desde el registro de cliente hasta el pago y entrega. Esta entrega es el frontend completo del prototipo; la autenticación y los datos funcionan localmente y todavía no se conectan a Go, PostgreSQL ni MongoDB.
+Las **13 opciones del menú consumen las APIs Go** conservando el diseño aprobado.
+Go sirve el modo real en `/` y la demostración separada en `/demo/`. La sesión usa
+cookies HttpOnly y CSRF; PostgreSQL mantiene los datos transaccionales y MongoDB
+los resultados de escáner/evidencias. No se mezclan registros demo con persistidos.
+
+**Modo real en Windows:** configurar privadamente el entorno de desarrollo aislado,
+una cuenta con bcrypt y permisos, ejecutar desde `backend/` `go run ./cmd/mongo-init`
+y, si termina correctamente, `go run ./cmd/api`. Abrir `http://localhost:8080/`.
+Variables, requisitos, endpoints utilizados, pruebas verificadas y límites de la
+interfaz están en [el informe de Fase E](docs/backend/FASE_E.md).
+
+La interfaz aprobada todavía no incluye controles para cargar archivos técnicos:
+el servicio JavaScript de MongoDB ya está implementado y probado; esos controles
+quedan pendientes de acordar. Especialidad de proveedores no se agrega al modelo.
+
+Los pasos de Python que siguen abren **solo la demostración**.
 
 ## Abrir el proyecto
 
@@ -104,16 +119,18 @@ Con Node.js instalado:
 node checks/verify.mjs
 node checks/workflow.mjs
 node checks/edge-cases.mjs
+node checks/real-api.mjs
+# O todas las pruebas sin npm: node checks/run.mjs
 ```
 
 Las pruebas usan almacenamiento en memoria y no alteran los datos de tu navegador.
 
-## Integración posterior
+## Integración real
 
-Go implementará las APIs REST, las reglas y permisos definitivos. PostgreSQL almacenará las operaciones relacionales y transaccionales; MongoDB los documentos flexibles y evidencias técnicas de diagnóstico. Los servicios JavaScript delimitan dónde sustituir la simulación local. Los nombres de campos y contratos definitivos se alinearán con el diccionario SQL antes de conectar el backend.
+La integración está implementada en `api-service.js`, `real-workshop.js` y `technical-service.js`. Go publica el frontend en el mismo origen y aplica permisos en cada operación. Consulta [FASE_E.md](docs/backend/FASE_E.md) para ejecutar y probar la aplicación completa.
 
 El Balsamiq no incluye un control de carga de evidencias en la pantalla de diagnóstico. Se conservó su formulario; la interfaz de archivos técnicos se acordará al conectar MongoDB, sin añadir un módulo por iniciativa propia.
 
 ## Diseño Borgoña contemporáneo
 
-La capa visual se define en `dist/assets/css/atelier.css`. Clientes muestra las placas vinculadas a cada persona y permite buscar también por placa. Sus contadores se calculan desde los registros locales. Se mantienen las operaciones de los 13 módulos y sus permisos. Títulos y texto usan DM Sans con fuentes del sistema como alternativa. El logo vectorial reutilizable está en `dist/assets/images/bravo-borgona.svg`.
+La capa visual se define en `dist/assets/css/atelier.css`. Clientes muestra las placas vinculadas a cada persona y permite buscar también por placa. Sus contadores se calculan desde los datos del modo seleccionado. Se mantienen las operaciones de los 13 módulos y sus permisos. Títulos y texto usan DM Sans con fuentes del sistema como alternativa. El logo vectorial reutilizable está en `dist/assets/images/bravo-borgona.svg`.

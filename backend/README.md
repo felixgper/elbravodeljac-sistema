@@ -1,8 +1,9 @@
-# Backend Go: fases A, B, C y D
+# Backend Go: fases A, B, C, D y E
 
 APIs reales de acceso, Clientes, contactos, Vehículos y proceso del taller:
 recepción, diagnóstico, cotización, OT, asignaciones, avances/pruebas, pagos y entrega.
-[Estado, contratos y pruebas](../docs/backend/FASE_D.md).
+[Integración del frontend, ejecución Windows y pruebas E](../docs/backend/FASE_E.md).
+[Contratos y pruebas MongoDB](../docs/backend/FASE_D.md).
 [Inventario de las 71 operaciones](../docs/backend/ESTADO_ENDPOINTS.md).
 Incluye usuarios/roles/matriz, auxilios, proveedores, catálogos, Dashboard/reportes
 y resultados de escáner/evidencias con MongoDB y GridFS (71/71 del catálogo).
@@ -82,7 +83,7 @@ Por defecto escucha 127.0.0.1:8080. En HTTPS usa Secure=true. Login exige Origin
 exacto y application/json. Devuelve cookie HttpOnly bravo_access y csrfToken.
 GET /api/v1/auth/me recupera csrfToken. Escrituras requieren cookie, Origin y
 X-CSRF-Token. Logout revoca de inmediato. No hay CORS abierto; la integración del
-frontend utilizará un proxy del mismo origen. La demo y dist/ permanecen intactos.
+frontend se sirve desde Go bajo el mismo origen. La demo queda separada en /demo/.
 
 ## Organización
 
@@ -121,3 +122,17 @@ INTEGRATION_MONGODB_DATABASE e INTEGRATION_DATABASE_URL, la suite D muestra SKIP
 compose.test.yaml incluye ahora ambos motores; compose.dev.yaml ofrece desarrollo
 aislado con inicialización MongoDB explícita. Comandos, configuración privada,
 contratos multipart, reintentos y resultados comprobados en FASE_D.md.
+
+
+## Frontend real y demo separados
+
+El servidor publica el frontend aprobado de `../dist` en el mismo origen de la
+API. `FRONTEND_DIR` permite indicar otra ruta al mismo frontend. Abrir `/` para
+modo real o `/demo/` para demostración. No requiere npm ni recompilar el HTML.
+La imagen Docker incluye ahora `dist/`.
+
+Desde la raíz: `node checks/run.mjs`. Para integración real del navegador,
+configurar `FRONTEND_E2E=1` y disponer de Playwright y Edge antes de ejecutar
+`test-local-databases.ps1`. El informe [FASE_E.md](../docs/backend/FASE_E.md)
+distingue pruebas nativas comprobadas, ejecución Docker bloqueada y controles
+visuales pendientes. Las suites sin bases o sin navegador informan SKIP.

@@ -1,3 +1,4 @@
+import {realMode,realSession} from '../services/api-service.js';
 import {icon} from './icons.js';
 export const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const money=cents=>new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN'}).format((cents||0)/100);
@@ -35,9 +36,9 @@ export function searchableList(root,{title,subtitle,actions,placeholder:searchPl
  result.addEventListener('click',ev=>{const b=ev.target.closest('[data-action]');if(b)onAction?.(b.dataset.action,b.dataset.id,b);});draw();
 }
 export function selectOptions(records,label){return [placeholder(),...records.map(r=>({value:r.id,label:label(r)}))];}
-export function readDraft(key){try{return JSON.parse(sessionStorage.getItem('bravo-jac:draft:'+key))||{};}catch{return {};}}
-export function bindDraft(id,key){const el=document.getElementById(id);el.addEventListener('input',()=>{try{sessionStorage.setItem('bravo-jac:draft:'+key,JSON.stringify(values(el)));}catch{}});}
-export function clearDraft(key){sessionStorage.removeItem('bravo-jac:draft:'+key);}
+export function readDraft(key){try{return JSON.parse(sessionStorage.getItem('bravo-jac:draft:'+(realMode?'real:'+realSession()?.id+':':'demo:')+key))||{};}catch{return {};}}
+export function bindDraft(id,key){const el=document.getElementById(id);el.addEventListener('input',()=>{try{sessionStorage.setItem('bravo-jac:draft:'+(realMode?'real:'+realSession()?.id+':':'demo:')+key,JSON.stringify(values(el)));}catch{}});}
+export function clearDraft(key){sessionStorage.removeItem('bravo-jac:draft:'+(realMode?'real:'+realSession()?.id+':':'demo:')+key);}
 
 // ── Acciones de fila: lápiz (editar) y tacho (eliminar) ──────────────────────
 export function rowActions({editHref='',editAction='',id='',name='registro',extra='',canEdit=true,canDelete=true}={}){

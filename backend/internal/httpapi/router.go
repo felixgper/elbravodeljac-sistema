@@ -19,6 +19,7 @@ import (
 )
 
 type Options struct {
+	FrontendDir   string
 	Technical     application.Technical
 	Origin        string
 	Key           []byte
@@ -93,6 +94,7 @@ func New(store application.Store, opts Options) (http.Handler, error) {
 		respond(w, 200, map[string]any{"status": "ready", "technicalConfigured": opts.Technical != nil})
 	})
 	mux.HandleFunc("POST /api/v1/auth/login", s.login)
+	mux.HandleFunc("GET /api/v1/frontend/opciones", s.protect("", s.frontendOptions))
 	implemented := map[string]bool{"POST /api/v1/auth/login": true}
 	for _, e := range append(append(append(s.endpoints(), s.workshopEndpoints()...), s.relationalEndpoints()...), s.technicalEndpoints()...) {
 		implemented[e.method+" "+e.path] = true
@@ -105,6 +107,11 @@ func New(store application.Store, opts Options) (http.Handler, error) {
 		mux.HandleFunc(route.Method+" "+route.Path, s.protect("", func(w http.ResponseWriter, r *http.Request, u domain.User) {
 			writeError(w, 501, "NOT_IMPLEMENTED", "Módulo pendiente de la siguiente fase.")
 		}))
+	}
+	if opts.FrontendDir != "" {
+		if err := mountFrontend(mux, opts.FrontendDir); err != nil {
+			return nil, err
+		}
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")

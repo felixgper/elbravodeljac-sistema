@@ -34,7 +34,7 @@ assert.notEqual(create.id,update.id);assert(create.controls.some(c=>c.properties
 assert(update.controls.some(c=>c.properties?.text==='Observación / avance de esta actualización'));
 for(const folder of ['dist/assets/js','dist/assets/js/components','dist/assets/js/services','dist/assets/js/data']){
  for(const name of fs.readdirSync(folder).filter(n=>n.endsWith('.js'))){
-  const source=fs.readFileSync(`${folder}/${name}`,'utf8');assert(!source.includes('fetch('),'Etapa demo sin API externa');
+  const source=fs.readFileSync(`${folder}/${name}`,'utf8');assert(!source.includes('fetch(')||name==='api-service.js','HTTP centralizado: cookies y CSRF en api-service');
  }
 }
 console.log('Correcto: acceso demo, sesión, recordatorio, aislamiento de datos, totales y correspondencia con las 23 pantallas y 13 opciones del Balsamiq.');

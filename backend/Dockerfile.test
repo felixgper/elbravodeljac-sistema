@@ -3,4 +3,5 @@ WORKDIR /workspace/backend
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 COPY backend/ ./
+COPY dist/ /workspace/dist/
 CMD ["go", "test", "./...", "-count=1", "-v"]

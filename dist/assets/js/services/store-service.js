@@ -1,21 +1,24 @@
+import {realMode} from './api-service.js';
+import {realStore} from './real-state.js';
 import { createSeed } from '../data/seed.js';
 export const STORE_KEY='bravo-jac:workshop-demo:v2';
 const tables=['clients','vehicles','users','receptions','diagnoses','quotes','orders','payments','contacts','rescues','suppliers'];
 export function getStore(){
+  if(realMode)return realStore();
   let raw;try{raw=localStorage.getItem(STORE_KEY);}catch{throw new Error('Habilita el almacenamiento local del navegador para usar la demostración.');}
   if(!raw){const seed=createSeed();persist(seed);return structuredClone(seed);}
   try{const value=JSON.parse(raw);if(value.version!==2||tables.some(k=>!Array.isArray(value[k])))throw Error();return value;}
   catch{throw new Error('No se pudieron leer los datos de demostración. Exporta una copia o reinícialos desde el perfil.');}
 }
 function persist(store){try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch{throw new Error('No se pudo guardar. El navegador no permite almacenar más datos; no se aplicaron los cambios.');}}
-export function transaction(action){const state=getStore();const result=action(state);persist(state);return structuredClone(result??null);}
-export function resetDemo(){const state=createSeed();persist(state);return state;}
+export function transaction(action){if(realMode)throw new Error("El modo real solo guarda mediante la API.");const state=getStore();const result=action(state);persist(state);return structuredClone(result??null);}
+export function resetDemo(){if(realMode)throw new Error("La demo está separada del modo real.");const state=createSeed();persist(state);return state;}
 export function nextCode(list,prefix,state){let max=list.reduce((n,r)=>Math.max(n,Number(String(r.id).split('-').at(-1))||0),0);if(state){state.sequences??={};max=Math.max(max,state.sequences[prefix]||0);state.sequences[prefix]=max+1;}return `${prefix}-${String(max+1).padStart(3,'0')}`;}
 export const newId=prefix=>{const bytes=new Uint32Array(4);crypto.getRandomValues(bytes);return `${prefix}-${[...bytes].map(n=>n.toString(16).padStart(8,'0')).join('')}`;};
 export const nowISO=()=>new Date().toISOString();
 export function requireRecord(list,id,label){const value=list.find(r=>r.id===id);if(!value)throw new Error(`Selecciona ${label} válido.`);return value;}
 export function decimalMinor(value,label='Importe'){
-  const text=String(value??'').trim();if(!/^\d{1,8}(\.\d{1,2})?$/.test(text))throw new Error(`${label}: ingresa un número positivo con hasta 8 enteros y 2 decimales, usando punto.`);
+  const text=String(value??'').trim();if(!(realMode && !['Cantidad','Kilometraje'].includes(label)?/^\d{1,10}(\.\d{1,2})?$/:/^\d{1,8}(\.\d{1,2})?$/).test(text))throw new Error(`${label}: ingresa un número positivo con hasta 8 enteros y 2 decimales, usando punto.`);
   const [whole,part='']=text.split('.');return Number(whole)*100+Number(part.padEnd(2,'0'));
 }
 export function decimalString(value,label='Kilometraje'){const n=decimalMinor(value,label);return `${Math.floor(n/100)}.${String(n%100).padStart(2,'0')}`;}

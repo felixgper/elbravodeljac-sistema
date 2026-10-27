@@ -1,6 +1,6 @@
 # Estado de las 71 operaciones REST
 
-Estado al completar Fase D. Bases reales del usuario no utilizadas. TestOriginalCatalogRelationalCoverage comprueba los 71 handlers originales y sus permisos. MongoDB, GridFS y PostgreSQL se probaron juntos en instancias temporales.
+Catálogo de A–D, conservado y vuelto a probar en Fase E. Bases reales del usuario no utilizadas. TestOriginalCatalogRelationalCoverage comprueba los 71 handlers originales y sus permisos. MongoDB, GridFS y PostgreSQL se probaron juntos en instancias temporales.
 
 | Método | Ruta | Módulo | Estado |
 |---|---|---|---|
@@ -83,3 +83,10 @@ Además del catálogo original se implementaron tres operaciones de apoyo:
 - `DELETE /api/v1/proveedores/{id}/repuestos/{repuestoId}`: desvinculación explícita.
 
 Total: 71/71 originales implementadas; 74 operaciones de negocio reales contando estas tres ampliaciones. GET /healthz y GET /readyz son operacionales y no se cuentan. Un rechazo 401/403/409/422 por reglas de seguridad o validación no es un placeholder.
+
+
+Fase E agrega `GET /api/v1/frontend/opciones` para las proyecciones auxiliares
+permitidas de cada formulario, con sesión, permisos y alcance por asignación.
+No cambia las 71 operaciones originales: son 75 rutas de aplicación contando
+las cuatro ampliaciones. `/`, `/demo/` y los archivos estáticos no se cuentan
+como operaciones de negocio. [Pantallas y endpoints utilizados](FASE_E.md).
