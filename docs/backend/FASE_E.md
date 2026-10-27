@@ -2,6 +2,12 @@
 
 Fecha: 27 de octubre de 2026. Rama: `backend/arquitectura-go-mongodb`.
 
+**Actualización posterior:** Docker y el recorrido completo desde Chrome ya se
+ejecutaron correctamente. Véase [VERIFICACION_DOCKER.md](VERIFICACION_DOCKER.md)
+para el estado actual, la dirección local, inicio de sesión privado y persistencia
+después de reiniciar contenedores. Las limitaciones Docker de este informe
+corresponden a la ejecución inicial de Fase E.
+
 El frontend de `dist/` consume las APIs de las fases A–D. Se conservan sus CSS,
 imágenes, menú, colores y distribución. No se creó otra aplicación ni se cambió
 el SQL aprobado. PostgreSQL sigue administrando 26 tablas y 42 FK.

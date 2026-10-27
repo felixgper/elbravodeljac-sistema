@@ -9,6 +9,18 @@ Incluye usuarios/roles/matriz, auxilios, proveedores, catálogos, Dashboard/repo
 y resultados de escáner/evidencias con MongoDB y GridFS (71/71 del catálogo).
 Requiere Go 1.26 o superior; verificado con Go 1.27.1.
 
+## Ejecución verificada con Docker en Windows
+
+Desde la raíz: `./backend/scripts/start-dev.ps1`. Abrir http://localhost:8080/.
+Credenciales iniciales privadas en `backend/.cache/acceso-desarrollo.txt`.
+El comando `dev-bootstrap` solo provisiona usuarios en la base aislada exacta
+`elbravodeljac_dev`, con confirmación explícita y si no existen usuarios.
+No restablece cuentas ni permisos de una base ya provisionada.
+
+Docker, Go, PostgreSQL, MongoDB y Chrome se comprobaron juntos, incluyendo
+persistencia después de reiniciar nuestro entorno. Resultados y distinción
+entre suites aprobadas y SKIP en [VERIFICACION_DOCKER.md](../docs/backend/VERIFICACION_DOCKER.md).
+
 ## Pruebas unitarias y análisis estático
 
 Desde backend/:

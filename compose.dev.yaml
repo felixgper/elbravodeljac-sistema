@@ -61,6 +61,21 @@ services:
         condition: service_healthy
       mongo-dev:
         condition: service_healthy
+    networks: [dev-only, web-entry]
+  dev-bootstrap:
+    profiles: [setup]
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.test
+    command: ["go", "run", "./cmd/dev-bootstrap"]
+    environment:
+      POSTGRES_DSN: postgres://postgres:${DEV_POSTGRES_PASSWORD}@postgres-dev:5432/elbravodeljac_dev?sslmode=disable
+      DEV_BOOTSTRAP_CONFIRM: elbravodeljac_dev
+      DEV_ADMIN_USERNAME: ${DEV_ADMIN_USERNAME:-admin_pruebas}
+      DEV_ADMIN_PASSWORD: ${DEV_ADMIN_PASSWORD:-}
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
     networks: [dev-only]
 volumes:
   pg-dev:
@@ -69,3 +84,6 @@ volumes:
 networks:
   dev-only:
     internal: true
+  # Only Go joins this network. Database services remain on dev-only with no
+  # published ports. Docker Desktop needs a non-internal entry for host binding.
+  web-entry:

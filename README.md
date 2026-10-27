@@ -7,11 +7,15 @@ Go sirve el modo real en `/` y la demostración separada en `/demo/`. La sesión
 cookies HttpOnly y CSRF; PostgreSQL mantiene los datos transaccionales y MongoDB
 los resultados de escáner/evidencias. No se mezclan registros demo con persistidos.
 
-**Modo real en Windows:** configurar privadamente el entorno de desarrollo aislado,
-una cuenta con bcrypt y permisos, ejecutar desde `backend/` `go run ./cmd/mongo-init`
-y, si termina correctamente, `go run ./cmd/api`. Abrir `http://localhost:8080/`.
-Variables, requisitos, endpoints utilizados, pruebas verificadas y límites de la
-interfaz están en [el informe de Fase E](docs/backend/FASE_E.md).
+**Modo real en Windows con Docker Desktop:** desde la raíz ejecutar
+`./backend/scripts/start-dev.ps1` y abrir **http://localhost:8080/**.
+Usuario inicial: `admin_pruebas`; contraseña aleatoria en el archivo local
+`backend/.cache/acceso-desarrollo.txt`, excluido de Git. El script mantiene un
+entorno separado y crea la cuenta con bcrypt solo si la nueva base no tiene usuarios.
+
+[Ejecución Docker y Chrome realmente verificada](docs/backend/VERIFICACION_DOCKER.md):
+recorrido completo, permisos, MongoDB y persistencia tras reiniciar los contenedores.
+Contratos y límites de las pantallas en [el informe de Fase E](docs/backend/FASE_E.md).
 
 La interfaz aprobada todavía no incluye controles para cargar archivos técnicos:
 el servicio JavaScript de MongoDB ya está implementado y probado; esos controles
