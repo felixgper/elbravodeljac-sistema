@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Contrato propuesto; _id de MongoDB es generado por persistencia y queda fuera del documento de dominio. No es script ejecutable ni validator BSON.",
+  "title": "Colecciones técnicas propuestas",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "resultados_escaner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "diagnosticoId",
+        "requestId",
+        "capturadoPor",
+        "capturadoEn",
+        "registradoEn",
+        "schemaVersion",
+        "equipo",
+        "dtcs",
+        "mediciones"
+      ],
+      "properties": {
+        "diagnosticoId": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "capturadoPor": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "capturadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "registradoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "equipo": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "nombre"
+          ],
+          "properties": {
+            "nombre": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "version": {
+              "type": "string",
+              "maxLength": 80
+            }
+          }
+        },
+        "dtcs": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "codigo"
+            ],
+            "properties": {
+              "codigo": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 30
+              },
+              "descripcion": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            }
+          }
+        },
+        "mediciones": {
+          "type": "object",
+          "description": "Valores variables por equipo; validar profundidad y tamaño en Go."
+        }
+      }
+    },
+    "evidencias_tecnicas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "diagnosticoId",
+        "requestId",
+        "capturadoPor",
+        "capturadoEn",
+        "registradoEn",
+        "schemaVersion",
+        "descripcion",
+        "mimeType",
+        "sizeBytes",
+        "sha256",
+        "gridfsFileId"
+      ],
+      "properties": {
+        "diagnosticoId": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "capturadoPor": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "capturadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "registradoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "descripcion": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "mimeType": {
+          "enum": [
+            "application/pdf",
+            "image/jpeg",
+            "image/png"
+          ]
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10485760
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "gridfsFileId": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{24}$"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+# Credenciales y configuración local
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# Artefactos locales del backend
+backend/bin/
+backend/coverage.out
+backend/.cache/
+*.test
+node_modules/
