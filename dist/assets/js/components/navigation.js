@@ -1,0 +1,15 @@
+export const modules = [
+  { id: 'inicio', label: 'Inicio', icon: 'home', ready: true },
+  { id: 'clientes', label: 'Clientes', icon: 'users', screens: ['03 - Clientes', '04 - Nuevo cliente'] },
+  { id: 'vehiculos', label: 'Vehículos', icon: 'car', screens: ['05 - Vehículos', '06 - Nuevo vehículo', '06B - Actualizar vehículo'] },
+  { id: 'recepciones', label: 'Recepciones', icon: 'reception', screens: ['07 - Nueva recepción'] },
+  { id: 'diagnosticos', label: 'Diagnósticos', icon: 'diagnosis', screens: ['08 - Diagnóstico técnico'] },
+  { id: 'cotizaciones', label: 'Cotizaciones', icon: 'quote', screens: ['09 - Cotización'] },
+  { id: 'ordenes', label: 'Órdenes de trabajo', icon: 'orders', screens: ['10 - Órdenes de trabajo', '10B - Confirmar eliminación de orden', '11 - Nueva orden de trabajo', '11B - Actualizar orden'] },
+  { id: 'auxilio', label: 'Auxilio mecánico', icon: 'rescue', screens: ['12 - Auxilio mecánico', '16 - Vista móvil del auxiliar'] },
+  { id: 'pagos', label: 'Pagos y entrega', icon: 'payment', screens: ['13 - Pagos y entrega', '13A - Nuevo contacto (ventana emergente)'] },
+  { id: 'mecanicos', label: 'Mecánicos', icon: 'wrench', screens: ['13B - Mecánicos'] },
+  { id: 'proveedores', label: 'Proveedores', icon: 'supplier', screens: ['13C - Proveedores'] },
+  { id: 'reportes', label: 'Reportes', icon: 'chart', screens: ['14 - Reportes'] },
+  { id: 'usuarios', label: 'Usuarios y roles', icon: 'shield', screens: ['15 - Usuarios y roles', '15A - Agregar / editar usuario'] },
+].map(module => ({...module, ready: true}));
