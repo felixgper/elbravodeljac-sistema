@@ -192,6 +192,13 @@ func (v *ContactInput) Validate() error {
 }
 func (v *VehicleInput) NormalizeValidate() error {
 	v.Plate = strings.ToUpper(strings.Join(strings.Fields(v.Plate), ""))
+	v.Brand = strings.TrimSpace(v.Brand)
+	if strings.EqualFold(v.Brand, "Otra marca") || v.Brand == "__other__" {
+		return Invalid("brand", "Escribe el nombre real de la otra marca.")
+	}
+	if !regexp.MustCompile(`^[\p{L}\p{N}][\p{L}\p{N} .&’'-]*$`).MatchString(v.Brand) {
+		return Invalid("brand", "La marca debe comenzar con una letra o número y no contener controles ni etiquetas.")
+	}
 	if _, err := ID(v.ClientID); err != nil {
 		return Invalid("clientId", "Cliente inválido.")
 	}

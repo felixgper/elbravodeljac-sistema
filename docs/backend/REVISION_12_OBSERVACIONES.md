@@ -1,5 +1,10 @@
 # Revisión de 12 observaciones
 
+> Corrección posterior de marcas: la solución inicial basada solamente en vehículos
+> registrados resultó insuficiente. [La revisión específica](CORRECCION_MARCAS.md)
+> incorpora las 34 marcas aprobadas en PostgreSQL, selector buscable y Otra marca.
+> Las afirmaciones históricas sobre marcas que siguen describen la entrega anterior.
+
 Base limpia: `0b2d61e54bce5dcf65ad0096baee11cee814eeee`.
 Recuperación: `respaldo/antes-observaciones-12-20261027`. Se conserva la rama actual.
 

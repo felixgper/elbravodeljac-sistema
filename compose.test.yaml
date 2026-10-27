@@ -12,6 +12,7 @@ services:
     volumes:
       - ./database/postgresql/esquema_actual.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
       - ./backend/internal/platform/postgres/migrations/001_revision_funcional.sql:/docker-entrypoint-initdb.d/002-functional.sql:ro
+      - ./backend/internal/platform/postgres/migrations/002_marcas_vehiculos.sql:/docker-entrypoint-initdb.d/003-brands.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d elbravodeljac_test"]
       interval: 2s

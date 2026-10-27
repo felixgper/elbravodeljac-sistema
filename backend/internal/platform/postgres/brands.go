@@ -3,7 +3,7 @@ package postgres
 import "context"
 
 func (s *Store) Brands(ctx context.Context) ([]string, error) {
-	rows, err := s.Pool.Query(ctx, `SELECT DISTINCT btrim(marca) AS marca FROM vehiculos WHERE coalesce(btrim(marca),'')<>'' ORDER BY marca`)
+	rows, err := s.Pool.Query(ctx, `SELECT nombre FROM public.marcas_vehiculos ORDER BY public.jac_normalize(nombre),nombre`)
 	if err != nil {
 		return nil, err
 	}

@@ -225,6 +225,9 @@ func (s *Store) CreateVehicle(ctx context.Context, v domain.VehicleInput, actor 
 	if exists {
 		return domain.Vehicle{}, domain.ErrConflict
 	}
+	if err = tx.QueryRow(ctx, `SELECT coalesce((SELECT nombre FROM public.marcas_vehiculos WHERE jac_normalize(nombre)=jac_normalize($1)), $1)`, v.Brand).Scan(&v.Brand); err != nil {
+		return domain.Vehicle{}, translate(err)
+	}
 	out, err := scanVehicle(tx.QueryRow(ctx, `INSERT INTO vehiculos(id_cliente,placa,marca,modelo,anio,kilometraje_actual,observaciones) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING `+vehicleCols, v.ClientID, v.Plate, v.Brand, v.Model, v.Year, v.Mileage, v.Notes))
 	if err != nil {
 		return out, err
@@ -253,6 +256,11 @@ func (s *Store) PatchVehicle(ctx context.Context, id string, patch domain.Vehicl
 	after, _ := domain.Mileage(v.Mileage)
 	if after < before {
 		return old, domain.Invalid("mileage", "El kilometraje no puede disminuir.")
+	}
+	if patch.Brand != nil {
+		if err = tx.QueryRow(ctx, `SELECT coalesce((SELECT nombre FROM public.marcas_vehiculos WHERE jac_normalize(nombre)=jac_normalize($1)), $1)`, v.Brand).Scan(&v.Brand); err != nil {
+			return old, translate(err)
+		}
 	}
 	out, err := scanVehicle(tx.QueryRow(ctx, `UPDATE vehiculos SET marca=$2,modelo=$3,anio=$4,kilometraje_actual=$5,observaciones=$6 WHERE id_vehiculo=$1 RETURNING `+vehicleCols, id, v.Brand, v.Model, v.Year, v.Mileage, v.Notes))
 	if err != nil {

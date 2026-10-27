@@ -8,7 +8,10 @@ import (
 //go:embed migrations/001_revision_funcional.sql
 var FunctionalMigration string
 
+//go:embed migrations/002_marcas_vehiculos.sql
+var BrandsMigration string
+
 func (s *Store) Migrate(ctx context.Context) error {
-	_, err := s.Pool.Exec(ctx, FunctionalMigration)
+	_, err := s.Pool.Exec(ctx, FunctionalMigration+"\n"+BrandsMigration)
 	return err
 }
