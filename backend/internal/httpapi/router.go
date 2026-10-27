@@ -87,7 +87,7 @@ func New(store application.Store, opts Options) (http.Handler, error) {
 	})
 	mux.HandleFunc("POST /api/v1/auth/login", s.login)
 	implemented := map[string]bool{"POST /api/v1/auth/login": true}
-	for _, e := range s.endpoints() {
+	for _, e := range append(s.endpoints(), s.workshopEndpoints()...) {
 		implemented[e.method+" "+e.path] = true
 		mux.HandleFunc(e.method+" "+e.path, s.protect(e.permission, e.handler))
 	}
@@ -234,6 +234,8 @@ func (s *server) failure(w http.ResponseWriter, err error) {
 		writeError(w, 404, "NOT_FOUND", "No se encontró el registro.")
 	case errors.Is(err, domain.ErrConflict):
 		writeError(w, 409, "CONFLICT", "Registro duplicado, referencias existentes o conflicto concurrente.")
+	case errors.Is(err, domain.ErrForbidden):
+		writeError(w, 403, "FORBIDDEN", "No tienes permiso sobre esta orden o asignación.")
 	default:
 		log.Print("API: fallo de persistencia/servicio (detalle omitido para proteger credenciales)")
 		writeError(w, 503, "UNAVAILABLE", "Servicio temporalmente no disponible.")

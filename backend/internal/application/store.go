@@ -7,6 +7,7 @@ import (
 
 // Store is the application port. SQL and transaction details stay in the adapter.
 type Store interface {
+	Workshop
 	Ping(context.Context) error
 	FindLogin(context.Context, string) (domain.User, error)
 	User(context.Context, string) (domain.User, error)

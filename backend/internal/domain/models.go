@@ -12,6 +12,7 @@ import (
 
 var ErrNotFound = errors.New("not found")
 var ErrConflict = errors.New("conflict")
+var ErrForbidden = errors.New("forbidden")
 
 type Validation struct{ Field, Message string }
 

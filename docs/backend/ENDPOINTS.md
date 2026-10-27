@@ -1,6 +1,6 @@
 # Endpoints REST propuestos
 
-Base `/api/v1`. Catálogo de 71 operaciones. **Fase A implementada: 17 operaciones:** acceso (3), Clientes y contactos (7), Vehículos, transferencias e historial (7). Las 54 operaciones restantes siguen reservadas. Estado y pruebas actuales: [FASE_A.md](FASE_A.md). Contratos generales: CORRESPONDENCIA.md y ARQUITECTURA.md.
+Base `/api/v1`. Catálogo de 71 operaciones. **41 implementadas:** 17 de fase A y 24 del flujo principal y consultas de apoyo. Las 30 restantes siguen reservadas. Estado y pruebas actuales: [FASE_B.md](FASE_B.md); base previa: [FASE_A.md](FASE_A.md). Contratos generales: CORRESPONDENCIA.md y ARQUITECTURA.md.
 
 ## Convenciones
 

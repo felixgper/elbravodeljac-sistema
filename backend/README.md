@@ -1,7 +1,8 @@
-# Backend Go: fase A
+# Backend Go: fases A y B
 
-APIs reales de acceso, Clientes, contactos y Vehículos sobre PostgreSQL.
-[Estado y endpoints](../docs/backend/FASE_A.md).
+APIs reales de acceso, Clientes, contactos, Vehículos y proceso del taller:
+recepción, diagnóstico, cotización, OT, asignaciones, avances/pruebas, pagos y entrega.
+[Estado y endpoints](../docs/backend/FASE_B.md).
 Requiere Go 1.26 o superior; verificado con Go 1.27.1.
 
 ## Pruebas unitarias y análisis estático

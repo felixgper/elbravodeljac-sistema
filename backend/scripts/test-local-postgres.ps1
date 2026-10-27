@@ -20,7 +20,8 @@ $started = $false
 $previousDsn = $env:INTEGRATION_DATABASE_URL
 Push-Location $backendRoot
 try {
-    Invoke-Pg 'initdb.exe' @('-D', $dataPath, '-U', 'postgres', '--encoding=UTF8', '--locale=C', '-A', 'trust')
+    # No durability benchmark: skip initial fsync only for this disposable cluster.
+    Invoke-Pg 'initdb.exe' @('-D', $dataPath, '-U', 'postgres', '--encoding=UTF8', '--locale=C', '--no-sync', '-A', 'trust')
     # Trust is confined to this disposable loopback cluster and random port.
     Invoke-Pg 'pg_ctl.exe' @('-D', $dataPath, '-l', $logPath, '-o', "-p $testPort -h 127.0.0.1", '-w', 'start')
     $started = $true
