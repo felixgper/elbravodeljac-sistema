@@ -1,3 +1,4 @@
+import {incomeChart} from '../components/charts.js';
 import {realMode} from '../services/api-service.js';
 import {getStore,saveSupplier,saveUser,deleteSupplier,deleteUser,saveRolePermissions,resetRolePermissions,ROLES,ACTIVE_STATES,getContext} from '../services/workshop-service.js';
 import {rolePermissions,permissionChecker,countPermissions} from '../services/permissions.js';
@@ -34,7 +35,7 @@ export function renderUsers({root,path,params,session}){
 }
 export async function renderReports({root}){
  root.innerHTML=pageHeader('Reportes e indicadores','Información para supervisión y análisis del taller')+form('FILTROS',select('Periodo:','period',['Semana','Mes','Año'],'Mes'),submit('Aplicar filtros'),'report-form')+'<div id="report-content"></div>';
- const draw=async period=>{const report=await getReport(period);root.querySelector('#report-content').innerHTML=`<div class="report-columns separated"><section class="panel"><h2 class="form-section-title">SERVICIOS REALIZADOS</h2>${table(['Tipo','Cantidad'],report.services.map(s=>[e(s.label),e(s.count)]),'No hay servicios finalizados en el periodo seleccionado.')}</section><section class="panel"><h2 class="form-section-title">INGRESOS REGISTRADOS</h2>${table(['Mes','Ingresos'],report.months.map(m=>[e(m.label),money(m.cents)]))}<div class="report-total"><span>Total registrado</span><strong>${money(report.income)}</strong></div></section></div>`;};
+ const draw=async period=>{const report=await getReport(period);root.querySelector('#report-content').innerHTML=`<div class="report-columns separated"><section class="panel"><h2 class="form-section-title">SERVICIOS REALIZADOS</h2>${table(['Tipo','Cantidad'],report.services.map(s=>[e(s.label),e(s.count)]),'No hay servicios finalizados en el periodo seleccionado.')}</section><section class="panel"><h2 class="form-section-title">INGRESOS REGISTRADOS</h2>${table(['Período','Ingresos'],report.months.map(m=>[e(m.label),money(m.cents)]))}<h3>Evolución de ingresos</h3>${incomeChart(report.months.map(m=>({month:/^\d{2}\/\d{2}$/.test(m.label)?m.label:m.label.slice(0,3),cents:m.cents})),Math.max(260,root.clientWidth/2-60))}<div class="report-total"><span>Total registrado</span><strong>${money(report.income)}</strong></div></section></div>`;};
  bindForm('report-form',async data=>{await draw(data.period);notify('Filtros aplicados.');});await draw('Mes');
 }
 

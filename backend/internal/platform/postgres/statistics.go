@@ -45,7 +45,7 @@ func (s *Store) Statistics(ctx context.Context, dashboard bool, start, end time.
  'incomeCents',(SELECT (coalesce(sum(amount),0)*100)::bigint::text FROM income),
  'dashboard',$3::boolean,'from',$1::timestamptz,'until',$2::timestamptz)`
 	}
-	if dashboard && end.Sub(start) <= 31*24*time.Hour {
+	if end.Sub(start) <= 31*24*time.Hour {
 		cte = strings.ReplaceAll(cte, "'month'", "'day'")
 		cte = strings.ReplaceAll(cte, "interval '1 month'", "interval '1 day'")
 		projection = strings.ReplaceAll(projection, "to_char(bucket,'YYYY-MM')", "to_char(bucket,'YYYY-MM-DD')")

@@ -7,7 +7,7 @@ export const ACTIVE_STATES=ORDER_STATES.slice(0,3);
 import {ROLES,LOCKED_ROLE,REQUIRED_FOR_ADMIN,defaultPermissions,sanitizePermissions} from '../data/permissions.js';
 export {ROLES};
 export function getContext(state,order){
-  const quote=state.quotes.find(q=>q.id===order?.quoteId),diagnosis=state.diagnoses.find(d=>d.id===quote?.diagnosisId),reception=state.receptions.find(r=>r.id===diagnosis?.receptionId);
+  const quote=state.quotes.find(q=>q.id===order?.quoteId),diagnosis=state.diagnoses.find(d=>d.id===quote?.diagnosisId),reception=state.receptions.find(r=>r.id===(quote?.receptionId||diagnosis?.receptionId));
   const client=state.clients.find(c=>c.id===(reception?.clientId||order?.clientId))||(realMode?{id:reception?.clientId||order?.clientId,name:reception?.clientName||order?.clientName}:undefined),vehicle=state.vehicles.find(v=>v.id===(reception?.vehicleId||order?.vehicleId))||(realMode?{id:reception?.vehicleId||order?.vehicleId,plate:reception?.vehiclePlate||order?.vehiclePlate,brand:reception?.vehicleBrand||order?.vehicleBrand,model:reception?.vehicleModel||order?.vehicleModel}:undefined);return {quote,diagnosis,reception,client,vehicle};
 }
 export function itemSubtotal(item){return Number((BigInt(decimalMinor(item.quantity,'Cantidad'))*BigInt(item.unitCents-(item.discountCents||0))+50n)/100n);}
@@ -38,7 +38,7 @@ export function saveReception(input,by){if(realMode)return real.saveReception(in
   const client=requireRecord(s.clients,input.clientId,'un cliente'),vehicle=requireRecord(s.vehicles,input.vehicleId,'un vehículo');
   if(vehicle.clientId!==client.id)throw new Error('El vehículo debe pertenecer al cliente seleccionado.');
   const mileage=decimalString(input.mileage);if(decimalMinor(mileage)<decimalMinor(vehicle.mileage))throw new Error('El kilometraje de ingreso no puede ser menor al actual.');
-  const record={id:nextCode(s.receptions,'RX',s),clientId:client.id,vehicleId:vehicle.id,mileage,symptoms:text(input.symptoms,'el motivo de ingreso / síntomas',4000),createdAt:nowISO(),createdBy:by};vehicle.mileage=mileage;s.receptions.push(record);return record;
+  const record={id:nextCode(s.receptions,'RX',s),clientId:client.id,vehicleId:vehicle.id,mileage,attentionType:input.attentionType||'Diagnostico',symptoms:text(input.symptoms,'el motivo de ingreso / síntomas',4000),createdAt:nowISO(),createdBy:by};vehicle.mileage=mileage;s.receptions.push(record);return record;
 });}
 export function saveDiagnosis(input,by){if(realMode)return real.saveDiagnosis(input,by);return transaction(s=>{
   const reception=requireRecord(s.receptions,input.receptionId,'una recepción guardada');if(s.diagnoses.some(d=>d.receptionId===reception.id))throw new Error('La recepción ya tiene un diagnóstico guardado. Selecciona otra pendiente.');
@@ -47,8 +47,8 @@ export function saveDiagnosis(input,by){if(realMode)return real.saveDiagnosis(in
 export function saveQuote(input,id){if(realMode)return real.saveQuote(input,id);return transaction(s=>{
   const current=id?requireRecord(s.quotes,id,'una cotización'):null;
   if(current&&s.orders.some(o=>o.quoteId===id))throw new Error('La cotización ya originó una orden y conserva sus trabajos autorizados.');
-  const diagnosis=requireRecord(s.diagnoses,input.diagnosisId,'un diagnóstico guardado');
-  if(s.quotes.some(q=>q.diagnosisId===diagnosis.id&&q.id!==id))throw new Error('Este diagnóstico ya tiene una cotización. Ábrela desde las cotizaciones guardadas.');
+  const diagnosis=input.diagnosisId?requireRecord(s.diagnoses,input.diagnosisId,'un diagnóstico guardado'):null;const reception=requireRecord(s.receptions,input.receptionId||diagnosis?.receptionId,'una recepción');if(!diagnosis&&reception.attentionType!=='Directo')throw Error('La atención requiere diagnóstico.');
+  if(s.quotes.some(q=>q.receptionId===reception.id&&q.id!==id||diagnosis&&q.diagnosisId===diagnosis.id&&q.id!==id))throw new Error('Este diagnóstico ya tiene una cotización. Ábrela desde las cotizaciones guardadas.');
   if(!['Pendiente','Aprobada','Rechazada'].includes(input.status))throw new Error('Selecciona el estado de autorización.');
   if(!Array.isArray(input.items)||!input.items.length)throw new Error('Agrega al menos un servicio o repuesto.');
   const items=input.items.map(line=>{
@@ -59,7 +59,7 @@ export function saveQuote(input,id){if(realMode)return real.saveQuote(input,id);
     const discountCents=decimalMinor(line.discount||'0','Descuento');if(discountCents>unitCents)throw new Error('El descuento supera el precio de venta.');return {concept:text(line.concept,'el concepto',4000),type:line.type,partKind:line.partKind||'',discountCents,origin,quantity,unitCents};
   });
   if(quoteTotal({items})>999999999999)throw new Error('El total de esta cotización excede el límite de la demostración.');
-  const data={diagnosisId:diagnosis.id,items,status:input.status,updatedAt:nowISO()};
+  const data={diagnosisId:diagnosis?.id||'',receptionId:reception.id,items,status:input.status,updatedAt:nowISO()};
   if(current){Object.assign(current,data);return current;}
   const record={id:nextCode(s.quotes,'COT',s),...data,createdAt:nowISO()};s.quotes.push(record);return record;
 });}

@@ -19,6 +19,9 @@ func (s *server) workshopEndpoints() []endpoint {
 		out = append(out, endpoint{"GET", "/api/v1/" + resource + "/{id}", resource + ".ver", s.workshopItem(resource)})
 	}
 	out = append(out,
+		endpoint{"GET", "/api/v1/ordenes/{id}/control-tecnico", "ordenes.ver", s.inspection},
+		endpoint{"PUT", "/api/v1/ordenes/{id}/control-tecnico", "ordenes.editar", s.inspection},
+		endpoint{"GET", "/api/v1/ordenes/{id}/ficha-tecnica.pdf", "pagos.ver", s.sheet},
 		endpoint{"POST", "/api/v1/recepciones", "recepciones.crear", s.createReception},
 		endpoint{"POST", "/api/v1/diagnosticos", "diagnosticos.crear", s.createDiagnosis},
 		endpoint{"POST", "/api/v1/cotizaciones", "cotizaciones.crear", s.saveQuote},

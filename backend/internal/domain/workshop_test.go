@@ -47,3 +47,14 @@ func TestOrderAndPaymentValidation(t *testing.T) {
 		t.Fatal("contact missing")
 	}
 }
+
+func TestDiagnosisResponsibleMechanicID(t *testing.T) {
+	for _, id := range []string{"not-an-id", "-1", "0"} {
+		if (DiagnosisInput{ReceptionID: "1", TechnicianID: id, Findings: "Evaluación"}).Validate() == nil {
+			t.Fatal("Accepted invalid technician", id)
+		}
+	}
+	if err := (DiagnosisInput{ReceptionID: "1", TechnicianID: "2", Findings: "Evaluación"}).Validate(); err != nil {
+		t.Fatal(err)
+	}
+}

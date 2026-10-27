@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
+	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/technicalsheet"
 	"github.com/jackc/pgx/v5"
 	"strconv"
 	"time"
@@ -35,7 +36,7 @@ func (s *Store) CreateReception(ctx context.Context, v domain.ReceptionInput, u 
 		return nil, translate(err)
 	}
 	var id string
-	if err = tx.QueryRow(ctx, `INSERT INTO recepciones(id_vehiculo,id_cliente_atencion,id_recepcionista,km_ingreso,sintomas) VALUES($1,$2,$3,$4,$5) RETURNING id_recepcion::text`, v.VehicleID, v.ClientID, u.ID, v.Mileage, v.Symptoms).Scan(&id); err != nil {
+	if err = tx.QueryRow(ctx, `INSERT INTO recepciones(id_vehiculo,id_cliente_atencion,id_recepcionista,km_ingreso,sintomas,tipo_atencion) VALUES($1,$2,$3,$4,$5,$6) RETURNING id_recepcion::text`, v.VehicleID, v.ClientID, u.ID, v.Mileage, v.Symptoms, v.AttentionType).Scan(&id); err != nil {
 		return nil, translate(err)
 	}
 	out, err := readJSON(ctx, tx, "SELECT "+receptionJSON+" FROM recepciones r WHERE r.id_recepcion=$1", id)
@@ -48,7 +49,28 @@ func (s *Store) CreateDiagnosis(ctx context.Context, v domain.DiagnosisInput, u 
 	if err := v.Validate(); err != nil {
 		return nil, err
 	}
-	return readJSON(ctx, s.Pool, `WITH inserted AS (INSERT INTO diagnosticos(id_recepcion,id_tecnico,resumen) VALUES($1,$2,$3) RETURNING *) SELECT `+diagnosisJSON+` FROM inserted d`, v.ReceptionID, u.ID, v.Findings)
+	explicit := v.TechnicianID != ""
+	if !explicit {
+		v.TechnicianID = u.ID
+	}
+	if v.TechnicianID != u.ID && !u.Can("ordenes.asignar") {
+		return nil, domain.ErrForbidden
+	}
+	tx, err := s.Pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+	if explicit {
+		if err = technicalUser(ctx, tx, v.TechnicianID, false); err != nil {
+			return nil, err
+		}
+	}
+	out, err := readJSON(ctx, tx, `WITH inserted AS (INSERT INTO diagnosticos(id_recepcion,id_tecnico,resumen) VALUES($1,$2,$3) RETURNING *) SELECT `+diagnosisJSON+` FROM inserted d`, v.ReceptionID, v.TechnicianID, v.Findings)
+	if err != nil {
+		return nil, err
+	}
+	return out, translate(tx.Commit(ctx))
 }
 func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u domain.User) (any, error) {
 	if err := v.Validate(); err != nil {
@@ -59,12 +81,29 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
-	if id != "" {
-		var diagnosis string
-		if err = tx.QueryRow(ctx, `SELECT id_diagnostico::text FROM cotizaciones WHERE id_cotizacion=$1 FOR UPDATE`, id).Scan(&diagnosis); err != nil {
+	if v.DiagnosisID != "" {
+		var reception string
+		if err = tx.QueryRow(ctx, `SELECT id_recepcion::text FROM diagnosticos WHERE id_diagnostico=$1 FOR KEY SHARE`, v.DiagnosisID).Scan(&reception); err != nil {
 			return nil, translate(err)
 		}
-		if diagnosis != v.DiagnosisID {
+		if v.ReceptionID != "" && v.ReceptionID != reception {
+			return nil, domain.Invalid("receptionId", "Diagnóstico y recepción no corresponden.")
+		}
+		v.ReceptionID = reception
+	}
+	var attention string
+	if err = tx.QueryRow(ctx, `SELECT tipo_atencion FROM recepciones WHERE id_recepcion=$1 FOR SHARE`, v.ReceptionID).Scan(&attention); err != nil {
+		return nil, translate(err)
+	}
+	if (attention == "Directo") != (v.DiagnosisID == "") {
+		return nil, domain.Invalid("diagnosisId", "El tipo de atención determina si se requiere diagnóstico.")
+	}
+	if id != "" {
+		var diagnosis, reception string
+		if err = tx.QueryRow(ctx, `SELECT coalesce(id_diagnostico::text,''),id_recepcion::text FROM cotizaciones WHERE id_cotizacion=$1 FOR UPDATE`, id).Scan(&diagnosis, &reception); err != nil {
+			return nil, translate(err)
+		}
+		if diagnosis != v.DiagnosisID || reception != v.ReceptionID {
 			return nil, domain.Invalid("diagnosisId", "No se puede cambiar el diagnóstico de una cotización guardada.")
 		}
 		var used bool
@@ -75,14 +114,11 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 			return nil, domain.ErrConflict
 		}
 	} else {
-		var diagnosis string
-		if err = tx.QueryRow(ctx, `SELECT id_diagnostico::text FROM diagnosticos WHERE id_diagnostico=$1 FOR KEY SHARE`, v.DiagnosisID).Scan(&diagnosis); err != nil {
-			return nil, translate(err)
-		}
-		if err = tx.QueryRow(ctx, `INSERT INTO cotizaciones(id_diagnostico,estado,total,aprobada_en) VALUES($1,$2::text,$3,CASE WHEN $2::text='aprobada' THEN clock_timestamp() END) RETURNING id_cotizacion::text`, v.DiagnosisID, v.Status, v.Total).Scan(&id); err != nil {
+		if err = tx.QueryRow(ctx, `INSERT INTO cotizaciones(id_diagnostico,id_recepcion,estado,total,aprobada_en) VALUES(nullif($1,'')::bigint,$2,$3::text,$4,CASE WHEN $3::text='aprobada' THEN clock_timestamp() END) RETURNING id_cotizacion::text`, v.DiagnosisID, v.ReceptionID, v.Status, v.Total).Scan(&id); err != nil {
 			return nil, translate(err)
 		}
 	}
+
 	for i := range v.Items {
 		line := &v.Items[i]
 		if line.ServiceID == "" && line.SparePartID == "" {
@@ -421,7 +457,7 @@ func (s *Store) Deliver(ctx context.Context, id string, v domain.DeliveryInput, 
 	}
 	var clientID string
 	var settled bool
-	err = tx.QueryRow(ctx, `SELECT r.id_cliente_atencion::text,q.total=coalesce((SELECT sum(monto) FROM pagos WHERE id_orden=$1),0) FROM ordenes_trabajo o JOIN cotizaciones q USING(id_cotizacion) JOIN diagnosticos d USING(id_diagnostico) JOIN recepciones r USING(id_recepcion) WHERE o.id_orden=$1`, id).Scan(&clientID, &settled)
+	err = tx.QueryRow(ctx, `SELECT r.id_cliente_atencion::text,q.total=coalesce((SELECT sum(monto) FROM pagos WHERE id_orden=$1),0) FROM ordenes_trabajo o JOIN cotizaciones q USING(id_cotizacion) JOIN recepciones r ON r.id_recepcion=q.id_recepcion WHERE o.id_orden=$1`, id).Scan(&clientID, &settled)
 	if err != nil {
 		return nil, translate(err)
 	}
@@ -441,6 +477,24 @@ func (s *Store) Deliver(ctx context.Context, id string, v domain.DeliveryInput, 
 		return nil, translate(err)
 	}
 	out, err := readJSON(ctx, tx, `WITH inserted AS (INSERT INTO entregas(id_orden,id_usuario_entrega,id_contacto_receptor,tipo_receptor,nombre_receptor_snap,tipo_doc_receptor_snap,documento_receptor_snap,telefono_receptor_snap,autorizacion_verificada,medio_verificacion,fecha_verificacion,id_usuario_verificador) VALUES($1,$2,nullif($3,'')::bigint,$4,$5,$6,$7,$8,true,$9,clock_timestamp(),$2) RETURNING *) SELECT `+deliveryJSON+` FROM inserted e`, id, u.ID, v.ContactID, v.Kind, name, docType, doc, phone, v.Method)
+	if err != nil {
+		return nil, err
+	}
+	var snapshot []byte
+	if err = tx.QueryRow(ctx, sheetSnapshotSQL, id).Scan(&snapshot); err != nil {
+		return nil, translate(err)
+	}
+	// Freeze all data even when unusually long content exceeds the fixed template.
+	// Printing must not invalidate an otherwise valid vehicle delivery. Downloads
+	// report a precise 422 instead of cropping; the UI exposes sheetReady=false.
+	pdf, renderErr := technicalsheet.Render(snapshot)
+	if renderErr != nil {
+		pdf = nil
+	}
+	if _, err = tx.Exec(ctx, `UPDATE entregas SET ficha_snapshot=$2,ficha_pdf=$3 WHERE id_orden=$1`, id, snapshot, pdf); err != nil {
+		return nil, translate(err)
+	}
+	out, err = readJSON(ctx, tx, "SELECT "+deliveryJSON+" FROM entregas e WHERE e.id_orden=$1", id)
 	if err != nil {
 		return nil, err
 	}

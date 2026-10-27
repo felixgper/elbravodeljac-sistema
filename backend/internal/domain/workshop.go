@@ -8,13 +8,20 @@ import (
 )
 
 type ReceptionInput struct {
-	ClientID  string `json:"clientId"`
-	VehicleID string `json:"vehicleId"`
-	Mileage   string `json:"mileage"`
-	Symptoms  string `json:"symptoms"`
+	AttentionType string `json:"attentionType"`
+	ClientID      string `json:"clientId"`
+	VehicleID     string `json:"vehicleId"`
+	Mileage       string `json:"mileage"`
+	Symptoms      string `json:"symptoms"`
 }
 
 func (v *ReceptionInput) Validate() error {
+	if v.AttentionType == "" {
+		v.AttentionType = "Diagnostico"
+	}
+	if v.AttentionType != "Directo" && v.AttentionType != "Diagnostico" {
+		return Invalid("attentionType", "Selecciona el tipo de atención.")
+	}
 	if _, err := ID(v.ClientID); err != nil {
 		return Invalid("clientId", "Cliente inválido.")
 	}
@@ -30,11 +37,17 @@ func (v *ReceptionInput) Validate() error {
 }
 
 type DiagnosisInput struct {
-	ReceptionID string `json:"receptionId"`
-	Findings    string `json:"findings"`
+	TechnicianID string `json:"technicianId"`
+	ReceptionID  string `json:"receptionId"`
+	Findings     string `json:"findings"`
 }
 
 func (v DiagnosisInput) Validate() error {
+	if v.TechnicianID != "" {
+		if _, err := ID(v.TechnicianID); err != nil {
+			return Invalid("technicianId", "Mecánico responsable inválido.")
+		}
+	}
 	if _, err := ID(v.ReceptionID); err != nil {
 		return Invalid("receptionId", "Recepción inválida.")
 	}
@@ -91,6 +104,7 @@ type QuoteLine struct {
 	Subtotal    string `json:"-"`
 }
 type QuoteInput struct {
+	ReceptionID string      `json:"receptionId"`
 	DiagnosisID string      `json:"diagnosisId"`
 	Status      string      `json:"status"`
 	Items       []QuoteLine `json:"items"`
@@ -98,8 +112,15 @@ type QuoteInput struct {
 }
 
 func (v *QuoteInput) Validate() error {
-	if _, err := ID(v.DiagnosisID); err != nil {
-		return Invalid("diagnosisId", "Diagnóstico inválido.")
+	if v.DiagnosisID == "" && v.ReceptionID == "" {
+		return Invalid("receptionId", "Se requiere recepción o diagnóstico real.")
+	}
+	for _, id := range []string{v.DiagnosisID, v.ReceptionID} {
+		if id != "" {
+			if _, err := ID(id); err != nil {
+				return Invalid("receptionId", "Referencia inválida.")
+			}
+		}
 	}
 	state, err := QuoteState(v.Status)
 	if err != nil {

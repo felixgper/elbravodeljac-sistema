@@ -1,5 +1,7 @@
 # El Bravo del JAC · Frontend y backend Go · Fase E
 
+[Atenciones directas/técnicas, gráfico de ingresos y ficha original de dos páginas](docs/backend/ATENCIONES_REPORTES_FICHA.md): implementación, migración 003, permisos y pruebas.
+
 [Revisión funcional implementada y probada — 27/10/2026](docs/backend/REVISION_12_OBSERVACIONES.md): búsqueda remota, cotizaciones manuales/descuentos, trabajadores, auxilio y períodos. Incluye migración segura para desarrollo/pruebas y un campo pendiente de identificar.
 
 Sistema web universitario de gestión del taller automotriz, realizado en **HTML, CSS y JavaScript**. Conserva la referencia funcional **Balsamiq V14.1 reparado** (23 pantallas y ventanas, notas internas V14.1.1) y adopta el estilo **Borgoña contemporáneo**: navegación color vino, superficies claras y títulos sans serif.

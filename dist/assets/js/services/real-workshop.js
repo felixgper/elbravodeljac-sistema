@@ -19,7 +19,7 @@ export function order(v) {
   return {...v,mechanicId:assignments.find(a=>a.role==='MECANICO')?.userId||'',assistantId:assignments.find(a=>a.role==='AUXILIAR')?.userId||'',updates,delivery:v.delivered?{pendingDetails:true}:null};
 }
 const specs={clients:['clientes','clientes'],vehicles:['vehiculos','vehiculos'],receptions:['recepciones','recepciones'],diagnoses:['diagnosticos','diagnosticos'],quotes:['cotizaciones','cotizaciones'],orders:['ordenes','ordenes'],rescues:['auxilios','auxilio'],suppliers:['proveedores','proveedores'],services:['servicios','cotizaciones'],spareParts:['repuestos','cotizaciones'],units:['unidades-auxilio','auxilio'],users:['mecanicos','mecanicos']};
-const needs={clientes:['clients','vehicles'],vehiculos:['clients','vehicles'],recepciones:['clients','vehicles','receptions','diagnoses'],diagnosticos:['clients','vehicles','receptions','diagnoses'],cotizaciones:['clients','vehicles','receptions','diagnoses','quotes','orders','services','spareParts'],ordenes:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],pagos:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],auxilio:['clients','vehicles','rescues','units','users','orders','quotes','diagnoses','receptions'],mecanicos:['users','orders','clients','vehicles','receptions','diagnoses','quotes'],proveedores:['suppliers']};
+const needs={clientes:['clients','vehicles'],vehiculos:['clients','vehicles'],recepciones:['clients','vehicles','receptions','diagnoses'],diagnosticos:['clients','vehicles','receptions','diagnoses','users'],cotizaciones:['clients','vehicles','receptions','diagnoses','quotes','orders','services','spareParts'],ordenes:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],pagos:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],auxilio:['clients','vehicles','rescues','units','users','orders','quotes','diagnoses','receptions'],mecanicos:['users','orders','clients','vehicles','receptions','diagnoses','quotes'],proveedores:['suppliers']};
 let generation=0;
 export async function loadModule(module,params=new URLSearchParams(),path=[]) {
   const current=++generation,sessionRef=realSession(),s={},permissions=sessionRef?.permissions||[],can=m=>permissions.includes(m+'.ver');
@@ -62,7 +62,7 @@ export async function loadModule(module,params=new URLSearchParams(),path=[]) {
       else for(const v of (await request('/vehiculos?pageSize=1')).data)add('vehicles',v);
     }
     const related=[...(s.receptions||[]).slice(0,10),...(s.rescues||[]).slice(0,10),...(s.orders||[]).slice(0,10)];
-    for(const r of s.receptions||[])if(r.id===params.get('recepcion')||r.id===params.get('guardada'))related.push(r);
+    for(const r of s.receptions||[])if(r.id===params.get('recepcion')||r.id===params.get('guardada')||r.id===(s.quotes||[]).find(q=>q.id===params.get('id'))?.receptionId)related.push(r);
     const diagnosis=(s.diagnoses||[]).find(d=>d.id===(params.get('diagnostico')||(s.quotes||[]).find(q=>q.id===params.get('id'))?.diagnosisId));
     if(diagnosis){const r=(s.receptions||[]).find(r=>r.id===diagnosis.receptionId);if(r)related.push(r);}
     const selectedOrder=(s.orders||[]).find(o=>o.id===(params.get('orden')||path[2]));if(selectedOrder)related.push(selectedOrder);
@@ -93,11 +93,11 @@ export async function saveVehicle(input,id) {
   }
   return (await request('/vehiculos'+(id?'/'+id:''),{method:id?'PATCH':'POST',body})).data;
 }
-export async function saveReception(input){return (await request('/recepciones',{method:'POST',body:pick(input,['clientId','vehicleId','mileage','symptoms'])})).data;}
-export async function saveDiagnosis(input){return (await request('/diagnosticos',{method:'POST',body:pick(input,['receptionId','findings'])})).data;}
+export async function saveReception(input){return (await request('/recepciones',{method:'POST',body:pick(input,['clientId','vehicleId','mileage','symptoms','attentionType'])})).data;}
+export async function saveDiagnosis(input){return (await request('/diagnosticos',{method:'POST',body:pick(input,['receptionId','findings','technicianId'])})).data;}
 export async function saveQuote(input,id){
   const items=input.items.map(i=>({...pick(i,['concept','type','quantity','unitPrice','partKind','discount','serviceId','sparePartId']),origin:i.type==='Servicio'?'':i.origin}));
-  return quote((await request('/cotizaciones'+(id?'/'+id:''),{method:id?'PUT':'POST',body:{diagnosisId:input.diagnosisId,status:input.status,items}})).data);
+  return quote((await request('/cotizaciones'+(id?'/'+id:''),{method:id?'PUT':'POST',body:{diagnosisId:input.diagnosisId||'',receptionId:input.receptionId||'',status:input.status,items}})).data);
 }
 export async function createOrder(input){return order((await request('/ordenes',{method:'POST',body:pick(input,['quoteId','mechanicId','assistantId'])})).data);}
 export async function updateOrder(id,input){
@@ -131,7 +131,7 @@ export async function getDashboard(period='Mes'){
  const fmt=value=>new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeZone:'America/Lima'}).format(new Date(value));
  return {...d,monthlyIncomeCents:safeInteger(d.monthlyIncomeCents),income,period:period+' · '+fmt(d.from)+'–'+fmt(Date.parse(d.until)-1),currentMonth:formatMonth(d.currentMonth)};
 }
-export async function getReport(period){const r=(await request('/reportes?period='+encodeURIComponent(period))).data;return {...r,income:safeInteger(r.incomeCents),months:r.months.map(m=>({...m,label:formatMonth(m.label),cents:safeInteger(m.cents)}))};}
+export async function getReport(period){const r=(await request('/reportes?period='+encodeURIComponent(period))).data;return {...r,income:safeInteger(r.incomeCents),months:r.months.map(m=>({...m,label:m.label.length===10?new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'2-digit',timeZone:'America/Lima'}).format(new Date(m.label+'T12:00:00-05:00')):formatMonth(m.label),cents:safeInteger(m.cents)}))};}
 
 function safeInteger(value){const n=Number(value);if(!/^\d+$/.test(String(value))||!Number.isSafeInteger(n))throw new Error("Total fuera del rango de visualización exacta.");return n;}
 

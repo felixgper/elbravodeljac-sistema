@@ -376,7 +376,7 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 		if got := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); got != "26" {
 			t.Fatal(got)
 		}
-		if got := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); got != "42" {
+		if got := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); got != "44" {
 			t.Fatal(got)
 		}
 	})

@@ -1,3 +1,4 @@
+import {sheetButton,bindSheetDownloads} from '../components/technical-sheet.js';
 import {realMode} from '../services/api-service.js';
 import {getStore,getContext,quoteTotal,balance,paidTotal,registerPayment,saveContact,confirmDelivery} from '../services/workshop-service.js';
 import {e,money,date,stamp,field,select,checkbox,placeholder,selectOptions,link,button,submit,form,hint,pageHeader,bindForm,go,notify,showModal,table,badge} from '../components/ui.js';
@@ -25,5 +26,7 @@ export function renderPayments({root,params,session}){
   dialog.querySelector('[data-action="cancel"]').onclick=()=>dialog.close();
   bindForm('contact-form',async data=>{const contact=await saveContact({...data,clientId:c.client.id});const sel=root.querySelector('[name="contactId"]');sel.innerHTML=contactOptions().map(o=>`<option value="${e(o.value)}" ${o.value===contact.id?'selected':''}>${e(o.label)}</option>`).join('');dialog.close();notify('Contacto registrado. Verifica la autorización para este retiro.');});
  };
+ if(realMode&&order&&delivery&&pending===0)root.insertAdjacentHTML('beforeend',`<section class="panel separated"><h2 class="form-section-title">ATENCIÓN FINALIZADA</h2>${delivery.sheetReady===false?hint('La entrega está registrada. La ficha tiene contenido pendiente de generar; al descargar se indicará el motivo sin recortar información.') : ''}${sheetButton(order.id)}</section>`);
+ bindSheetDownloads(root);
  if(order){root.insertAdjacentHTML('beforeend',`<section class="panel separated"><h2 class="form-section-title">PAGOS REGISTRADOS · ${e(order.id)}</h2>${table(['Pago','Fecha y hora','Monto','Medio','Registrado por'],s.payments.filter(p=>p.orderId===order.id).map(p=>[e(p.id),stamp(p.createdAt),money(p.amountCents),e(p.method),e(s.users.find(u=>u.id===p.createdBy)?.name)]),'Todavía no hay pagos registrados.')}${delivery?`<div class="success-strip">${icon('check')}Vehículo entregado el ${stamp(delivery.at)}. Retiro: ${e(delivery.kind==='Tercero'?s.contacts.find(x=>x.id===delivery.contactId)?.name:c.client?.name)}. Verificado por ${e(s.users.find(u=>u.id===delivery.by)?.name)} mediante ${e(delivery.method)}.</div>`:''}</section>`);}
 }

@@ -18,7 +18,7 @@ func (s *server) frontendOptions(w http.ResponseWriter, r *http.Request, u domai
 	allowed := map[string]string{
 		"clientes": "vehiculos", "vehiculos": "clientes",
 		"recepciones":  "clientes vehiculos diagnosticos",
-		"diagnosticos": "clientes vehiculos recepciones",
+		"diagnosticos": "clientes vehiculos recepciones mecanicos",
 		"cotizaciones": "clientes vehiculos recepciones diagnosticos ordenes",
 		"ordenes":      "clientes vehiculos recepciones diagnosticos cotizaciones mecanicos",
 		"pagos":        "clientes vehiculos recepciones diagnosticos cotizaciones ordenes mecanicos contactos",

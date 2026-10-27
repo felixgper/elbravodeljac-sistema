@@ -332,8 +332,8 @@ func (s *Store) VehicleHistory(ctx context.Context, id string) (any, error) {
 	var raw []byte
 	err := s.Pool.QueryRow(ctx, `SELECT jsonb_build_object('vehicleId',v.id_vehiculo::text,
  'transfers',coalesce((SELECT jsonb_agg(jsonb_build_object('id',h.id_historial::text,'clientId',h.id_cliente::text,'from',h.fecha_inicio,'until',h.fecha_fin,'verified',h.verificado,'actorId',h.id_usuario_registro::text,'observation',h.observacion) ORDER BY h.fecha_inicio,h.id_historial) FROM historial_propietarios h WHERE h.id_vehiculo=v.id_vehiculo),'[]'::jsonb),
- 'receptions',coalesce((SELECT jsonb_agg(jsonb_build_object('id',r.id_recepcion::text,'clientId',r.id_cliente_atencion::text,'createdAt',r.fecha_ingreso,'symptoms',r.sintomas,'diagnosisId',d.id_diagnostico::text,'findings',d.resumen,
- 'quotes',coalesce((SELECT jsonb_agg(jsonb_build_object('id',c.id_cotizacion::text,'orderId',o.id_orden::text,'code',o.codigo_ot,'state',o.estado) ORDER BY c.id_cotizacion) FROM cotizaciones c LEFT JOIN ordenes_trabajo o USING(id_cotizacion) WHERE c.id_diagnostico=d.id_diagnostico),'[]'::jsonb)) ORDER BY r.fecha_ingreso DESC,r.id_recepcion DESC) FROM recepciones r LEFT JOIN diagnosticos d USING(id_recepcion) WHERE r.id_vehiculo=v.id_vehiculo),'[]'::jsonb))
+ 'receptions',coalesce((SELECT jsonb_agg(jsonb_build_object('id',r.id_recepcion::text,'clientId',r.id_cliente_atencion::text,'createdAt',r.fecha_ingreso,'symptoms',r.sintomas,'attentionType',r.tipo_atencion,'diagnosisId',d.id_diagnostico::text,'findings',d.resumen,
+ 'quotes',coalesce((SELECT jsonb_agg(jsonb_build_object('id',c.id_cotizacion::text,'orderId',o.id_orden::text,'code',o.codigo_ot,'state',o.estado,'delivered',EXISTS(SELECT 1 FROM entregas e WHERE e.id_orden=o.id_orden)) ORDER BY c.id_cotizacion) FROM cotizaciones c LEFT JOIN ordenes_trabajo o USING(id_cotizacion) WHERE c.id_recepcion=r.id_recepcion),'[]'::jsonb)) ORDER BY r.fecha_ingreso DESC,r.id_recepcion DESC) FROM recepciones r LEFT JOIN diagnosticos d USING(id_recepcion) WHERE r.id_vehiculo=v.id_vehiculo),'[]'::jsonb))
  FROM vehiculos v WHERE v.id_vehiculo=$1`, id).Scan(&raw)
 	if err != nil {
 		return nil, translate(err)

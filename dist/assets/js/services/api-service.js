@@ -12,7 +12,7 @@ export function clearSession() { session=null; csrfToken=''; }
 export class APIError extends Error {
   constructor(message,status=0,code='',fields={}) { super(message); Object.assign(this,{status,code,fields}); }
 }
-export async function request(path,{method='GET',body,signal}={}) {
+export async function request(path,{method='GET',body,signal,responseType='json'}={}) {
   if (!path.startsWith('/') || path.startsWith('//')) throw new Error('Ruta API inválida.');
   const headers = {Accept:'application/json'};
   const multipart = body instanceof FormData;
@@ -21,6 +21,7 @@ export async function request(path,{method='GET',body,signal}={}) {
   let response;
   try { response = await fetch('/api/v1'+path,{method,headers,credentials:'same-origin',cache:'no-store',body:body===undefined?undefined:multipart?body:JSON.stringify(body),signal}); }
   catch(error) { if(error.name==='AbortError')throw error; throw new APIError('No se pudo contactar al servidor. Comprueba la conexión antes de volver a guardar.'); }
+  if(response.ok&&responseType==='blob'){if(!response.headers.get('Content-Type')?.includes('application/pdf'))throw new APIError('El servidor no devolvió un PDF.',response.status);return response.blob();}
   let result;
   if(response.status!==204) {
     try { result=await response.json(); } catch { throw new APIError('El servidor devolvió una respuesta inválida.',response.status); }

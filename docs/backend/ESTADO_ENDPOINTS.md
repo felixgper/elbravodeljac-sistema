@@ -104,3 +104,12 @@ manuales con `type`, `concept`, `quantity`, `unitPrice`, `discount` y
 y se validan cuando se envían. Ver [migración y pruebas](REVISION_12_OBSERVACIONES.md).
 
 [Corrección de origen de marcas, migración y pruebas](CORRECCION_MARCAS.md).
+
+
+Mejoras de atención/ficha (27/10/2026): GET y PUT
+`/api/v1/ordenes/{id}/control-tecnico`, y GET
+`/api/v1/ordenes/{id}/ficha-tecnica.pdf`. Son 79 operaciones de aplicación contando
+las ampliaciones anteriores; las 71 originales siguen implementadas. Control
+requiere ordenes.ver/editar y alcance de asignación; PDF exige pagos.ver, saldo cero
+y entrega. Reportes entrega días en Semana/Mes y meses en Año. Ver
+[contratos, migración 003 y pruebas](ATENCIONES_REPORTES_FICHA.md).

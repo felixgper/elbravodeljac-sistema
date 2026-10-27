@@ -27,7 +27,7 @@ func (s *Store) FrontendOptions(ctx context.Context, module, resource string, p 
 		expr = receptionJSON
 		from = "recepciones r"
 		sort = "r.id_recepcion"
-		where = "NOT $1 OR r.id_recepcion IN (SELECT d.id_recepcion FROM ordenes_trabajo o JOIN cotizaciones q USING(id_cotizacion) JOIN diagnosticos d USING(id_diagnostico) JOIN asignaciones_ot a USING(id_orden) WHERE a.activo AND a.id_usuario::text=$2)"
+		where = "NOT $1 OR r.id_recepcion IN (SELECT q.id_recepcion FROM ordenes_trabajo o JOIN cotizaciones q USING(id_cotizacion) JOIN asignaciones_ot a USING(id_orden) WHERE a.activo AND a.id_usuario::text=$2)"
 	case "diagnosticos":
 		expr = diagnosisJSON
 		from = "diagnosticos d"

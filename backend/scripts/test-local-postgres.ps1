@@ -31,6 +31,8 @@ try {
     Invoke-Pg 'psql.exe' @('-h','127.0.0.1','-p',"$testPort",'-U','postgres','-d','elbravodeljac_test','-q','-v','ON_ERROR_STOP=1','-f',$migrationPath)
     $brandsPath=Join-Path $backendRoot 'internal/platform/postgres/migrations/002_marcas_vehiculos.sql'
     Invoke-Pg 'psql.exe' @('-h','127.0.0.1','-p',"$testPort",'-U','postgres','-d','elbravodeljac_test','-q','-v','ON_ERROR_STOP=1','-f',$brandsPath)
+    $attentionPath=Join-Path $backendRoot 'internal/platform/postgres/migrations/003_atencion_ficha.sql'
+    Invoke-Pg 'psql.exe' @('-h','127.0.0.1','-p',"$testPort",'-U','postgres','-d','elbravodeljac_test','-q','-v','ON_ERROR_STOP=1','-f',$attentionPath)
     $env:INTEGRATION_DATABASE_URL = "postgres://postgres@127.0.0.1:$testPort/elbravodeljac_test?sslmode=disable"
     & go test ./... -count=1 -v
     $testExitCode = $LASTEXITCODE
