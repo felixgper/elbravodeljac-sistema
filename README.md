@@ -1,5 +1,7 @@
 # El Bravo del JAC · Frontend y backend Go · Fase E
 
+[Cotizaciones: nueva vacía, búsqueda remota y consulta protegida](docs/backend/CORRECCION_COTIZACIONES.md).
+
 [Asignación de mecánicos y diagnósticos: implementación y pruebas](docs/backend/FLUJO_DIAGNOSTICOS_ASIGNADOS.md): bandejas por trabajador, borradores, finalización y cotización; migración 004 y prueba con dos cuentas.
 
 [Atenciones directas/técnicas, gráfico de ingresos y ficha original de dos páginas](docs/backend/ATENCIONES_REPORTES_FICHA.md): implementación, migración 003, permisos y pruebas.

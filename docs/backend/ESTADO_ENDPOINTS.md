@@ -139,3 +139,11 @@ recepciones/diagnósticos y sus opciones auxiliares verifican alcance en Go.
 `POST /cotizaciones` rechaza borradores; Directo sigue sin diagnóstico.
 
 [Flujo, compatibilidad de datos, migración y pruebas](FLUJO_DIAGNOSTICOS_ASIGNADOS.md).
+
+
+Corrección de Cotizaciones: `GET /api/v1/cotizaciones/atenciones`, permiso
+`cotizaciones.ver`, búsqueda real normalizada por `q`, `recepcionId` y paginación.
+Devuelve orígenes directos o diagnósticos finalizados, con ID de cotización existente.
+Son **84 rutas de aplicación** acumuladas (83 de negocio más frontend/opciones),
+sin 501. POST cotizaciones rechaza duplicados por atención en transacción; PUT
+mantiene el bloqueo si hay OT. Ver [implementación y pruebas](CORRECCION_COTIZACIONES.md).

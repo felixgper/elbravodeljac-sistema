@@ -19,6 +19,7 @@ func (s *server) workshopEndpoints() []endpoint {
 		out = append(out, endpoint{"GET", "/api/v1/" + resource + "/{id}", resource + ".ver", s.workshopItem(resource)})
 	}
 	out = append(out,
+		endpoint{"GET", "/api/v1/cotizaciones/atenciones", "cotizaciones.ver", s.workshopList("atenciones")},
 		endpoint{"GET", "/api/v1/me/diagnosticos", "diagnosticos.ver", s.diagnosisQueue(false)},
 		endpoint{"GET", "/api/v1/diagnosticos/pendientes-cotizacion", "diagnosticos.ver", s.diagnosisQueue(true)},
 		endpoint{"PATCH", "/api/v1/recepciones/{id}/mecanico", "diagnosticos.asignar", s.assignDiagnosis},
@@ -48,6 +49,8 @@ func workshopFilter(r *http.Request, resource string) (domain.WorkshopFilter, er
 	f := domain.WorkshopFilter{Page: p}
 	q := r.URL.Query()
 	switch resource {
+	case "atenciones":
+		f.ParentID = q.Get("recepcionId")
 	case "diagnosticos":
 		f.ParentID = q.Get("recepcionId")
 	case "cotizaciones":

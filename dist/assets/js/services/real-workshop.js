@@ -19,7 +19,7 @@ export function order(v) {
   return {...v,mechanicId:assignments.find(a=>a.role==='MECANICO')?.userId||'',assistantId:assignments.find(a=>a.role==='AUXILIAR')?.userId||'',updates,delivery:v.delivered?{pendingDetails:true}:null};
 }
 const specs={clients:['clientes','clientes'],vehicles:['vehiculos','vehiculos'],receptions:['recepciones','recepciones'],diagnoses:['diagnosticos','diagnosticos'],quotes:['cotizaciones','cotizaciones'],orders:['ordenes','ordenes'],rescues:['auxilios','auxilio'],suppliers:['proveedores','proveedores'],units:['unidades-auxilio','auxilio'],users:['mecanicos','mecanicos']};
-const needs={clientes:['clients','vehicles'],vehiculos:['clients','vehicles'],recepciones:['clients','vehicles','receptions','diagnoses','users'],diagnosticos:['clients','vehicles','receptions','diagnoses','users'],cotizaciones:['clients','vehicles','receptions','diagnoses','quotes','orders'],ordenes:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],pagos:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],auxilio:['clients','vehicles','rescues','units','users','orders','quotes','diagnoses','receptions'],mecanicos:['users','orders','clients','vehicles','receptions','diagnoses','quotes'],proveedores:['suppliers']};
+const needs={clientes:['clients','vehicles'],vehiculos:['clients','vehicles'],recepciones:['clients','vehicles','receptions','diagnoses','users'],diagnosticos:['clients','vehicles','receptions','diagnoses','users'],cotizaciones:['quotes'],ordenes:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],pagos:['clients','vehicles','receptions','diagnoses','quotes','orders','users'],auxilio:['clients','vehicles','rescues','units','users','orders','quotes','diagnoses','receptions'],mecanicos:['users','orders','clients','vehicles','receptions','diagnoses','quotes'],proveedores:['suppliers']};
 let generation=0;
 export async function loadModule(module,params=new URLSearchParams(),path=[]) {
   const current=++generation,sessionRef=realSession(),s={},permissions=sessionRef?.permissions||[],can=m=>permissions.includes(m+'.ver');
@@ -60,6 +60,12 @@ export async function loadModule(module,params=new URLSearchParams(),path=[]) {
     if(module==='vehiculos'&&path[1]==='editar'){
       if(path[2])add('vehicles',(await request('/vehiculos/'+path[2])).data);
       else for(const v of (await request('/vehiculos?pageSize=1')).data)add('vehicles',v);
+    }
+    if(module==='cotizaciones'){
+      s.receptions=[];s.diagnoses=[];s.orders=[];
+      const current=s.quotes.find(q=>q.id===params.get('id'));let receptionId=current?.receptionId||params.get('recepcion');
+      if(!receptionId&&params.get('diagnostico')){const diagnosis=(await request('/diagnosticos/'+params.get('diagnostico'))).data;receptionId=diagnosis.receptionId;}
+      if(receptionId){const found=(await lookupQuoteReceptions('',1,undefined,receptionId)).data[0];if(!found)throw Error('Atención no autorizada o diagnóstico todavía no finalizado.');s.receptions=[found];s.diagnoses=found.diagnosis?[found.diagnosis]:[];}
     }
     const related=[...(s.receptions||[]).slice(0,10),...(s.rescues||[]).slice(0,10),...(s.orders||[]).slice(0,10)];
     for(const r of s.receptions||[])if(r.id===params.get('recepcion')||r.id===params.get('guardada')||r.id===(s.quotes||[]).find(q=>q.id===params.get('id'))?.receptionId)related.push(r);
@@ -157,3 +163,5 @@ export async function saveUnit(input){return (await request('/unidades-auxilio',
 export const assignDiagnosis=(id,technicianId,version)=>request('/recepciones/'+id+'/mecanico',{method:'PATCH',body:{technicianId,version}});
 export const pendingDiagnoses=()=>allPages('/me/diagnosticos');
 export const diagnosesToQuote=()=>allPages('/diagnosticos/pendientes-cotizacion');
+
+export const lookupQuoteReceptions=(q='',page=1,signal,id='')=>request('/cotizaciones/atenciones?q='+encodeURIComponent(q)+'&page='+page+'&pageSize=20'+(id?'&recepcionId='+encodeURIComponent(id):''),{signal});

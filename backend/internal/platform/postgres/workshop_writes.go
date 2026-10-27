@@ -83,7 +83,7 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 		v.ReceptionID = reception
 	}
 	var attention string
-	if err = tx.QueryRow(ctx, `SELECT tipo_atencion FROM recepciones WHERE id_recepcion=$1 FOR SHARE`, v.ReceptionID).Scan(&attention); err != nil {
+	if err = tx.QueryRow(ctx, `SELECT tipo_atencion FROM recepciones WHERE id_recepcion=$1 FOR UPDATE`, v.ReceptionID).Scan(&attention); err != nil {
 		return nil, translate(err)
 	}
 	if (attention == "Directo") != (v.DiagnosisID == "") {
@@ -105,6 +105,13 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 			return nil, domain.ErrConflict
 		}
 	} else {
+		var duplicate bool
+		if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM cotizaciones WHERE id_recepcion=$1)`, v.ReceptionID).Scan(&duplicate); err != nil {
+			return nil, err
+		}
+		if duplicate {
+			return nil, domain.Invalid("receptionId", "Esta atención ya tiene una cotización. Abre la existente; no se puede duplicar sin un flujo autorizado de rectificación.")
+		}
 		if err = tx.QueryRow(ctx, `INSERT INTO cotizaciones(id_diagnostico,id_recepcion,estado,total,aprobada_en) VALUES(nullif($1,'')::bigint,$2,$3::text,$4,CASE WHEN $3::text='aprobada' THEN clock_timestamp() END) RETURNING id_cotizacion::text`, v.DiagnosisID, v.ReceptionID, v.Status, v.Total).Scan(&id); err != nil {
 			return nil, translate(err)
 		}

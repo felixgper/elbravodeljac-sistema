@@ -187,7 +187,11 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 	}
 	newOrder := func(t *testing.T) string {
 		t.Helper()
-		qid := responseID(t, h.call(t, admin, "POST", "/cotizaciones", quoteBody("Aprobada"), 201))
+		rx := responseID(t, h.call(t, admin, "POST", "/recepciones", map[string]string{"clientId": client, "vehicleId": vehicle, "mileage": "11.25", "attentionType": "Directo", "symptoms": "Otra atención para probar una orden independiente"}, 201))
+		body := quoteBody("Aprobada")
+		delete(body, "diagnosisId")
+		body["receptionId"] = rx
+		qid := responseID(t, h.call(t, admin, "POST", "/cotizaciones", body, 201))
 		return responseID(t, h.call(t, admin, "POST", "/ordenes", map[string]string{"quoteId": qid, "mechanicId": mechanic}, 201))
 	}
 	t.Run("recepciones y diagnóstico con restricciones reales", func(t *testing.T) {

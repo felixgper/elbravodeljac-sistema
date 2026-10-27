@@ -1,6 +1,6 @@
-import {assignDiagnosis} from '../services/real-workshop.js';
+import {lookupQuoteReceptions,assignDiagnosis} from '../services/real-workshop.js';
 import {openInspection} from '../components/technical-sheet.js';
-import {clientPicker,ownerVehicles} from '../components/remote-picker.js';
+import {remotePicker,clientPicker,ownerVehicles} from '../components/remote-picker.js';
 import {saveUnit} from '../services/real-workshop.js';
 import {todayLabel} from '../components/ui.js';
 import {realMode} from '../services/api-service.js';
@@ -47,17 +47,31 @@ export function renderDiagnoses({root,params,session}){
  root.insertAdjacentHTML('beforeend',`<section class="panel separated"><h2 class="form-section-title">Evaluaciones registradas</h2>${table(['Diagnóstico','Recepción','Responsable','Estado','Finalización','Acción'],s.diagnoses.map(d=>[e(d.id),e(d.receptionId),e(d.technicianName),badge(d.status||'Finalizado'),d.finishedAt?stamp(d.finishedAt):'Pendiente',link('Consultar','diagnosticos?recepcion='+d.receptionId)]))}</section>`);
 }
 
-export function renderQuotes({root,params}){
- const s=getStore(),existing=s.quotes.find(q=>q.id===params.get('id')||(params.get('diagnostico')&&q.diagnosisId===params.get('diagnostico'))||(params.get('recepcion')&&!q.diagnosisId&&q.receptionId===params.get('recepcion')));
- const directId=params.get('recepcion')||(!existing?.diagnosisId?existing?.receptionId:'')||'';
- const diagnosisId=existing?.diagnosisId||params.get('diagnostico')||'',items=(existing?.items||[]).map(i=>({...i,unitPrice:(i.unitCents/100).toFixed(2),discount:i.discount||((i.discountCents||0)/100).toFixed(2)}));
- const locked=existing&&s.orders.some(o=>o.quoteId===existing.id),diagnosis=s.diagnoses.find(d=>d.id===diagnosisId),r=s.receptions.find(r=>r.id===(directId||diagnosis?.receptionId)),v=s.vehicles.find(v=>v.id===r?.vehicleId);
- const options=s.diagnoses.filter(d=>(d.status||'Finalizado')==='Finalizado'&&(d.id===diagnosisId||!s.quotes.some(q=>q.diagnosisId===d.id)));
- if(diagnosis&&(diagnosis.status||'Finalizado')!=='Finalizado')throw Error('Finaliza el diagnóstico antes de cotizar.');
- const sourceSelect=select('Atención por cotizar','sourceReception',selectOptions(s.receptions.filter(x=>x.attentionType==='Directo'||s.diagnoses.some(d=>d.receptionId===x.id&&(d.status||'Finalizado')==='Finalizado')),x=>`${x.id} · ${x.clientName||'Cliente'} · ${x.attentionType==='Directo'?'Servicio directo':'Diagnóstico técnico'}`),r?.id||'',locked?'disabled':'');
- const body=sourceSelect+(r?.attentionType==='Directo'?`<input type="hidden" name="receptionId" value="${e(r.id)}"><input type="hidden" name="diagnosisId" value="">` : select('Diagnóstico guardado / Recepción','diagnosisId',selectOptions(options,d=>`${d.id} / ${d.receptionId} / ${s.clients.find(c=>c.id===s.receptions.find(r=>r.id===d.receptionId)?.clientId)?.name||'Cliente de la atención'}`),diagnosisId,locked?'disabled':'required'))+field('Vehículo','vehicle',v?vehicleLabel(v):'','text','readonly')+`<div class="full-width"><div id="quote-lines"></div><button type="button" class="secondary-button" id="add-line" ${locked?'disabled':''}>+ Agregar servicio o repuesto</button><div class="quote-total">TOTAL PROPUESTO: <strong id="quote-total"></strong></div></div><h2 class="form-section-title full-width separated">AUTORIZACIÓN DEL CLIENTE</h2>`+select('¿El cliente acepta el servicio?','status',['Pendiente','Aprobada','Rechazada'],existing?.status||'Pendiente',locked?'disabled':'required');
- root.innerHTML=pageHeader(existing?`Cotización ${existing.id}`:'Nueva cotización','Descripciones libres; precios y descuentos propios de esta cotización.',link('Nueva cotización','cotizaciones'))+form('PRESUPUESTO DEL SERVICIO',body,submit('Guardar cotización')+(existing?.status==='Aprobada'&&!locked?link('Crear orden','ordenes/nueva?cotizacion='+existing.id):''));
- if(diagnosis)root.querySelector('#edit-form .form-grid').insertAdjacentHTML('afterbegin',`<div class="full-width inline-note"><strong>Evaluación técnica · ${e(diagnosis.technicianName)}</strong><p>${e(diagnosis.findings)}</p><p>${e(diagnosis.evaluation)}</p><p>Recomendaciones: ${e(diagnosis.recommendations)}</p><p>${e(diagnosis.notes)}</p></div>`);
+export function renderQuotes({root,params,session}){
+ const s=getStore(),can=permissionChecker(session?.role),existing=params.get('id')?s.quotes.find(q=>q.id===params.get('id')):null;
+ if(params.get('id')&&!existing)throw Error('Cotización inexistente o no autorizada.');
+ let diagnosis=s.diagnoses.find(d=>d.id===(existing?.diagnosisId||params.get('diagnostico'))),r=s.receptions.find(r=>r.id===(existing?.receptionId||params.get('recepcion')||diagnosis?.receptionId));
+ const items=(existing?.items||[]).map(i=>({...i,unitPrice:(i.unitCents/100).toFixed(2),discount:i.discount||((i.discountCents||0)/100).toFixed(2)}));
+ const order=existing&&(s.orders||[]).find(o=>o.quoteId===existing.id),orderID=existing?.orderId||order?.id;
+ const locked=Boolean(orderID)||!can('cotizaciones',existing?'editar':'crear');
+ const reason=orderID?`Cotización de solo lectura: vinculada a la orden de trabajo N.º ${orderID}`:locked?'Cotización de solo lectura: tu cuenta no tiene permiso para '+(existing?'editar.':'crear.') : '';
+ let duplicateID='';
+ const sourceSelect=select('Atención por cotizar','sourceReception',[placeholder()],r?.id||'',existing||locked?'disabled':'required');
+ const body=sourceSelect+`<input type="hidden" name="receptionId"><input type="hidden" name="diagnosisId">`+field('Cliente','quoteClient','','text','readonly')+field('Vehículo','vehicle','','text','readonly')+`<div id="quote-context" class="full-width"></div><div id="quote-existing" class="full-width" role="status"></div><div class="full-width"><div id="quote-lines"></div><button type="button" class="secondary-button" id="add-line" ${locked?'disabled':''}>+ Agregar servicio o repuesto</button><div class="quote-total">TOTAL PROPUESTO: <strong id="quote-total"></strong></div></div><h2 class="form-section-title full-width separated">AUTORIZACIÓN DEL CLIENTE</h2>`+select('¿El cliente acepta el servicio?','status',['Pendiente','Aprobada','Rechazada'],existing?.status||'Pendiente',locked?'disabled':'required');
+ root.innerHTML=pageHeader(existing?`Cotización ${existing.id}${locked?' · Solo lectura':''}`:'Nueva cotización','Descripciones libres; precios y descuentos propios de esta cotización.',link('Nueva cotización','cotizaciones'))+form('PRESUPUESTO DEL SERVICIO',body,submit('Guardar cotización')+(existing?.status==='Aprobada'&&!locked?link('Crear orden','ordenes/nueva?cotizacion='+existing.id):''));
+ function context(record){
+  r=record;diagnosis=record?.diagnosis||s.diagnoses.find(d=>d.receptionId===record?.id);
+  root.querySelector('[name=receptionId]').value=r?.id||'';root.querySelector('[name=diagnosisId]').value=diagnosis?.id||'';
+  root.querySelector('[name=quoteClient]').value=r?.clientName||'';root.querySelector('[name=vehicle]').value=r?[r.vehiclePlate,r.vehicleBrand,r.vehicleModel].filter(Boolean).join(' · '):'';
+  root.querySelector('#quote-context').innerHTML=diagnosis?`<div class="inline-note"><strong>Evaluación técnica · ${e(diagnosis.technicianName)}</strong><p>${e(diagnosis.findings)}</p><p>${e(diagnosis.evaluation)}</p><p>Recomendaciones: ${e(diagnosis.recommendations)}</p><p>${e(diagnosis.notes)}</p></div>`:'';
+  duplicateID=!existing?(r?.quoteId||s.quotes.find(q=>q.receptionId===r?.id)?.id||''):'';
+  root.querySelector('#quote-existing').innerHTML=duplicateID?hint('Esta atención ya tiene la cotización '+duplicateID+'. Ábrela para consultar o editar según las reglas del negocio.')+link('Abrir cotización existente','cotizaciones?id='+duplicateID):'';
+  root.querySelector('[type=submit]').disabled=locked||Boolean(duplicateID);
+ }
+ const receptionLabel=x=>`${x.id} · ${x.clientName||'Cliente'} · ${x.clientDocumentType||''} ${x.clientDocumentNumber||''} · ${x.vehiclePlate||''} · ${x.attentionType==='Directo'?'Servicio directo':'Diagnóstico técnico'}`;
+ const initial=r;
+ remotePicker(root.querySelector('[name=sourceReception]'),{selectedId:initial?.id||'',initialLabel:initial?receptionLabel(initial):'',label:receptionLabel,search:realMode?lookupQuoteReceptions:async(q,page)=>{const norm=v=>String(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();const rows=s.receptions.filter(x=>(x.attentionType==='Directo'||s.diagnoses.some(d=>d.receptionId===x.id&&(d.status||'Finalizado')==='Finalizado'))&&norm(receptionLabel(x)).includes(norm(q)));return {data:rows.slice((page-1)*20,page*20),meta:{total:rows.length,pageSize:20,page}};},onSelect:context});
+ context(initial);
  const lineRoot=root.querySelector('#quote-lines');
  const subtotal=i=>{const price=i.type==='Repuesto'&&i.origin==='Cliente'?0:decimalMinor(i.unitPrice),discount=decimalMinor(i.discount||'0');if(discount>price)throw Error('El descuento supera el precio de venta.');return itemSubtotal({...i,unitCents:price,discountCents:discount});};
  function totals(){try{root.querySelector('#quote-total').textContent=money(items.reduce((n,i)=>n+subtotal(i),0));items.forEach((i,n)=>{const target=lineRoot.querySelector(`[data-subtotal="${n}"]`);if(target)target.textContent=money(subtotal(i));});}catch{root.querySelector('#quote-total').textContent='Revisa cantidades, precios y descuentos';}}
@@ -77,11 +91,10 @@ export function renderQuotes({root,params}){
   else if(el.dataset.key==='origin'){if(item.origin==='Cliente'){item.unitPrice='0.00';item.discount='0.00';}draw();}
  });
  lineRoot.addEventListener('click',event=>{const b=event.target.closest('[data-remove]');if(b){items.splice(Number(b.dataset.remove),1);draw();}});draw();
- if(!locked){root.querySelector('[name=sourceReception]').onchange=event=>{const rec=s.receptions.find(x=>x.id===event.target.value),diag=s.diagnoses.find(x=>x.receptionId===rec?.id);go(rec?.attentionType==='Directo'?'cotizaciones?recepcion='+rec.id:'cotizaciones?diagnostico='+diag?.id);};const field=root.querySelector('select[name=diagnosisId]');if(field)field.onchange=event=>go('cotizaciones?diagnostico='+event.target.value);}
- if(locked){root.querySelector('[type=submit]').disabled=true;root.insertAdjacentHTML('beforeend',hint('Cotización vinculada a una orden: conceptos e importes conservados por trazabilidad.'));}
- else bindForm('edit-form',async data=>{const q=await saveQuote({...data,items},existing?.id);notify(`Cotización ${q.id} guardada: ${q.status}.`);go('cotizaciones?id='+q.id);});
+ if(locked)root.insertAdjacentHTML('afterbegin',hint(reason));
+ else bindForm('edit-form',async data=>{if(!r||(!existing&&data.sourceReception!==r.id))throw Error('Busca y selecciona una atención válida.');if(duplicateID)throw Error('Esta atención ya tiene cotización; abre la existente.');const q=await saveQuote({...data,items},existing?.id);notify(`Cotización ${q.id} guardada: ${q.status}.`);go('cotizaciones?id='+q.id);});
  root.insertAdjacentHTML('beforeend',hint('Subtotal = cantidad × (precio de venta − descuento por unidad), redondeado a dos decimales. Original/Alternativo identifica calidad; Suministrado por identifica quién aporta el repuesto. Los aportados por el cliente tienen precio cero.'));
- root.insertAdjacentHTML('beforeend',`<section class="panel separated"><h2 class="form-section-title">COTIZACIONES GUARDADAS</h2>${table(['Cotización','Cliente','Total','Autorización','Acción'],s.quotes.map(q=>{const d=s.diagnoses.find(d=>d.id===q.diagnosisId),r=s.receptions.find(r=>r.id===(q.receptionId||d?.receptionId));return [e(q.id),e(s.clients.find(c=>c.id===r?.clientId)?.name||r?.clientName||'Cliente #'+r?.clientId),money(quoteTotal(q)),badge(q.status),link('Abrir','cotizaciones?id='+q.id)];}))}</section>`);
+ root.insertAdjacentHTML('beforeend',`<section class="panel separated"><h2 class="form-section-title">COTIZACIONES GUARDADAS</h2>${table(['Cotización','Cliente','Total','Autorización','Acción'],s.quotes.map(q=>{const d=(s.diagnoses||[]).find(d=>d.id===q.diagnosisId),r=(s.receptions||[]).find(r=>r.id===(q.receptionId||d?.receptionId));return [e(q.id),e(s.clients.find(c=>c.id===r?.clientId)?.name||r?.clientName||q.clientName||'Cliente #'+r?.clientId),money(quoteTotal(q)),badge(q.status),link('Abrir','cotizaciones?id='+q.id)];}))}</section>`);
 }
 export function renderOrders(ctx){
  const {root,path,params,session}=ctx,s=getStore(),can=permissionChecker(session.role);

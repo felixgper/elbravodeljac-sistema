@@ -50,7 +50,7 @@ func TestAssignedDiagnosisWorkflow(t *testing.T) {
 	_, aux := h.user(t, "diagaux", "DiagAux_"+h.suffix, []string{"diagnosticos.ver", "diagnosticos.crear"})
 	inactive, _ := h.user(t, "diaginactive", "Mecánico", []string{"diagnosticos.ver"})
 	h.exec(t, `UPDATE usuarios SET activo=false WHERE id_usuario=$1`, inactive)
-	client := responseID(t, h.call(t, admin, "POST", "/clientes", map[string]string{"name": "Despacho " + h.suffix, "documentType": "Pasaporte", "documentNumber": "DW" + h.suffix, "phone": "+51987654321", "address": "Prueba aislada"}, 201))
+	client := responseID(t, h.call(t, admin, "POST", "/clientes", map[string]string{"name": "Félix Fernández " + h.suffix, "documentType": "Pasaporte", "documentNumber": "DW" + h.suffix, "phone": "+51987654321", "address": "Prueba aislada"}, 201))
 	car := responseID(t, h.call(t, admin, "POST", "/vehiculos", map[string]any{"clientId": client, "plate": "DW" + h.suffix[:5], "brand": "Honda", "model": "Prueba", "year": 2025, "mileage": "1"}, 201))
 	body := func(tech string) map[string]string {
 		return map[string]string{"clientId": client, "vehicleId": car, "mileage": "1", "symptoms": "Evaluación autorizada", "attentionType": "Diagnostico", "technicianId": tech}
@@ -129,6 +129,19 @@ func TestAssignedDiagnosisWorkflow(t *testing.T) {
 	h.call(t, admin, "POST", "/cotizaciones", quoteBody, 201)
 	if h.scalar(t, `SELECT count(*)::text FROM diagnosticos WHERE id_recepcion=$1`, directRx) != "0" {
 		t.Fatal("Fictitious diagnosis")
+	}
+	h.call(t, admin, "POST", "/cotizaciones", quoteBody, 422)
+	h.call(t, m1, "GET", "/cotizaciones/atenciones", nil, 403)
+	for _, query := range []string{h.suffix, "felix%20fernandez", "DW" + h.suffix, "DW" + h.suffix[:5]} {
+		rows := h.call(t, admin, "GET", "/cotizaciones/atenciones?q="+query+"&recepcionId="+rx, nil, 200)["data"].([]any)
+		if len(rows) != 1 || rows[0].(map[string]any)["id"] != rx {
+			t.Fatal("Normalized remote lookup", query, rows)
+		}
+	}
+	firstPage := h.call(t, admin, "GET", "/cotizaciones/atenciones?q="+h.suffix+"&pageSize=1", nil, 200)["data"].([]any)
+	nextPage := h.call(t, admin, "GET", "/cotizaciones/atenciones?q="+h.suffix+"&pageSize=1&page=2", nil, 200)["data"].([]any)
+	if len(firstPage) != 1 || len(nextPage) != 1 || firstPage[0].(map[string]any)["id"] == nextPage[0].(map[string]any)["id"] {
+		t.Fatal("Lookup pagination")
 	}
 	t.Log("Assignment, two-worker scope, draft, finalization, reassignment history, quote inbox and direct workflow verified")
 }
