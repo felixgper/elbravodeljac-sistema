@@ -2,14 +2,15 @@ import {e} from './ui.js';
 const money = value => new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN', maximumFractionDigits: 2 }).format(value / 100);
 export function incomeChart(points, width = 520) {
   const peak=Math.max(...points.map(p=>p.cents),100),step=10**Math.floor(Math.log10(peak));
+  const min=Math.min(0,...points.map(p=>p.cents));
   const max = Math.ceil(peak/step)*step, w = Math.max(240, Math.floor(width)), h = 190, left = 43, right = 15, top = 16, bottom = 36;
   const x = index => left + index * ((w - left - right) / Math.max(1,points.length - 1));
-  const y = value => top + (1 - value / max) * (h - top - bottom);
+  const y = value => top + (1 - (value-min) / (max-min)) * (h - top - bottom);
   const line = points.map((p, i) => `${x(i)},${y(p.cents)}`).join(' ');
-  const area = `${left},${h - bottom} ${line} ${w - right},${h - bottom}`;
+  const area = `${left},${y(0)} ${line} ${w - right},${y(0)}`;
   return `<svg class="income-chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Ingresos: ${points.map(p => `${e(p.month)}, ${money(p.cents)}`).join('; ')}">
     <defs><linearGradient id="income-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#791c2b" stop-opacity=".2"/><stop offset="1" stop-color="#791c2b" stop-opacity="0"/></linearGradient></defs>
-    ${[0, max / 3, max * 2 / 3, max].map(n => `<line x1="${left}" x2="${w - right}" y1="${y(n)}" y2="${y(n)}" class="chart-grid"/><text x="${left - 10}" y="${y(n) + 4}" text-anchor="end" class="chart-label">${n === 0 ? '0' : n>=100000?`${Number((n / 100000).toFixed(1))}k`:Number((n/100).toFixed(2))}</text>`).join('')}
+    ${[min, min+(max-min)/3, min+2*(max-min)/3, max].map(n => `<line x1="${left}" x2="${w - right}" y1="${y(n)}" y2="${y(n)}" class="chart-grid"/><text x="${left - 10}" y="${y(n) + 4}" text-anchor="end" class="chart-label">${n === 0 ? '0' : n>=100000?`${Number((n / 100000).toFixed(1))}k`:Number((n/100).toFixed(2))}</text>`).join('')}
     <polygon points="${area}" fill="url(#income-fill)"/><polyline points="${line}" fill="none" stroke="#791c2b" stroke-width="3" stroke-linejoin="round"/>
     ${points.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.cents)}" r="4" fill="#fff" stroke="#791c2b" stroke-width="2"><title>${e(p.month)}: ${money(p.cents)}</title></circle><text x="${x(i)}" y="${h - 12}" text-anchor="middle" class="chart-label">${i%Math.max(1,Math.ceil(points.length/Math.max(2,Math.floor((w-left-right)/45))))===0||i===points.length-1?e(p.month):''}</text>`).join('')}
     <text x="0" y="12" class="chart-unit">S/</text>

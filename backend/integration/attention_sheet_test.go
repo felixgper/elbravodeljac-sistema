@@ -84,8 +84,9 @@ func TestAttentionInspectionAndOriginalSheet(t *testing.T) {
 			}
 			h.call(t, mechanic, "PUT", "/ordenes/"+order+"/control-tecnico", control, 409)
 			h.call(t, manager, "PATCH", "/ordenes/"+order, map[string]string{"state": "En reparación", "note": "Servicio confirmado"}, 200)
+			h.confirmExecution(t, manager, order)
 			h.call(t, manager, "PATCH", "/ordenes/"+order, map[string]string{"state": "Finalizada", "note": "Entrega técnica", "test": "Ruta", "result": "Satisfactoria"}, 200)
-			control["version"] = 1
+			control["version"] = 2
 			h.call(t, mechanic, "PUT", "/ordenes/"+order+"/control-tecnico", control, 409)
 			h.call(t, manager, "POST", "/ordenes/"+order+"/entrega", map[string]any{"kind": "Titular / representante", "method": "Documento", "verified": true}, 422)
 			h.call(t, manager, "POST", "/ordenes/"+order+"/pagos", map[string]string{"amount": "80", "method": "Efectivo"}, 201)
@@ -123,13 +124,16 @@ func TestAttentionInspectionAndOriginalSheet(t *testing.T) {
 		quote := responseID(t, h.call(t, manager, "POST", "/cotizaciones", map[string]any{"receptionId": rx, "status": "Aprobada", "items": []map[string]string{{"concept": "Servicio autorizado", "type": "Servicio", "quantity": "1", "unitPrice": "10"}}}, 201))
 		order := responseID(t, h.call(t, manager, "POST", "/ordenes", map[string]string{"quoteId": quote, "mechanicId": technician}, 201))
 		h.call(t, manager, "PATCH", "/ordenes/"+order, map[string]string{"state": "En reparación", "note": "Ejecutado"}, 200)
+		h.confirmExecution(t, manager, order)
 		h.call(t, manager, "PATCH", "/ordenes/"+order, map[string]string{"state": "Finalizada", "note": "Verificado", "test": "Ruta", "result": "Satisfactoria"}, 200)
 		h.call(t, manager, "POST", "/ordenes/"+order+"/pagos", map[string]string{"amount": "10", "method": "Efectivo"}, 201)
 		out := dataObject(t, h.call(t, manager, "POST", "/ordenes/"+order+"/entrega", map[string]any{"kind": "Titular / representante", "method": "Documento", "verified": true}, 201))
-		if out["sheetReady"] != false {
+		if out["sheetReady"] != true {
 			t.Fatal("False PDF success", out)
 		}
-		h.call(t, manager, "GET", "/ordenes/"+order+"/ficha-tecnica.pdf", nil, 422)
+		if response := h.send(manager, "GET", "/ordenes/"+order+"/ficha-tecnica.pdf", nil); response.status != 200 || bytes.Contains(response.raw, []byte("/Count 2 >>")) {
+			t.Fatal("Appendix not generated", response.status)
+		}
 		if saved := h.scalar(t, `SELECT ficha_snapshot->>'symptoms' FROM entregas WHERE id_orden=$1`, order); saved != symptoms {
 			t.Fatal("Snapshot truncated")
 		}
@@ -140,7 +144,7 @@ func TestAttentionInspectionAndOriginalSheet(t *testing.T) {
 		if period == "Semana" && n != 7 || period == "Año" && n != 12 || period == "Mes" && (n < 28 || n > 31) {
 			t.Fatal("Wrong buckets", period, n)
 		}
-		expected := h.scalar(t, `SELECT coalesce(sum(monto),0)::numeric(18,2)::text FROM pagos WHERE fecha_pago>=$1::timestamptz AND fecha_pago<$2::timestamptz`, report["from"], report["until"])
+		expected := h.scalar(t, `SELECT coalesce(sum(monto),0)::numeric(18,2)::text FROM jac_movimientos_pagos WHERE fecha>=$1::timestamptz AND fecha<$2::timestamptz`, report["from"], report["until"])
 		if report["income"] != expected {
 			t.Fatal("Report does not reconcile", report, expected)
 		}

@@ -126,14 +126,25 @@ type QuoteLine struct {
 	Subtotal    string `json:"-"`
 }
 type QuoteInput struct {
-	ReceptionID string      `json:"receptionId"`
-	DiagnosisID string      `json:"diagnosisId"`
-	Status      string      `json:"status"`
-	Items       []QuoteLine `json:"items"`
-	Total       string      `json:"-"`
+	Version       int64          `json:"version"`
+	ParentQuoteID string         `json:"parentQuoteId"`
+	Approval      *QuoteApproval `json:"approval"`
+	ReceptionID   string         `json:"receptionId"`
+	DiagnosisID   string         `json:"diagnosisId"`
+	Status        string         `json:"status"`
+	Items         []QuoteLine    `json:"items"`
+	Total         string         `json:"-"`
 }
 
 func (v *QuoteInput) Validate() error {
+	if v.Version < 0 {
+		return Invalid("version", "Versión inválida.")
+	}
+	if v.ParentQuoteID != "" {
+		if _, err := ID(v.ParentQuoteID); err != nil {
+			return err
+		}
+	}
 	if v.DiagnosisID == "" && v.ReceptionID == "" {
 		return Invalid("receptionId", "Se requiere recepción o diagnóstico real.")
 	}
@@ -320,12 +331,16 @@ func (v *UpdateOrderInput) Validate() error {
 }
 
 type PaymentInput struct {
-	Amount  string `json:"amount"`
-	Method  string `json:"method"`
-	Receipt string `json:"comprobante"`
+	RequestID string `json:"requestId"`
+	Amount    string `json:"amount"`
+	Method    string `json:"method"`
+	Receipt   string `json:"comprobante"`
 }
 
 func (v *PaymentInput) Validate() error {
+	if err := text("requestId", v.RequestID, 100, true); err != nil {
+		return err
+	}
 	n, err := Money(v.Amount, "amount")
 	if err != nil {
 		return err
@@ -343,13 +358,34 @@ func (v *PaymentInput) Validate() error {
 }
 
 type DeliveryInput struct {
-	Kind      string `json:"kind"`
-	Method    string `json:"method"`
-	Verified  bool   `json:"verified"`
-	ContactID string `json:"contactId"`
+	RecipientKind   string `json:"recipientKind"`
+	Conformity      bool   `json:"conformity"`
+	ConformityNotes string `json:"conformityNotes"`
+	Kind            string `json:"kind"`
+	Method          string `json:"method"`
+	Verified        bool   `json:"verified"`
+	ContactID       string `json:"contactId"`
 }
 
 func (v DeliveryInput) Validate() error {
+	if !v.Conformity {
+		return Invalid("conformity", "Registra la conformidad de entrega y trabajos, separada de la autorización de retiro.")
+	}
+	if err := text("conformityNotes", v.ConformityNotes, 1200, false); err != nil {
+		return err
+	}
+	switch v.RecipientKind {
+	case "Propietario o titular":
+		if v.Kind != "Titular / representante" {
+			return Invalid("recipientKind", "Identificación de retiro inconsistente.")
+		}
+	case "Persona autorizada", "Representante de empresa":
+		if v.Kind != "Tercero" {
+			return Invalid("recipientKind", "Selecciona el contacto que recibe físicamente.")
+		}
+	default:
+		return Invalid("recipientKind", "Identifica quién retira físicamente el vehículo.")
+	}
 	if !v.Verified {
 		return Invalid("verified", "Comprueba identidad y autorización para este retiro.")
 	}

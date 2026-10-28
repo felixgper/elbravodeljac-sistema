@@ -11,23 +11,23 @@ func (s *Store) Statistics(ctx context.Context, dashboard bool, start, end time.
 	cte := `WITH months AS (
  SELECT generate_series(date_trunc('month',$1::timestamptz AT TIME ZONE 'America/Lima'),date_trunc('month',($2::timestamptz-interval '1 microsecond') AT TIME ZONE 'America/Lima'),interval '1 month') AS bucket
 ), pay_month AS (
- SELECT date_trunc('month',fecha_pago AT TIME ZONE 'America/Lima') AS bucket,sum(monto) AS amount FROM pagos WHERE fecha_pago >= $1 AND fecha_pago < $2 GROUP BY 1
+ SELECT date_trunc('month',fecha AT TIME ZONE 'America/Lima') AS bucket,sum(monto) AS amount FROM jac_movimientos_pagos WHERE fecha >= $1 AND fecha < $2 GROUP BY 1
 ), income AS (
  SELECT m.bucket,coalesce(p.amount,0)::numeric(18,2) AS amount FROM months m LEFT JOIN pay_month p USING(bucket)
 ), services AS (
- SELECT s.id_servicio::text AS id,coalesce(s.nombre,d.descripcion) AS label,count(*) AS count FROM ordenes_trabajo o JOIN detalle_cotizacion d USING(id_cotizacion) LEFT JOIN servicios s USING(id_servicio) WHERE coalesce(d.tipo_concepto,CASE WHEN d.id_servicio IS NOT NULL THEN 'Servicio' ELSE 'Repuesto' END)='Servicio' AND o.estado='finalizada' AND o.fecha_fin >= $1 AND o.fecha_fin < $2 GROUP BY s.id_servicio,coalesce(s.nombre,d.descripcion)
+ SELECT s.id_servicio::text AS id,d.descripcion AS label,sum(d.cantidad) AS count FROM ordenes_trabajo o JOIN detalle_cotizacion d USING(id_cotizacion) LEFT JOIN servicios s USING(id_servicio) WHERE coalesce(d.tipo_concepto,CASE WHEN d.id_servicio IS NOT NULL THEN 'Servicio' ELSE 'Repuesto' END)='Servicio' AND (o.control_tecnico->'execution'->d.id_detalle::text->>'status'='Realizado' OR coalesce(o.control_tecnico->'performedItems','[]'::jsonb) ? d.id_detalle::text) AND o.estado='finalizada' AND o.fecha_fin >= $1 AND o.fecha_fin < $2 GROUP BY s.id_servicio,d.descripcion
 ), rescues AS (
  SELECT count(*) AS count FROM auxilios WHERE fecha >= $1 AND fecha < $2
 ), states AS (
- SELECT t.key,t.label,t.color,(SELECT count(*) FROM ordenes_trabajo o WHERE o.estado=t.state AND o.fecha_creacion >= $1 AND o.fecha_creacion < $2) AS count FROM (VALUES ('pending','Pendientes','#d89a2a','creada'),('repair','En reparación','#791c2b','en_reparacion'),('testing','En pruebas','#467bbb','en_pruebas'),('completed','Finalizadas','#24906d','finalizada'),('cancelled','Canceladas','#b85858','cancelada')) t(key,label,color,state)
+ SELECT t.key,t.label,t.color,(SELECT count(*) FROM ordenes_trabajo o WHERE o.estado=t.state AND (o.estado IN ('creada','en_reparacion','en_pruebas') OR (o.fecha_fin >= $1 AND o.fecha_fin < $2))) AS count FROM (VALUES ('pending','Pendientes','#d89a2a','creada'),('repair','En reparación','#791c2b','en_reparacion'),('testing','En pruebas','#467bbb','en_pruebas'),('completed','Finalizadas','#24906d','finalizada'),('cancelled','Canceladas','#b85858','cancelada')) t(key,label,color,state)
 ), staff AS (
- SELECT u.id_usuario::text AS id,u.nombre AS label,count(DISTINCT o.id_orden) AS count FROM usuarios u LEFT JOIN asignaciones_ot a ON a.id_usuario=u.id_usuario AND a.activo AND a.rol_en_trabajo='MECANICO' LEFT JOIN ordenes_trabajo o ON o.id_orden=a.id_orden AND o.estado IN ('creada','en_reparacion','en_pruebas') AND o.fecha_creacion >= $1 AND o.fecha_creacion < $2 WHERE EXISTS(SELECT 1 FROM usuario_roles ur JOIN roles r USING(id_rol) WHERE ur.id_usuario=u.id_usuario AND lower(r.nombre_rol) IN ('mecánico','mecanico','supervisor')) GROUP BY u.id_usuario,u.nombre ORDER BY count DESC,u.id_usuario LIMIT 4
+ SELECT u.id_usuario::text AS id,u.nombre AS label,count(DISTINCT o.id_orden) AS count FROM usuarios u LEFT JOIN asignaciones_ot a ON a.id_usuario=u.id_usuario AND a.activo AND a.rol_en_trabajo='MECANICO' LEFT JOIN ordenes_trabajo o ON o.id_orden=a.id_orden AND o.estado IN ('creada','en_reparacion','en_pruebas') WHERE EXISTS(SELECT 1 FROM usuario_roles ur JOIN roles r USING(id_rol) WHERE ur.id_usuario=u.id_usuario AND lower(r.nombre_rol) IN ('mecánico','mecanico','supervisor')) GROUP BY u.id_usuario,u.nombre ORDER BY count DESC,u.id_usuario LIMIT 4
 ) `
 	projection := `jsonb_build_object(
  'monthlyIncome',(SELECT coalesce(sum(amount),0)::numeric(18,2)::text FROM income),
  'monthlyIncomeCents',(SELECT (coalesce(sum(amount),0)*100)::bigint::text FROM income),
- 'activeOrders',(SELECT count(*) FROM ordenes_trabajo WHERE estado IN ('creada','en_reparacion','en_pruebas') AND fecha_creacion >= $1 AND fecha_creacion < $2),
- 'completedServices',(SELECT count(*) FROM ordenes_trabajo WHERE estado='finalizada' AND fecha_fin >= $1 AND fecha_fin < $2),
+ 'activeOrders',(SELECT count(*) FROM ordenes_trabajo WHERE estado IN ('creada','en_reparacion','en_pruebas')),
+ 'completedServices',(SELECT coalesce(sum(count),0) FROM services),
  'rescuesToday',(SELECT count(*) FROM auxilios WHERE fecha >= $1 AND fecha < $2),
  'income',(SELECT coalesce(jsonb_agg(jsonb_build_object('month',to_char(bucket,'YYYY-MM'),'amount',amount::text,'cents',(amount*100)::bigint::text) ORDER BY bucket),'[]'::jsonb) FROM income),
  'states',(SELECT jsonb_agg(to_jsonb(states)) FROM states),

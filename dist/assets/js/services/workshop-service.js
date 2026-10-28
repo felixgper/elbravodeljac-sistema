@@ -12,8 +12,8 @@ export function getContext(state,order){
 }
 export function itemSubtotal(item){return Number((BigInt(decimalMinor(item.quantity,'Cantidad'))*BigInt(item.unitCents-(item.discountCents||0))+50n)/100n);}
 export function quoteTotal(quote){if(realMode&&quote?.total!==undefined)return real.cents(quote.total);return (quote?.items??[]).reduce((n,item)=>n+itemSubtotal(item),0);}
-export function paidTotal(state,orderId){return state.payments.filter(p=>p.orderId===orderId).reduce((n,p)=>n+p.amountCents,0);}
-export function balance(state,order){return quoteTotal(getContext(state,order).quote)-paidTotal(state,order.id);}
+export function paidTotal(state,orderId){return state.payments.filter(p=>p.orderId===orderId&&!p.reversedAt).reduce((n,p)=>n+p.amountCents,0);}
+export function balance(state,order){return (realMode&&order.amountDue!==undefined?real.cents(order.amountDue):quoteTotal(getContext(state,order).quote))-paidTotal(state,order.id);}
 export function saveClient(input,id){if(realMode)return real.saveClient(input,id);return transaction(s=>{
   const type=input.documentType,number=documentNumber(type,input.documentNumber);
   if(s.clients.some(c=>c.id!==id&&c.documentType===type&&c.documentNumber===number))throw new Error('Ya existe un cliente con ese tipo y número de documento.');
@@ -108,12 +108,12 @@ export function saveContact(input){if(realMode)return real.saveContact(input);re
   const telephone=phone(input.phone);if(!telephone.startsWith('+'))throw new Error('Incluye el prefijo internacional del teléfono, por ejemplo +51.');
   const record={id:newId('ct'),clientId:input.clientId,name:text(input.name,'el nombre completo',180),documentType:input.documentType,documentNumber:number,phone:telephone,relation:input.relation};s.contacts.push(record);return record;
 });}
-export function confirmDelivery(input,by){if(realMode)return real.confirmDelivery(input,by);return transaction(s=>{
+export function confirmDelivery(input,by){if(realMode)return real.confirmDelivery(input,by);const recipientKind=input.kind;input={...input,kind:input.kind==='Propietario o titular'?'Titular / representante':['Persona autorizada','Representante de empresa'].includes(input.kind)?'Tercero':input.kind};return transaction(s=>{
   const order=requireRecord(s.orders,input.orderId,'una orden');if(order.delivery)throw new Error('La entrega ya está registrada.');if(order.state!=='Finalizada')throw new Error('La orden debe estar finalizada para entregar el vehículo.');if(balance(s,order)!==0)throw new Error('Completa el pago pendiente antes de entregar el vehículo.');if(!input.verified)throw new Error('Verifica la identidad y autorización específica del receptor.');
   if(!['Titular / representante','Tercero'].includes(input.kind))throw new Error('Selecciona quién retira el vehículo.');
   if(!['Confirmación del titular','Documento','Representante facultado'].includes(input.method))throw new Error('Selecciona cómo se verificó la autorización.');
   let contactId='';if(input.kind==='Tercero'){const contact=requireRecord(s.contacts,input.contactId,'un contacto');if(contact.clientId!==getContext(s,order).client.id)throw new Error('El contacto debe estar vinculado al cliente de la orden.');contactId=contact.id;}
-  order.delivery={...audit(by),kind:input.kind,contactId,method:input.method,verified:true};return order;
+  order.delivery={...audit(by),kind:input.kind,recipientKind,contactId,method:input.method,verified:true,conformity:{accepted:Boolean(input.conformity),notes:input.conformityNotes||''}};return order;
 });}
 export function saveSupplier(input,id){if(realMode)return real.saveSupplier(input,id);return transaction(s=>{
   const ruc=documentNumber('RUC',input.ruc);if(s.suppliers.some(p=>p.id!==id&&p.ruc===ruc))throw new Error('Ya existe un proveedor con ese RUC.');

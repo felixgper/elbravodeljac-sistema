@@ -63,7 +63,7 @@ export async function loadModule(module,params=new URLSearchParams(),path=[]) {
     }
     if(module==='cotizaciones'){
       s.receptions=[];s.diagnoses=[];s.orders=[];
-      const current=s.quotes.find(q=>q.id===params.get('id'));let receptionId=current?.receptionId||params.get('recepcion');
+      const current=s.quotes.find(q=>q.id===(params.get('id')||params.get('ampliacion')));let receptionId=current?.receptionId||params.get('recepcion');
       if(!receptionId&&params.get('diagnostico')){const diagnosis=(await request('/diagnosticos/'+params.get('diagnostico'))).data;receptionId=diagnosis.receptionId;}
       if(receptionId){const found=(await lookupQuoteReceptions('',1,undefined,receptionId)).data[0];if(!found)throw Error('Atención no autorizada o diagnóstico todavía no finalizado.');s.receptions=[found];s.diagnoses=found.diagnosis?[found.diagnosis]:[];}
     }
@@ -104,7 +104,7 @@ export async function saveReception(input){return (await request('/recepciones',
 export async function saveDiagnosis(input){return (await request('/diagnosticos'+(input.id?'/'+input.id:''),{method:input.id?'PUT':'POST',body:pick(input,['receptionId','findings','technicianId','evaluation','recommendations','notes','status','version'])})).data;}
 export async function saveQuote(input,id){
   const items=input.items.map(i=>({...pick(i,['concept','type','quantity','unitPrice','partKind','discount','serviceId','sparePartId']),origin:i.type==='Servicio'?'':i.origin}));
-  return quote((await request('/cotizaciones'+(id?'/'+id:''),{method:id?'PUT':'POST',body:{diagnosisId:input.diagnosisId||'',receptionId:input.receptionId||'',status:input.status,items}})).data);
+  return quote((await request('/cotizaciones'+(id?'/'+id:''),{method:id?'PUT':'POST',body:{diagnosisId:input.diagnosisId||'',receptionId:input.receptionId||'',status:input.status,items,version:input.version||0,parentQuoteId:input.parentQuoteId||'',...(input.status==='Aprobada'?{approval:{name:input.approvalName,method:input.approvalMethod}}:{})}})).data);
 }
 export async function createOrder(input){return order((await request('/ordenes',{method:'POST',body:pick(input,['quoteId','mechanicId','assistantId'])})).data);}
 export async function updateOrder(id,input){
@@ -113,9 +113,17 @@ export async function updateOrder(id,input){
   return order((await request('/ordenes/'+id,{method:'PATCH',body})).data);
 }
 export async function saveRescue(input){return (await request('/auxilios',{method:'POST',body:{...pick(input,['clientId','vehicleId','location','incident','description','technicianId']),unitId:input.unit}})).data;}
-export async function registerPayment(input){const p=(await request('/ordenes/'+input.orderId+'/pagos',{method:'POST',body:pick(input,['amount','method'])})).data;return {...p,amountCents:cents(p.amount)};}
+export async function registerPayment(input){
+ const key='bravo-payment-pending:'+realSession()?.id+':'+input.orderId,signature=JSON.stringify([cents(input.amount),input.method,input.comprobante||'']);let pending;
+ try{pending=JSON.parse(sessionStorage.getItem(key)||'null');}catch{}
+ if(pending?.signature!==signature)pending={signature,requestId:input.requestId||crypto.randomUUID()};
+ try{sessionStorage.setItem(key,JSON.stringify(pending));}catch{}
+ const p=(await request('/ordenes/'+input.orderId+'/pagos',{method:'POST',body:{...pick(input,['amount','method','comprobante']),requestId:pending.requestId}})).data;
+ try{sessionStorage.removeItem(key);}catch{}
+ return {...p,amountCents:cents(p.amount)};
+}
 export async function saveContact(input){const c=(await request('/clientes/'+input.clientId+'/contactos',{method:'POST',body:pick(input,['name','documentType','documentNumber','phone','relation'])})).data;updateRealStore(s=>s.contacts.push(c));return c;}
-export async function confirmDelivery(input){return (await request('/ordenes/'+input.orderId+'/entrega',{method:'POST',body:pick(input,['kind','method','verified',...(input.kind==='Tercero'?['contactId']:[])])})).data;}
+export async function confirmDelivery(input){return (await request('/ordenes/'+input.orderId+'/entrega',{method:'POST',body:{...pick(input,['method','verified','conformity','conformityNotes',...(input.kind!=='Propietario o titular'?['contactId']:[])]),recipientKind:input.kind,kind:input.kind==='Propietario o titular'?'Titular / representante':'Tercero'}})).data;}
 export async function saveSupplier(input,id){if(input.parts)throw new Error('PostgreSQL no dispone de especialidad. El campo de repuestos se consulta mediante relaciones de catálogo; no se descartará información.');return (await request('/proveedores'+(id?'/'+id:''),{method:id?'PATCH':'POST',body:pick(input,['name','ruc','phone'])})).data;}
 export async function saveUser(input,id){
   const s=realStore(),old=s.users.find(u=>u.id===id),role=s.roles.find(r=>r.name===(input.role||old?.roleNames?.[0]));if(!role)throw new Error('El rol seleccionado no existe en PostgreSQL.');
@@ -140,7 +148,7 @@ export async function getDashboard(period='Mes'){
 }
 export async function getReport(period){const r=(await request('/reportes?period='+encodeURIComponent(period))).data;return {...r,income:safeInteger(r.incomeCents),months:r.months.map(m=>({...m,label:m.label.length===10?new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'2-digit',timeZone:'America/Lima'}).format(new Date(m.label+'T12:00:00-05:00')):formatMonth(m.label),cents:safeInteger(m.cents)}))};}
 
-function safeInteger(value){const n=Number(value);if(!/^\d+$/.test(String(value))||!Number.isSafeInteger(n))throw new Error("Total fuera del rango de visualización exacta.");return n;}
+function safeInteger(value){const n=Number(value);if(!/^[-]?\d+$/.test(String(value))||!Number.isSafeInteger(n))throw new Error("Total fuera del rango de visualización exacta.");return n;}
 
 function formatMonth(value,short=false){if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(value))throw new Error("Mes inválido recibido del servidor.");return new Intl.DateTimeFormat("es-PE",{month:short?"short":"long",...(short?{}:{year:"numeric"}),timeZone:"America/Lima"}).format(new Date(value+"-15T12:00:00-05:00")).replace(".","");}
 
@@ -165,3 +173,8 @@ export const pendingDiagnoses=()=>allPages('/me/diagnosticos');
 export const diagnosesToQuote=()=>allPages('/diagnosticos/pendientes-cotizacion');
 
 export const lookupQuoteReceptions=(q='',page=1,signal,id='')=>request('/cotizaciones/atenciones?q='+encodeURIComponent(q)+'&page='+page+'&pageSize=20'+(id?'&recepcionId='+encodeURIComponent(id):''),{signal});
+
+export const reversePayment=(orderId,paymentId,reason,requestId,replacement)=>request('/ordenes/'+orderId+'/pagos/'+paymentId,{method:'PATCH',body:{reason,requestId,...(replacement?{replacement}:{})}});
+
+export const lookupOrders=(q='',page=1,signal)=>request((realSession()?.permissions.includes('ordenes.ver')?'/ordenes?':'/frontend/opciones?module=pagos&resource=ordenes&')+'q='+encodeURIComponent(q)+'&page='+page+'&pageSize=20',{signal});
+export const lookupApprovedQuotes=(q='',page=1,signal)=>request((realSession()?.permissions.includes('cotizaciones.ver')?'/cotizaciones?estado=Aprobada&sinOrden=true&':'/frontend/opciones?module=ordenes&resource=cotizaciones&')+'q='+encodeURIComponent(q)+'&page='+page+'&pageSize=20',{signal});

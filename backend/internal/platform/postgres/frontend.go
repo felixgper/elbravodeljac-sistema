@@ -37,6 +37,9 @@ func (s *Store) FrontendOptions(ctx context.Context, module, resource string, p 
 		sort = "d.id_diagnostico"
 		where = "NOT $1 OR d.id_diagnostico IN (SELECT q.id_diagnostico FROM ordenes_trabajo o JOIN cotizaciones q USING(id_cotizacion) JOIN asignaciones_ot a USING(id_orden) WHERE a.activo AND a.id_usuario::text=$2)"
 	case "cotizaciones":
+		if module == "ordenes" && u.Can("ordenes.crear") {
+			return s.WorkshopList(ctx, "cotizaciones", domain.WorkshopFilter{Page: p, State: "aprobada", WithoutOrder: true}, u)
+		}
 		expr = quoteJSON
 		from = "cotizaciones q"
 		sort = "q.id_cotizacion"

@@ -27,7 +27,7 @@ func (s *server) inspection(w http.ResponseWriter, r *http.Request, u domain.Use
 	var err error
 	if r.Method == "PUT" {
 		var v technicalsheet.Control
-		if !decode(w, r, &v) {
+		if !decodeLimit(w, r, &v, 1<<20) {
 			return
 		}
 		out, err = store.SaveInspection(r.Context(), id, v, u)

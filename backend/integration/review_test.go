@@ -126,6 +126,7 @@ func TestFunctionalReviewPostgreSQL(t *testing.T) {
 		}
 		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "Finalizada", "note": "Falta prueba"}, 422)
 		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "En pruebas", "note": "Prueba guardada", "test": "Ruta", "result": "Satisfactoria"}, 200)
+		h.confirmExecution(t, admin, order)
 		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "Finalizada", "note": "Usa prueba vigente"}, 200)
 		h.call(t, admin, "DELETE", "/ordenes/"+order, nil, 409)
 	})
@@ -134,11 +135,11 @@ func TestFunctionalReviewPostgreSQL(t *testing.T) {
 		for _, period := range []string{"Semana", "Mes", "Año"} {
 			r := dataObject(t, h.call(t, admin, "GET", "/dashboard?period="+url.QueryEscape(period), nil, 200))
 			a, b := r["from"].(string), r["until"].(string)
-			expected := h.scalar(t, `SELECT coalesce(sum(monto),0)::numeric(18,2)::text FROM pagos WHERE fecha_pago >= $1::timestamptz AND fecha_pago < $2::timestamptz`, a, b)
+			expected := h.scalar(t, `SELECT coalesce(sum(monto),0)::numeric(18,2)::text FROM jac_movimientos_pagos WHERE fecha >= $1::timestamptz AND fecha < $2::timestamptz`, a, b)
 			if r["monthlyIncome"] != expected {
 				t.Fatal(period, r["monthlyIncome"], expected)
 			}
-			statesExpected := h.scalar(t, `SELECT count(*)::text FROM ordenes_trabajo WHERE fecha_creacion >= $1::timestamptz AND fecha_creacion < $2::timestamptz`, a, b)
+			statesExpected := h.scalar(t, `SELECT count(*)::text FROM ordenes_trabajo WHERE estado IN ('creada','en_reparacion','en_pruebas') OR (fecha_fin >= $1::timestamptz AND fecha_fin < $2::timestamptz)`, a, b)
 			total := 0
 			for _, v := range r["states"].([]any) {
 				total += int(v.(map[string]any)["count"].(float64))
@@ -151,7 +152,7 @@ func TestFunctionalReviewPostgreSQL(t *testing.T) {
 	if n := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); n != "26" {
 		t.Fatal(n)
 	}
-	if n := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); n != "46" {
+	if n := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); n != "47" {
 		t.Fatal(n)
 	}
 }

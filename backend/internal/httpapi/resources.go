@@ -1,12 +1,14 @@
 package httpapi
 
 import (
+	"encoding/json"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 	"net/http"
 )
 
 func (s *server) endpoints() []endpoint {
 	return []endpoint{
+		{"GET", "/api/v1/clientes/{id}/historial", "clientes.ver", s.clientHistory},
 		{"GET", "/api/v1/auth/me", "", func(http.ResponseWriter, *http.Request, domain.User) {}},
 		{"POST", "/api/v1/auth/logout", "", func(http.ResponseWriter, *http.Request, domain.User) {}},
 		{"GET", "/api/v1/clientes", "clientes.ver", s.clients},
@@ -205,5 +207,20 @@ func (s *server) history(w http.ResponseWriter, r *http.Request, u domain.User) 
 		return
 	}
 	out, err := s.store.VehicleHistory(r.Context(), id)
+	if err == nil {
+		if store, ok := s.store.(attentionHistoryStore); ok {
+			extra, e := store.AttentionHistory(r.Context(), "", id, u)
+			if e != nil {
+				s.failure(w, e)
+				return
+			}
+			raw, _ := json.Marshal(out)
+			var combined map[string]any
+			json.Unmarshal(raw, &combined)
+			combined["attentionHistory"] = extra
+			out = combined
+		}
+	}
+
 	s.result(w, 200, out, err)
 }

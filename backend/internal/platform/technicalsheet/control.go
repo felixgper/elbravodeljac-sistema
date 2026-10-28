@@ -40,7 +40,21 @@ func init() {
 	}
 }
 
+type Execution struct {
+	Status string `json:"status"`
+	Notes  string `json:"notes"`
+}
+type Reconciliation struct {
+	By     string `json:"by"`
+	At     string `json:"at"`
+	Hash   string `json:"hash"`
+	Reason string `json:"reason"`
+}
 type Control struct {
+	Execution        map[string]Execution `json:"execution"`
+	Reconciliation   *Reconciliation      `json:"reconciliation,omitempty"`
+	AdjustmentReason string               `json:"adjustmentReason,omitempty"`
+
 	Version        int64               `json:"version"`
 	Inspections    map[string]string   `json:"inspections"`
 	Maintenance    map[string][]string `json:"maintenance"`
@@ -56,6 +70,20 @@ type Control struct {
 }
 
 func (c Control) Validate() error {
+	if len(c.Execution) > 100 {
+		return fmt.Errorf("Máximo 100 trabajos por orden")
+	}
+	for _, entry := range c.Execution {
+		if entry.Status != "Pendiente" && entry.Status != "Realizado" && entry.Status != "No realizado" {
+			return fmt.Errorf("Estado de trabajo inválido")
+		}
+		if utf8.RuneCountInString(entry.Notes) > 1200 {
+			return fmt.Errorf("Observaciones: máximo 1200 caracteres")
+		}
+		if entry.Status == "No realizado" && strings.TrimSpace(entry.Notes) == "" {
+			return fmt.Errorf("Explica por qué no se realizó el trabajo")
+		}
+	}
 	if c.Version < 0 {
 		return fmt.Errorf("Versión inválida")
 	}

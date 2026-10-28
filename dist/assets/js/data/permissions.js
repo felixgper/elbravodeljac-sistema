@@ -24,7 +24,7 @@ export const PERMISSION_MODULES = [
   {id: 'cotizaciones', label: 'Cotizaciones', icon: 'quote', actions: [['ver', 'Ver cotizaciones'], ['crear', 'Crear cotizaciones'], ['editar', 'Editar cotizaciones']]},
   {id: 'ordenes', label: 'Órdenes de trabajo', icon: 'orders', actions: [['ver', 'Ver órdenes'], ['crear', 'Crear órdenes'], ['editar', 'Editar órdenes'], ['eliminar', 'Eliminar órdenes'], ['asignar', 'Reasignar mecánicos']]},
   {id: 'auxilio', label: 'Auxilio mecánico', icon: 'rescue', actions: [['ver', 'Ver auxilios y tareas'], ['crear', 'Registrar auxilios']]},
-  {id: 'pagos', label: 'Pagos y entrega', icon: 'payment', actions: [['ver', 'Ver pagos'], ['registrar', 'Registrar pagos'], ['entregar', 'Confirmar entrega']]},
+  {id: 'pagos', label: 'Pagos y entrega', icon: 'payment', actions: [['ver', 'Ver pagos'], ['registrar', 'Registrar pagos'], ['entregar', 'Confirmar entrega'], ['rectificar','Revertir pagos con motivo']]},
   {id: 'mecanicos', label: 'Mecánicos', icon: 'wrench', actions: [['ver', 'Ver mecánicos']]},
   {id: 'proveedores', label: 'Proveedores', icon: 'supplier', actions: [['ver', 'Ver proveedores'], ['crear', 'Crear proveedores'], ['editar', 'Editar proveedores'], ['eliminar', 'Eliminar proveedores']]},
   {id: 'reportes', label: 'Reportes', icon: 'chart', actions: [['ver', 'Ver reportes']]},

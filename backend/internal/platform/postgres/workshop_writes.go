@@ -2,7 +2,10 @@ package postgres
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/technicalsheet"
 	"github.com/jackc/pgx/v5"
@@ -61,6 +64,7 @@ func (s *Store) CreateDiagnosis(ctx context.Context, v domain.DiagnosisInput, u 
 }
 
 func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u domain.User) (any, error) {
+	wasExisting := id != ""
 	if err := v.Validate(); err != nil {
 		return nil, err
 	}
@@ -89,6 +93,32 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 	if (attention == "Directo") != (v.DiagnosisID == "") {
 		return nil, domain.Invalid("diagnosisId", "El tipo de atención determina si se requiere diagnóstico.")
 	}
+	rawContent, _ := json.Marshal(v.Items)
+	contentHash := fmt.Sprintf("%x", sha256.Sum256(rawContent))
+	var oldHash, oldState string
+	var oldVersion int64
+	var oldApproval []byte
+	if id != "" {
+		if err = tx.QueryRow(ctx, `SELECT version,coalesce(contenido_hash,''),estado,aprobacion FROM cotizaciones WHERE id_cotizacion=$1 FOR UPDATE`, id).Scan(&oldVersion, &oldHash, &oldState, &oldApproval); err != nil {
+			return nil, translate(err)
+		}
+		if oldVersion != v.Version {
+			return nil, domain.Invalid("version", "La cotización cambió. Recarga antes de editar.")
+		}
+	}
+	changed := id != "" && oldHash != contentHash
+	if changed && oldState == "aprobada" {
+		v.Status = "pendiente"
+		v.Approval = nil
+	}
+	if v.Status == "aprobada" && (id == "" || changed || oldState != "aprobada" || len(oldApproval) == 0) {
+		if v.Approval == nil {
+			return nil, domain.Invalid("approval", "Registra la persona y el medio de aprobación del cliente.")
+		}
+		if err = v.Approval.Validate(); err != nil {
+			return nil, err
+		}
+	}
 	if id != "" {
 		var diagnosis, reception string
 		if err = tx.QueryRow(ctx, `SELECT coalesce(id_diagnostico::text,''),id_recepcion::text FROM cotizaciones WHERE id_cotizacion=$1 FOR UPDATE`, id).Scan(&diagnosis, &reception); err != nil {
@@ -106,11 +136,23 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 		}
 	} else {
 		var duplicate bool
-		if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM cotizaciones WHERE id_recepcion=$1)`, v.ReceptionID).Scan(&duplicate); err != nil {
+		if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM cotizaciones WHERE id_recepcion=$1 AND id_cotizacion_base IS NULL)`, v.ReceptionID).Scan(&duplicate); err != nil {
 			return nil, err
 		}
-		if duplicate {
+		if duplicate && v.ParentQuoteID == "" {
 			return nil, domain.Invalid("receptionId", "Esta atención ya tiene una cotización. Abre la existente; no se puede duplicar sin un flujo autorizado de rectificación.")
+		}
+		if v.ParentQuoteID != "" {
+			if !u.Can("cotizaciones.editar") {
+				return nil, domain.ErrForbidden
+			}
+			var allowed bool
+			if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM cotizaciones q JOIN ordenes_trabajo o USING(id_cotizacion) WHERE q.id_cotizacion=$1 AND q.id_recepcion=$2 AND q.id_cotizacion_base IS NULL AND o.estado NOT IN ('finalizada','cancelada') AND NOT EXISTS(SELECT 1 FROM entregas e WHERE e.id_orden=o.id_orden))`, v.ParentQuoteID, v.ReceptionID).Scan(&allowed); err != nil {
+				return nil, err
+			}
+			if !allowed {
+				return nil, domain.Invalid("parentQuoteId", "La ampliación requiere una orden original abierta de la misma atención.")
+			}
 		}
 		if err = tx.QueryRow(ctx, `INSERT INTO cotizaciones(id_diagnostico,id_recepcion,estado,total,aprobada_en) VALUES(nullif($1,'')::bigint,$2,$3::text,$4,CASE WHEN $3::text='aprobada' THEN clock_timestamp() END) RETURNING id_cotizacion::text`, v.DiagnosisID, v.ReceptionID, v.Status, v.Total).Scan(&id); err != nil {
 			return nil, translate(err)
@@ -140,6 +182,11 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 			line.Concept = name
 		}
 	}
+	if wasExisting {
+		if _, err = tx.Exec(ctx, `UPDATE cotizaciones q SET historial_revision=historial_revision||jsonb_build_array(jsonb_build_object('version',version,'approval',aprobacion,'status',estado,'total',total,'items',(SELECT jsonb_agg(to_jsonb(d) ORDER BY id_detalle) FROM detalle_cotizacion d WHERE d.id_cotizacion=q.id_cotizacion),'by',$2::text,'at',clock_timestamp())) WHERE id_cotizacion=$1`, id, u.ID); err != nil {
+			return nil, translate(err)
+		}
+	}
 	if _, err = tx.Exec(ctx, `DELETE FROM detalle_cotizacion WHERE id_cotizacion=$1`, id); err != nil {
 		return nil, translate(err)
 	}
@@ -150,6 +197,24 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 		}
 	}
 	if _, err = tx.Exec(ctx, `UPDATE cotizaciones SET estado=$2::text,total=$3,aprobada_en=CASE WHEN $2::text='aprobada' THEN coalesce(aprobada_en,clock_timestamp()) ELSE NULL END WHERE id_cotizacion=$1`, id, v.Status, v.Total); err != nil {
+		return nil, translate(err)
+	}
+	// A newly recorded acceptance has its own server timestamp, even when only
+	// the approving person/method changed and line content stayed identical.
+	if v.Status == "aprobada" && v.Approval != nil {
+		if _, err = tx.Exec(ctx, `UPDATE cotizaciones SET aprobada_en=clock_timestamp() WHERE id_cotizacion=$1`, id); err != nil {
+			return nil, translate(err)
+		}
+	}
+	var approval any
+	if v.Status == "aprobada" {
+		if v.Approval == nil && !changed && oldState == "aprobada" {
+			approval = oldApproval
+		} else {
+			approval, _ = json.Marshal(map[string]any{"name": v.Approval.Name, "method": v.Approval.Method, "by": u.ID, "version": oldVersion + 1, "items": v.Items, "total": v.Total})
+		}
+	}
+	if _, err = tx.Exec(ctx, `UPDATE cotizaciones SET version=version+1,contenido_hash=$2,aprobacion=CASE WHEN $3::jsonb IS NULL THEN NULL ELSE $3::jsonb||jsonb_build_object('at',coalesce(aprobada_en,clock_timestamp())) END,id_cotizacion_base=coalesce(id_cotizacion_base,nullif($4,'')::bigint) WHERE id_cotizacion=$1`, id, contentHash, approval, v.ParentQuoteID); err != nil {
 		return nil, translate(err)
 	}
 	out, err := readJSON(ctx, tx, "SELECT "+quoteJSON+" FROM cotizaciones q WHERE q.id_cotizacion=$1", id)
@@ -186,7 +251,7 @@ func (s *Store) CreateOrder(ctx context.Context, v domain.CreateOrderInput, u do
 	}
 	defer tx.Rollback(ctx)
 	var state string
-	if err = tx.QueryRow(ctx, `SELECT estado FROM cotizaciones WHERE id_cotizacion=$1 FOR UPDATE`, v.QuoteID).Scan(&state); err != nil {
+	if err = tx.QueryRow(ctx, `SELECT CASE WHEN aprobacion IS NULL THEN 'sin_aprobacion' ELSE estado END FROM cotizaciones WHERE id_cotizacion=$1 FOR UPDATE`, v.QuoteID).Scan(&state); err != nil {
 		return nil, translate(err)
 	}
 	if state != "aprobada" {
@@ -201,7 +266,7 @@ func (s *Store) CreateOrder(ctx context.Context, v domain.CreateOrderInput, u do
 		}
 	}
 	var id string
-	err = tx.QueryRow(ctx, `WITH n AS (SELECT nextval(pg_get_serial_sequence('ordenes_trabajo','id_orden')) AS id) INSERT INTO ordenes_trabajo(id_orden,id_cotizacion,codigo_ot,id_usuario_creacion) SELECT id,$1,'OT-'||id::text,$2 FROM n RETURNING id_orden::text`, v.QuoteID, u.ID).Scan(&id)
+	err = tx.QueryRow(ctx, `WITH n AS (SELECT nextval(pg_get_serial_sequence('ordenes_trabajo','id_orden')) AS id) INSERT INTO ordenes_trabajo(id_orden,id_cotizacion,codigo_ot,id_usuario_creacion,flujo_version) SELECT id,$1,'OT-'||id::text,$2,1 FROM n RETURNING id_orden::text`, v.QuoteID, u.ID).Scan(&id)
 	if err != nil {
 		return nil, translate(err)
 	}
@@ -283,7 +348,7 @@ func (s *Store) UpdateOrder(ctx context.Context, id string, v domain.UpdateOrder
 	}
 	if v.State == "cancelada" {
 		var paid bool
-		if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pagos WHERE id_orden=$1)`, id).Scan(&paid); err != nil {
+		if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pagos WHERE id_orden=$1 AND revertido_en IS NULL)`, id).Scan(&paid); err != nil {
 			return nil, err
 		}
 		if paid {
@@ -347,6 +412,11 @@ func (s *Store) UpdateOrder(ctx context.Context, id string, v domain.UpdateOrder
 		}
 	}
 	if v.State == "finalizada" {
+		if err = validateExecution(ctx, tx, id); err != nil {
+			return nil, err
+		}
+	}
+	if v.State == "finalizada" {
 		var passed bool
 		err = tx.QueryRow(ctx, `SELECT coalesce((SELECT p.resultado='satisfactoria' AND p.fecha>=coalesce((SELECT max(h.fecha) FROM historial_estados_ot h WHERE h.id_orden=$1 AND h.estado_nuevo='en_reparacion'),'-infinity'::timestamptz) FROM pruebas_ot p WHERE p.id_orden=$1 ORDER BY p.fecha DESC,p.id_prueba DESC LIMIT 1),false)`, id).Scan(&passed)
 		if err != nil {
@@ -405,11 +475,27 @@ func (s *Store) RegisterPayment(ctx context.Context, id string, v domain.Payment
 	if err != nil {
 		return nil, err
 	}
-	if closed || state != "finalizada" {
-		return nil, domain.Invalid("orderId", "Solo se pagan órdenes finalizadas y aún no entregadas.")
+	var replay []byte
+	replayErr := tx.QueryRow(ctx, `SELECT `+paymentJSON+` FROM pagos p WHERE id_orden=$1 AND request_id=$2`, id, v.RequestID).Scan(&replay)
+	if replayErr == nil {
+		var previous map[string]any
+		json.Unmarshal(replay, &previous)
+		if previous["reversedAt"] != nil {
+			return nil, domain.ErrConflict
+		}
+		if previous["amount"] != v.Amount || previous["method"] != v.Method || previous["comprobante"] != v.Receipt {
+			return nil, domain.ErrConflict
+		}
+		return json.RawMessage(replay), nil
+	}
+	if !errors.Is(replayErr, pgx.ErrNoRows) {
+		return nil, translate(replayErr)
+	}
+	if closed || state == "cancelada" {
+		return nil, domain.Invalid("orderId", "No se pagan órdenes canceladas o ya entregadas.")
 	}
 	var total, paid string
-	if err = tx.QueryRow(ctx, `SELECT q.total::text,coalesce((SELECT sum(monto) FROM pagos WHERE id_orden=$1),0)::numeric(14,2)::text FROM cotizaciones q JOIN ordenes_trabajo o USING(id_cotizacion) WHERE o.id_orden=$1`, id).Scan(&total, &paid); err != nil {
+	if err = tx.QueryRow(ctx, `SELECT jac_importe_orden(o.id_orden)::text,coalesce((SELECT sum(monto) FROM pagos WHERE id_orden=$1 AND revertido_en IS NULL),0)::numeric(14,2)::text FROM cotizaciones q JOIN ordenes_trabajo o USING(id_cotizacion) WHERE o.id_orden=$1`, id).Scan(&total, &paid); err != nil {
 		return nil, translate(err)
 	}
 	totalCents, err := domain.Money(total, "total")
@@ -424,7 +510,7 @@ func (s *Store) RegisterPayment(ctx context.Context, id string, v domain.Payment
 	if amount > totalCents-paidCents {
 		return nil, domain.Invalid("amount", "El pago supera el saldo pendiente.")
 	}
-	out, err := readJSON(ctx, tx, `WITH inserted AS (INSERT INTO pagos(id_orden,monto,metodo_pago,comprobante,id_usuario_registro) VALUES($1,$2,$3,nullif($4,''),$5) RETURNING *) SELECT `+paymentJSON+` FROM inserted p`, id, v.Amount, v.Method, v.Receipt, u.ID)
+	out, err := readJSON(ctx, tx, `WITH inserted AS (INSERT INTO pagos(id_orden,monto,metodo_pago,comprobante,id_usuario_registro,request_id) VALUES($1,$2,$3,nullif($4,''),$5,$6) RETURNING *) SELECT `+paymentJSON+` FROM inserted p`, id, v.Amount, v.Method, v.Receipt, u.ID, v.RequestID)
 	if err != nil {
 		return nil, err
 	}
@@ -455,12 +541,19 @@ func (s *Store) Deliver(ctx context.Context, id string, v domain.DeliveryInput, 
 	}
 	var clientID string
 	var settled bool
-	err = tx.QueryRow(ctx, `SELECT r.id_cliente_atencion::text,q.total=coalesce((SELECT sum(monto) FROM pagos WHERE id_orden=$1),0) FROM ordenes_trabajo o JOIN cotizaciones q USING(id_cotizacion) JOIN recepciones r ON r.id_recepcion=q.id_recepcion WHERE o.id_orden=$1`, id).Scan(&clientID, &settled)
+	err = tx.QueryRow(ctx, `SELECT r.id_cliente_atencion::text,jac_importe_orden(o.id_orden)=coalesce((SELECT sum(monto) FROM pagos WHERE id_orden=$1 AND revertido_en IS NULL),0) FROM ordenes_trabajo o JOIN cotizaciones q USING(id_cotizacion) JOIN recepciones r ON r.id_recepcion=q.id_recepcion WHERE o.id_orden=$1`, id).Scan(&clientID, &settled)
 	if err != nil {
 		return nil, translate(err)
 	}
 	if !settled {
 		return nil, domain.Invalid("balance", "Completa el pago exacto antes de entregar.")
+	}
+	var unfinished bool
+	if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM ordenes_trabajo x JOIN cotizaciones xq USING(id_cotizacion) WHERE xq.id_recepcion=(SELECT q.id_recepcion FROM ordenes_trabajo z JOIN cotizaciones q USING(id_cotizacion) WHERE z.id_orden=$1) AND x.id_orden<>$1 AND x.estado<>'cancelada' AND (x.estado<>'finalizada' OR jac_importe_orden(x.id_orden)<>coalesce((SELECT sum(monto) FROM pagos WHERE id_orden=x.id_orden AND revertido_en IS NULL),0))) OR EXISTS(SELECT 1 FROM cotizaciones xq WHERE xq.id_recepcion=(SELECT q.id_recepcion FROM ordenes_trabajo z JOIN cotizaciones q USING(id_cotizacion) WHERE z.id_orden=$1) AND xq.id_cotizacion_base IS NOT NULL AND xq.estado='aprobada' AND NOT EXISTS(SELECT 1 FROM ordenes_trabajo x WHERE x.id_cotizacion=xq.id_cotizacion))`, id).Scan(&unfinished); err != nil {
+		return nil, err
+	}
+	if unfinished {
+		return nil, domain.Invalid("attention", "Completa y liquida todas las órdenes y ampliaciones aprobadas de esta atención antes de entregar el vehículo.")
 	}
 	var name, docType, doc, phone string
 	if v.Kind == "Tercero" {
@@ -477,6 +570,14 @@ func (s *Store) Deliver(ctx context.Context, id string, v domain.DeliveryInput, 
 	out, err := readJSON(ctx, tx, `WITH inserted AS (INSERT INTO entregas(id_orden,id_usuario_entrega,id_contacto_receptor,tipo_receptor,nombre_receptor_snap,tipo_doc_receptor_snap,documento_receptor_snap,telefono_receptor_snap,autorizacion_verificada,medio_verificacion,fecha_verificacion,id_usuario_verificador) VALUES($1,$2,nullif($3,'')::bigint,$4,$5,$6,$7,$8,true,$9,clock_timestamp(),$2) RETURNING *) SELECT `+deliveryJSON+` FROM inserted e`, id, u.ID, v.ContactID, v.Kind, name, docType, doc, phone, v.Method)
 	if err != nil {
 		return nil, err
+	}
+	if v.RecipientKind == "Propietario o titular" && docType == "RUC" {
+		return nil, domain.Invalid("recipientKind", "Una empresa requiere identificar a su representante físico mediante un contacto.")
+	}
+	receiver, _ := json.Marshal(map[string]any{"kind": v.RecipientKind, "name": name, "documentType": docType, "documentNumber": doc, "phone": phone})
+	conformity, _ := json.Marshal(map[string]any{"accepted": v.Conformity, "notes": v.ConformityNotes, "recordedBy": u.ID})
+	if _, err = tx.Exec(ctx, `UPDATE entregas SET receptor_real=$2,conformidad=$3::jsonb||jsonb_build_object('at',clock_timestamp()) WHERE id_orden=$1`, id, receiver, conformity); err != nil {
+		return nil, translate(err)
 	}
 	var snapshot []byte
 	if err = tx.QueryRow(ctx, sheetSnapshotSQL, id).Scan(&snapshot); err != nil {

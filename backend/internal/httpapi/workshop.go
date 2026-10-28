@@ -19,6 +19,7 @@ func (s *server) workshopEndpoints() []endpoint {
 		out = append(out, endpoint{"GET", "/api/v1/" + resource + "/{id}", resource + ".ver", s.workshopItem(resource)})
 	}
 	out = append(out,
+		endpoint{"PATCH", "/api/v1/ordenes/{id}/pagos/{paymentId}", "pagos.rectificar", s.reversePayment},
 		endpoint{"GET", "/api/v1/cotizaciones/atenciones", "cotizaciones.ver", s.workshopList("atenciones")},
 		endpoint{"GET", "/api/v1/me/diagnosticos", "diagnosticos.ver", s.diagnosisQueue(false)},
 		endpoint{"GET", "/api/v1/diagnosticos/pendientes-cotizacion", "diagnosticos.ver", s.diagnosisQueue(true)},
@@ -139,7 +140,7 @@ func (s *server) saveQuote(w http.ResponseWriter, r *http.Request, u domain.User
 		status = 200
 	}
 	var v domain.QuoteInput
-	if !decode(w, r, &v) {
+	if !decodeLimit(w, r, &v, 1<<20) {
 		return
 	}
 	out, err := s.store.SaveQuote(r.Context(), id, v, u)

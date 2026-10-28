@@ -35,6 +35,10 @@ try {
     Invoke-Pg 'psql.exe' @('-h','127.0.0.1','-p',"$testPort",'-U','postgres','-d','elbravodeljac_test','-q','-v','ON_ERROR_STOP=1','-f',$attentionPath)
     $diagnosisPath=Join-Path $backendRoot 'internal/platform/postgres/migrations/004_flujo_diagnosticos.sql'
     Invoke-Pg 'psql.exe' @('-h','127.0.0.1','-p',"$testPort",'-U','postgres','-d','elbravodeljac_test','-q','-v','ON_ERROR_STOP=1','-f',$diagnosisPath)
+    foreach ($migration in @('005_auditoria_flujo.sql','006_pagos_entrega.sql')) {
+        $auditPath=Join-Path $backendRoot ('internal/platform/postgres/migrations/'+$migration)
+        Invoke-Pg 'psql.exe' @('-h','127.0.0.1','-p',"$testPort",'-U','postgres','-d','elbravodeljac_test','-q','-v','ON_ERROR_STOP=1','-f',$auditPath)
+    }
     $env:INTEGRATION_DATABASE_URL = "postgres://postgres@127.0.0.1:$testPort/elbravodeljac_test?sslmode=disable"
     & go test ./... -count=1 -v
     $testExitCode = $LASTEXITCODE

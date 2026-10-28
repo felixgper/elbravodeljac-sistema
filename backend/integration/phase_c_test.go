@@ -171,17 +171,18 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 		service := responseID(t, h.call(t, admin, "POST", "/servicios", map[string]string{"name": "Stats_" + h.suffix, "referencePrice": "100"}, 201))
 		quote := responseID(t, h.call(t, admin, "POST", "/cotizaciones", map[string]any{"diagnosisId": diagnosis, "status": "Aprobada", "items": []map[string]string{{"serviceId": service, "quantity": "1", "unitPrice": "100"}, {"serviceId": service, "quantity": "1", "unitPrice": "100"}}}, 201))
 		order := responseID(t, h.call(t, admin, "POST", "/ordenes", map[string]string{"quoteId": quote, "mechanicId": tech}, 201))
+		h.confirmExecution(t, admin, order)
 		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "Finalizada", "note": "Comprobado", "test": "Ruta", "result": "Satisfactoria"}, 200)
 		for _, amount := range []string{"50.00", "150.00"} {
 			h.call(t, admin, "POST", "/ordenes/"+order+"/pagos", map[string]string{"amount": amount, "method": "Efectivo"}, 201)
 		}
 		report := dataObject(t, h.call(t, admin, "GET", "/reportes?period=Últimos%206%20meses", nil, 200))
-		expected := h.scalar(t, `SELECT coalesce(sum(monto),0)::numeric(18,2)::text FROM pagos WHERE fecha_pago >= (date_trunc('month',statement_timestamp() AT TIME ZONE 'America/Lima')-interval '5 months') AT TIME ZONE 'America/Lima' AND fecha_pago < (date_trunc('month',statement_timestamp() AT TIME ZONE 'America/Lima')+interval '1 month') AT TIME ZONE 'America/Lima'`)
+		expected := h.scalar(t, `SELECT coalesce(sum(monto),0)::numeric(18,2)::text FROM jac_movimientos_pagos WHERE fecha >= (date_trunc('month',statement_timestamp() AT TIME ZONE 'America/Lima')-interval '5 months') AT TIME ZONE 'America/Lima' AND fecha < (date_trunc('month',statement_timestamp() AT TIME ZONE 'America/Lima')+interval '1 month') AT TIME ZONE 'America/Lima'`)
 		if report["income"] != expected {
 			t.Fatal("duplicated income", report["income"], expected)
 		}
 		dashboard := dataObject(t, h.call(t, admin, "GET", "/dashboard", nil, 200))
-		monthExpected := h.scalar(t, `SELECT coalesce(sum(monto),0)::numeric(18,2)::text FROM pagos WHERE fecha_pago >= date_trunc('month',statement_timestamp() AT TIME ZONE 'America/Lima') AT TIME ZONE 'America/Lima' AND fecha_pago < (date_trunc('month',statement_timestamp() AT TIME ZONE 'America/Lima')+interval '1 month') AT TIME ZONE 'America/Lima'`)
+		monthExpected := h.scalar(t, `SELECT coalesce(sum(monto),0)::numeric(18,2)::text FROM jac_movimientos_pagos WHERE fecha >= date_trunc('month',statement_timestamp() AT TIME ZONE 'America/Lima') AT TIME ZONE 'America/Lima' AND fecha < (date_trunc('month',statement_timestamp() AT TIME ZONE 'America/Lima')+interval '1 month') AT TIME ZONE 'America/Lima'`)
 		if dashboard["monthlyIncome"] != monthExpected {
 			t.Fatal("dashboard multiplied income", dashboard["monthlyIncome"], monthExpected)
 		}
@@ -236,7 +237,7 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 	if tables := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); tables != "26" {
 		t.Fatal(tables)
 	}
-	if fks := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); fks != "46" {
+	if fks := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); fks != "47" {
 		t.Fatal(fks)
 	}
 }

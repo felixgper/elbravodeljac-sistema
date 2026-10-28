@@ -140,7 +140,7 @@ async function renderDashboard(currentRender,period='Mes') {
     const cards = [
       {label:'Ingresos del período',value:currency(data.monthlyIncomeCents),icon:'wallet',class:'copper',note:data.period},
       {label:'Órdenes activas',value:getActiveOrders(data),icon:'wrench',class:'copper',note:'Pendientes, reparación y pruebas'},
-      {label:'Servicios finalizados',value:data.completedServices,icon:'check',class:'green',note:'Atenciones concluidas'},
+      {label:'Servicios finalizados',value:data.completedServices,icon:'check',class:'green',note:'Cantidades confirmadas'},
       {label:'Auxilios del período',value:data.rescuesToday,icon:'rescue',class:'blue',note:realMode?'Solicitudes registradas':'Solicitudes de demostración'},
     ];
     content.innerHTML = `<div class="dashboard-note"><span class="live-dot"></span>Dashboard general <span class="note-divider">/</span><span>${realMode?'Datos del servidor':'Datos de este navegador'} · ${escapeHtml(data.period)}</span><div role="group" aria-label="Período del dashboard">${['Semana','Mes','Año'].map(p=>`<button type="button" class="${p===period?'primary':'secondary'}-button" data-period="${p}" aria-pressed="${p===period}">${p}</button>`).join('')}</div></div>

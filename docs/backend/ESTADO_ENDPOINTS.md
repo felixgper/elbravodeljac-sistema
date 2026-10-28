@@ -147,3 +147,12 @@ Devuelve orígenes directos o diagnósticos finalizados, con ID de cotización e
 Son **84 rutas de aplicación** acumuladas (83 de negocio más frontend/opciones),
 sin 501. POST cotizaciones rechaza duplicados por atención en transacción; PUT
 mantiene el bloqueo si hay OT. Ver [implementación y pruebas](CORRECCION_COTIZACIONES.md).
+
+
+Auditoría funcional (27/10/2026): PATCH `/api/v1/ordenes/{id}/pagos/{paymentId}`
+(pagos.rectificar) y GET `/api/v1/clientes/{id}/historial` (clientes.ver, finanzas
+según pagos.ver). Total **86 operaciones de aplicación**: 85 entradas de negocio
+y frontend/opciones. Se conservan las 71 originales sin 501. Los contratos existentes
+incorporan versión/aprobación, ampliación autorizada, ejecución/conciliación, anticipos
+con requestId, reversión/sustitución y conformidad separada de entrega. Ver
+[implementación, migraciones 005/006 y pruebas](CORRECCIONES_AUDITORIA_FUNCIONAL.md).

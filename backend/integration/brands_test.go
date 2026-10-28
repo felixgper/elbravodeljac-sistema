@@ -86,7 +86,7 @@ func TestVehicleBrandsPostgreSQL(t *testing.T) {
 	if n := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); n != "26" {
 		t.Fatal(n)
 	}
-	if n := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE connamespace='public'::regnamespace AND contype='f'`); n != "46" {
+	if n := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE connamespace='public'::regnamespace AND contype='f'`); n != "47" {
 		t.Fatal(n)
 	}
 }

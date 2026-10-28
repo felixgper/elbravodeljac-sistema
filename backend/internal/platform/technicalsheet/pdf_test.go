@@ -35,7 +35,7 @@ func TestOriginalTwoPagePDF(t *testing.T) {
 	}
 	s.Symptoms = strings.Repeat("Texto muy largo ", 1000)
 	raw, _ = json.Marshal(s)
-	if _, err = Render(raw); err == nil {
-		t.Fatal("Silently cropped content")
+	if extended, err := Render(raw); err != nil || bytes.Contains(extended, []byte("/Count 2 >>")) {
+		t.Fatal("Long content must create appendices", err)
 	}
 }

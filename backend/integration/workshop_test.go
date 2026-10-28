@@ -41,6 +41,43 @@ func (h *workshopHarness) send(session workshopSession, method, path string, pay
 	var b []byte
 	var err error
 	if payload != nil {
+		// Existing fixtures now explicitly supply the newer business metadata.
+		// Audit-specific negative tests pass empty/null fields to exercise rejection.
+		fixture, _ := json.Marshal(payload)
+		var fields map[string]any
+		json.Unmarshal(fixture, &fields)
+		if method == "POST" && strings.HasSuffix(path, "/pagos") {
+			if _, ok := fields["requestId"]; !ok {
+				fields["requestId"] = rand.Text()
+			}
+		}
+		if method == "POST" && strings.HasSuffix(path, "/entrega") {
+			if _, ok := fields["conformity"]; !ok {
+				fields["conformity"] = true
+			}
+			if _, ok := fields["recipientKind"]; !ok {
+				if fields["kind"] == "Tercero" {
+					fields["recipientKind"] = "Persona autorizada"
+				} else {
+					fields["recipientKind"] = "Propietario o titular"
+				}
+			}
+		}
+		if (method == "POST" || method == "PUT") && (path == "/cotizaciones" || strings.HasPrefix(path, "/cotizaciones/")) {
+			if fields["status"] == "Aprobada" {
+				if _, ok := fields["approval"]; !ok {
+					fields["approval"] = map[string]string{"name": "Cliente de la prueba aislada", "method": "Presencial"}
+				}
+			}
+			if method == "PUT" {
+				if _, ok := fields["version"]; !ok {
+					var version int64
+					_ = h.pool.QueryRow(h.ctx, `SELECT version FROM cotizaciones WHERE id_cotizacion=$1`, strings.TrimPrefix(path, "/cotizaciones/")).Scan(&version)
+					fields["version"] = version
+				}
+			}
+		}
+		payload = fields
 		b, err = json.Marshal(payload)
 		if err != nil {
 			return workshopResponse{err: err}
@@ -256,7 +293,7 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 		h.call(t, admin, "GET", "/mecanicos", nil, 200)
 		h.call(t, admin, "GET", "/asignaciones?ordenId="+order, nil, 200)
 		h.call(t, auxSession, "GET", "/me/tareas", nil, 200)
-		h.call(t, admin, "POST", "/ordenes/"+order+"/pagos", map[string]string{"amount": "1", "method": "Efectivo"}, 422)
+		h.call(t, admin, "POST", "/ordenes/"+order+"/pagos", map[string]string{"amount": "9999", "method": "Efectivo"}, 422)
 		pristine := newOrder(t)
 		h.call(t, admin, "DELETE", "/ordenes/"+pristine, nil, 204)
 		h.call(t, admin, "GET", "/ordenes/"+pristine, nil, 404)
@@ -281,6 +318,7 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "En reparación", "note": "Reparación posterior"}, 200)
 		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "Finalizada", "note": "Prueba antigua"}, 422)
 		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "Finalizada", "note": "Final revisado", "test": strings.Repeat("x", 101), "result": "Satisfactoria"}, 422)
+		h.confirmExecution(t, admin, order)
 		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "Finalizada", "note": "Final revisado", "test": "Ruta final", "result": "Satisfactoria"}, 200)
 		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "En reparación", "note": "Reabrir"}, 409)
 		h.call(t, admin, "DELETE", "/ordenes/"+order, nil, 409)
@@ -381,8 +419,25 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 		if got := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); got != "26" {
 			t.Fatal(got)
 		}
-		if got := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); got != "46" {
+		if got := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); got != "47" {
 			t.Fatal(got)
 		}
 	})
+}
+
+func (h *workshopHarness) confirmExecution(t *testing.T, session workshopSession, order string) {
+	record := dataObject(t, h.call(t, session, "GET", "/ordenes/"+order+"/control-tecnico", nil, 200))["record"].(map[string]any)
+	var quoteID string
+	if err := h.pool.QueryRow(h.ctx, `SELECT id_cotizacion::text FROM ordenes_trabajo WHERE id_orden=$1`, order).Scan(&quoteID); err != nil {
+		t.Fatal(err)
+	}
+	quote := dataObject(t, h.call(t, session, "GET", "/cotizaciones/"+quoteID, nil, 200))
+	execution := map[string]any{}
+	for _, item := range quote["items"].([]any) {
+		execution[item.(map[string]any)["id"].(string)] = map[string]string{"status": "Realizado", "notes": "Ejecución confirmada en fixture aislado"}
+	}
+	control := record["control"].(map[string]any)
+	control["version"] = record["version"]
+	control["execution"] = execution
+	h.call(t, session, "PUT", "/ordenes/"+order+"/control-tecnico", control, 200)
 }

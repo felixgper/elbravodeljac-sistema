@@ -44,7 +44,8 @@
     "pagos": [
       "ver",
       "registrar",
-      "entregar"
+      "entregar",
+      "rectificar"
     ],
     "mecanicos": [
       "ver"
@@ -112,7 +113,8 @@
       "pagos": [
         "ver",
         "registrar",
-        "entregar"
+        "entregar",
+        "rectificar"
       ],
       "mecanicos": [
         "ver"
@@ -179,7 +181,8 @@
       "pagos": [
         "ver",
         "registrar",
-        "entregar"
+        "entregar",
+        "rectificar"
       ],
       "mecanicos": [
         "ver"

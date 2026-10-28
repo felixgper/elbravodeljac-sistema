@@ -13,6 +13,7 @@ import (
 )
 
 type Line struct {
+	Notes     string `json:"notes"`
 	ID        string `json:"id"`
 	Concept   string `json:"concept"`
 	Quantity  string `json:"quantity"`
@@ -26,24 +27,25 @@ type Workshop struct {
 	Address string `json:"address"`
 }
 type Snapshot struct {
-	Workshop Workshop `json:"workshop"`
-	Code     string   `json:"code"`
-	Client   string   `json:"client"`
-	Document string   `json:"document"`
-	Phone    string   `json:"phone"`
-	Address  string   `json:"address"`
-	Email    string   `json:"email"`
-	Plate    string   `json:"plate"`
-	Vehicle  string   `json:"vehicle"`
-	Mileage  string   `json:"mileage"`
-	Symptoms string   `json:"symptoms"`
-	In       string   `json:"in"`
-	Out      string   `json:"out"`
-	Mechanic string   `json:"mechanic"`
-	Total    string   `json:"total"`
-	Lines    []Line   `json:"lines"`
-	Advances []string `json:"advances"`
-	Control  Control  `json:"control"`
+	AuthorizedTotal string   `json:"authorizedTotal"`
+	Workshop        Workshop `json:"workshop"`
+	Code            string   `json:"code"`
+	Client          string   `json:"client"`
+	Document        string   `json:"document"`
+	Phone           string   `json:"phone"`
+	Address         string   `json:"address"`
+	Email           string   `json:"email"`
+	Plate           string   `json:"plate"`
+	Vehicle         string   `json:"vehicle"`
+	Mileage         string   `json:"mileage"`
+	Symptoms        string   `json:"symptoms"`
+	In              string   `json:"in"`
+	Out             string   `json:"out"`
+	Mechanic        string   `json:"mechanic"`
+	Total           string   `json:"total"`
+	Lines           []Line   `json:"lines"`
+	Advances        []string `json:"advances"`
+	Control         Control  `json:"control"`
 }
 
 const width = 595.5
@@ -60,8 +62,9 @@ func date(s string) string {
 
 type canvas struct {
 	bytes.Buffer
-	err  error
-	bold bool
+	err    error
+	bold   bool
+	extras []string
 }
 
 func (c *canvas) text(x, y, size float64, s string, white bool) {
@@ -128,7 +131,8 @@ func (c *canvas) box(x, y, w, h, max float64, s string, white bool) {
 			return
 		}
 	}
-	c.err = fmt.Errorf("El contenido supera el espacio imprimible de la ficha original de dos páginas; no se ha recortado información")
+	c.extras = append(c.extras, s)
+	c.text(x, y+6, 5.5, "Ver información completa en anexo.", white)
 }
 func (c *canvas) boxBold(x, y, w, h, max float64, s string, white bool) {
 	c.bold = true
@@ -152,6 +156,9 @@ func Render(raw []byte) ([]byte, error) {
 	var s Snapshot
 	if err := json.Unmarshal(raw, &s); err != nil {
 		return nil, err
+	}
+	if s.Control.Reconciliation != nil {
+		s.Control.TechnicalNotes += "\nConciliación autorizada por usuario " + s.Control.Reconciliation.By + ": " + s.Control.Reconciliation.Reason + ". Presupuesto S/ " + s.AuthorizedTotal + "; importe definitivo S/ " + s.Total + "."
 	}
 	p1, p2 := &canvas{}, &canvas{}
 	for _, p := range []*canvas{p1, p2} {
@@ -200,10 +207,16 @@ func Render(raw []byte) ([]byte, error) {
 			}
 		}
 	}
-	n := len(s.Lines)
-	if n == 0 {
-		return nil, fmt.Errorf("Cotización sin conceptos")
+	displayLines := s.Lines
+	if len(displayLines) > 12 {
+		for _, l := range displayLines[12:] {
+			p1.extras = append(p1.extras, l.Concept+orNote(l.Notes)+" | "+l.Quantity+" x S/ "+l.UnitPrice+" - dto/u S/ "+l.Discount+" | Subtotal S/ "+l.Subtotal)
+		}
+		displayLines = displayLines[:12]
+		p1.text(35, 636, 6, "Detalle adicional en anexos; el total incluye todos los conceptos realizados.", false)
 	}
+	n := len(displayLines)
+
 	rows := n
 	if rows < 4 {
 		rows = 4
@@ -221,10 +234,10 @@ func Render(raw []byte) ([]byte, error) {
 		}
 		fmt.Fprintf(p1, "0.90 G 0.4 w 30 %.2f m 565 %.2f l S\n", height-y-row, height-y-row)
 	}
-	for i, l := range s.Lines {
+	for i, l := range displayLines {
 		y := 512 + float64(i)*row
 		p1.text(42, y+9, 7, fmt.Sprint(i+1), false)
-		p1.box(72, y, 427, row-1, 9, l.Concept+" | "+l.Quantity+" x S/ "+l.UnitPrice+" - dto/u S/ "+l.Discount, false)
+		p1.box(72, y, 427, row-1, 9, l.Concept+orNote(l.Notes)+" | "+l.Quantity+" x S/ "+l.UnitPrice+" - dto/u S/ "+l.Discount, false)
 		p1.box(505, y, 51, row-1, 9, "S/ "+l.Subtotal, false)
 	}
 	p1.boxBold(458, 642, 95, 27, 21, "S/ "+s.Total, true)
@@ -286,7 +299,43 @@ func Render(raw []byte) ([]byte, error) {
 	if p2.err != nil {
 		return nil, p2.err
 	}
-	return buildPDF(p1.Bytes(), p2.Bytes())
+	pages := [][]byte{p1.Bytes(), p2.Bytes()}
+	extras := append(p1.extras, p2.extras...)
+	if len(extras) > 0 {
+		var appendix *canvas
+		var y float64
+		newPage := func() {
+			if appendix != nil {
+				pages = append(pages, appendix.Bytes())
+			}
+			appendix = &canvas{}
+			appendix.text(40, 42, 16, "EL BRAVO DEL JAC - ANEXO", false)
+			appendix.box(40, 55, 510, 25, 9, s.Code+" - "+s.Plate+" - "+s.Client, false)
+			appendix.text(42, 818, 8, fmt.Sprintf("Anexo %d", len(pages)-1), false)
+			y = 100
+		}
+		for _, text := range extras {
+			lines := wrap(text, 9, 510)
+			if appendix == nil || (float64(len(lines))*13 <= 680 && y+float64(len(lines))*13 > 780) {
+				newPage()
+			}
+			for _, line := range lines {
+				if y > 780 {
+					newPage()
+				}
+				appendix.text(42, y, 9, line, false)
+				if appendix.err != nil {
+					return nil, appendix.err
+				}
+				y += 13
+			}
+			y += 8
+		}
+		if appendix != nil {
+			pages = append(pages, appendix.Bytes())
+		}
+	}
+	return buildPDF(pages...)
 }
 func nextDate(v string) string {
 	if v == "" {
@@ -304,9 +353,14 @@ func or(v, otherwise string) string {
 	}
 	return v
 }
-func buildPDF(a, b []byte) ([]byte, error) {
-	objects := [][]byte{[]byte("<< /Type /Catalog /Pages 2 0 R >>"), []byte("<< /Type /Pages /Kids [4 0 R 7 0 R] /Count 2 >>"), []byte("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")}
-	for i, content := range [][]byte{a, b} {
+func buildPDF(pages ...[]byte) ([]byte, error) {
+	objects := [][]byte{[]byte("<< /Type /Catalog /Pages 2 0 R >>"), []byte("PAGES_PLACEHOLDER"), []byte("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")}
+	kids := ""
+	for i := range pages {
+		kids += fmt.Sprintf("%d 0 R ", 4+i*3)
+	}
+	objects[1] = []byte(fmt.Sprintf("<< /Type /Pages /Kids [%s] /Count %d >>", kids, len(pages)))
+	for i, content := range pages {
 		base := 4 + i*3
 		objects = append(objects, []byte(fmt.Sprintf("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2f %.2f] /Resources << /Font << /F1 3 0 R /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >> >> /XObject << /Bg %d 0 R >> >> /Contents %d 0 R >>", width, height, base+2, base+1)))
 		var z bytes.Buffer
@@ -314,6 +368,10 @@ func buildPDF(a, b []byte) ([]byte, error) {
 		w.Write(content)
 		w.Close()
 		objects = append(objects, stream(fmt.Sprintf("/Filter /FlateDecode /Length %d", z.Len()), z.Bytes()))
+		if i >= 2 {
+			objects = append(objects, []byte("<< >>"))
+			continue
+		}
 		jpg, err := assets.ReadFile(fmt.Sprintf("assets/pagina-%d.jpg", i+1))
 		if err != nil {
 			return nil, err
@@ -343,4 +401,11 @@ func buildPDF(a, b []byte) ([]byte, error) {
 }
 func stream(dict string, data []byte) []byte {
 	return append(append([]byte("<< "+dict+" >>\nstream\n"), data...), []byte("\nendstream")...)
+}
+
+func orNote(notes string) string {
+	if notes == "" {
+		return ""
+	}
+	return " (Obs.: " + notes + ")"
 }

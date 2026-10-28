@@ -25,7 +25,7 @@ func TestOriginalCatalogRelationalCoverage(t *testing.T) {
 			t.Fatal("relational placeholder remains", key)
 		}
 	}
-	if len(Routes) != 71 || n != 71 || len(implemented) != 83 {
+	if len(Routes) != 71 || n != 71 || len(implemented) != 85 {
 		t.Fatal("unexpected catalog", len(Routes), n, len(implemented))
 	}
 }
