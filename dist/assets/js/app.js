@@ -4,7 +4,7 @@ import {loadModule} from './services/real-workshop.js';
 import {clearRealStore} from './services/real-state.js';
 import { icon } from './components/icons.js';
 import { modules } from './components/navigation.js';
-import { incomeChart, donutChart, verticalBars, horizontalBars } from './components/charts.js';
+import { donutChart, horizontalBars } from './components/charts.js';
 import { refreshSession, getSession, getRememberedUser, login, logout, demoCredentials } from './services/auth-service.js';
 import { getDashboard, getActiveOrders } from './services/dashboard-service.js';
 import { renderClients, renderVehicles } from './views/clients-vehicles.js';
@@ -19,7 +19,6 @@ const root = document.getElementById('app');
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
 const currency = cents => new Intl.NumberFormat('es-PE', {style:'currency',currency:'PEN',maximumFractionDigits:0}).format(cents / 100);
 let renderId = 0;
-let chartObserver;
 let disposeShell;
 let allowed = modules;
 
@@ -145,21 +144,12 @@ async function renderDashboard(currentRender,period='Mes') {
     ];
     content.innerHTML = `<div class="dashboard-note"><span class="live-dot"></span>Dashboard general <span class="note-divider">/</span><span>${realMode?'Datos del servidor':'Datos de este navegador'} · ${escapeHtml(data.period)}</span><div role="group" aria-label="Período del dashboard">${['Semana','Mes','Año'].map(p=>`<button type="button" class="${p===period?'primary':'secondary'}-button" data-period="${p}" aria-pressed="${p===period}">${p}</button>`).join('')}</div></div>
       <section class="kpi-grid" aria-label="Resumen de actividad">${cards.map(card => `<article class="kpi-card"><span class="kpi-icon ${card.class}">${icon(card.icon)}</span><div><strong class="kpi-value">${card.value}</strong><h2>${card.label}</h2><p>${card.note}</p></div></article>`).join('')}</section>
-      <div class="main-charts"><section class="panel income-panel"><div class="panel-heading"><div><h2>Ingresos del período</h2><p>Evolución de ingresos registrados</p></div><span class="panel-chip">${escapeHtml(String(new Date().getFullYear()))}</span></div>${incomeChart(data.income)}<div class="chart-caption"><span>${escapeHtml(data.period)}</span><strong>Total del período: ${currency(data.monthlyIncomeCents)}</strong></div></section>
-      <section class="panel states-panel"><div class="panel-heading"><div><h2>Estados del servicio</h2><p>Distribución de las órdenes de trabajo</p></div>${icon('orders')}</div>${donutChart(data.states)}</section></div>
-      <div class="secondary-charts"><section class="panel"><div class="panel-heading"><div><h2>Órdenes por estado</h2><p>En proceso = reparación + pruebas</p></div></div>${verticalBars(data.states)}</section><section class="panel"><div class="panel-heading"><div><h2>Trabajo por mecánico</h2><p>Distribución del trabajo registrado</p></div></div>${horizontalBars(data.mechanics,'mechanics')}</section><section class="panel"><div class="panel-heading"><div><h2>Servicios más solicitados</h2><p>Atenciones por tipo de servicio</p></div></div>${horizontalBars(data.services,'services')}</section></div>
+      <div class="main-charts"><section class="panel income-panel"><div class="panel-heading"><div><h2>Actividad del taller</h2><p>Resumen operativo del período</p></div>${icon('wrench')}</div><div class="report-total"><span>Recepciones registradas</span><strong>${escapeHtml(data.counts?.receptions??getStore().receptions.length)}</strong></div><div class="report-total"><span>Diagnósticos registrados</span><strong>${escapeHtml(data.counts?.diagnoses??getStore().diagnoses.length)}</strong></div><div class="report-total"><span>Entregas registradas</span><strong>${escapeHtml(data.counts?.deliveries??(getStore().deliveries||[]).length)}</strong></div><p>Las bandejas de diagnóstico muestran las evaluaciones pendientes y las listas para cotizar según tus permisos.</p>${permissionChecker(getSession().role)('reportes','ver')?'<a class="secondary-button" href="#/reportes">Ver análisis e ingresos en Reportes</a>':''}</section>
+      <section class="panel states-panel"><div class="panel-heading"><div><h2>Estados del servicio</h2><p>Órdenes activas y cierres del período</p></div>${icon('orders')}</div>${donutChart(data.states)}</section></div>
+      <section class="panel separated"><div class="panel-heading"><div><h2>Trabajo por mecánico</h2><p>Carga de órdenes activas registrada</p></div></div>${horizontalBars(data.mechanics,'mechanics')}</section>
       <section class="workshop-banner" aria-label="El Bravo del JAC, servicio especializado en vehículos JAC"><div class="banner-crop"><img src="./assets/images/referencia-cobre-carbon.png" alt="Camioneta JAC y mecánico del taller. Diagnóstico, mantenimiento, repuestos y auxilio mecánico." loading="lazy"></div></section>`;
     content.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>go('inicio?period='+encodeURIComponent(b.dataset.period)));
-    const panel = content.querySelector('.income-panel');
-    let lastWidth = 0;
-    function fitIncomeChart() {
-      const chart = panel.querySelector('.income-chart');
-      const width = Math.floor(chart.getBoundingClientRect().width);
-      if (width !== lastWidth && width > 0) { lastWidth = width; chart.outerHTML = incomeChart(data.income,width); }
-    }
     await mountDiagnosisDashboard(content);
-    fitIncomeChart();
-    chartObserver = new ResizeObserver(fitIncomeChart); chartObserver.observe(panel);
   } catch {
     if (currentRender === renderId) content.innerHTML = '<section class="panel error-state" role="alert"><h2>No se pudo cargar el resumen</h2><p>Vuelve a Inicio para intentarlo nuevamente.</p><a class="primary-button" href="#/inicio">Volver a Inicio</a></section>';
   }
@@ -175,7 +165,6 @@ function gateForms(id, path, can, content) {
 function contentSubtitle(){return document.querySelector('.module-heading p');}
 async function render() {
   root.setAttribute('aria-busy','true');
-  chartObserver?.disconnect();
   disposeShell?.();
   const currentRender = ++renderId;
   root.onkeydown = null; root.onclick = null;

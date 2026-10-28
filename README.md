@@ -148,3 +148,23 @@ El Balsamiq no incluye un control de carga de evidencias en la pantalla de diagn
 ## Diseño Borgoña contemporáneo
 
 La capa visual se define en `dist/assets/css/atelier.css`. Clientes muestra las placas vinculadas a cada persona y permite buscar también por placa. Sus contadores se calculan desde los datos del modo seleccionado. Se mantienen las operaciones de los 13 módulos y sus permisos. Títulos y texto usan DM Sans con fuentes del sistema como alternativa. El logo vectorial reutilizable está en `dist/assets/images/bravo-borgona.svg`.
+
+
+## Cotizaciones PDF e informes
+
+En modo real, **Cotizaciones → Cotizaciones guardadas → PDF**, junto a **Abrir**,
+descarga la versión guardada con su estado y aprobación registrada. Se permite
+consultar una cotización pendiente para enviarla al cliente. Se requiere
+`cotizaciones.ver`. Abrir conserva su edición/consulta existente. Este documento
+es independiente de la ficha técnica de Pagos y entrega.
+
+Inicio presenta indicadores operativos, estados, carga de mecánicos y bandejas de
+diagnósticos; Reportes conserva el análisis de servicios e ingresos con tabla y
+gráfico, incorpora fecha de referencia y comparación con el período anterior.
+[Detalle, archivos y pruebas](docs/backend/COTIZACIONES_PDF_REPORTES.md).
+
+Pruebas reproducibles en Windows: `node checks/run.mjs` y
+`.\backend\scripts\test-audit.ps1` (Docker Desktop, Go, Node, Chrome y Playwright).
+Solo se usan las bases aisladas `elbravodeljac_test` y
+`elbravodeljac_tecnico_test`. Desde `backend/`: `go test ./...` y `go vet ./...`;
+sin variables de integración, Go omite esas pruebas explícitamente.

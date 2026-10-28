@@ -156,3 +156,18 @@ y frontend/opciones. Se conservan las 71 originales sin 501. Los contratos exist
 incorporan versión/aprobación, ampliación autorizada, ejecución/conciliación, anticipos
 con requestId, reversión/sustitución y conformidad separada de entrega. Ver
 [implementación, migraciones 005/006 y pruebas](CORRECCIONES_AUDITORIA_FUNCIONAL.md).
+
+
+Cotizaciones PDF (27/10/2026): `GET /api/v1/cotizaciones/{id}/pdf`, permiso
+`cotizaciones.ver`, devuelve `application/pdf` como archivo adjunto, con caché
+privada deshabilitada. Disponible para Pendiente, Aprobada y Rechazada. Solo SELECT:
+no modifica cotizaciones, detalles, aprobación, historial ni ficha técnica.
+Incluye versión actual y versión de la aprobación registrada; no sustituye una
+aprobación invalidada por otra ficticia. Total acumulado: **87 operaciones de
+aplicación**, 86 de negocio y frontend/opciones; las 71 originales continúan.
+
+Reportes conserva `GET /api/v1/reportes`: la interfaz envía `period`, `desde` y
+`hasta` (exclusivo, zona Lima) usando el contrato existente. Hace una segunda
+consulta del período de calendario anterior para comparar ingresos netos y
+órdenes finalizadas. No se añadieron columnas, migraciones ni cálculos de venta.
+Ver [descarga, organización y pruebas](COTIZACIONES_PDF_REPORTES.md).

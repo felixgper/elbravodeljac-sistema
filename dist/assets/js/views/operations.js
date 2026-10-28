@@ -1,3 +1,4 @@
+import {quotePDFButton,bindQuoteDownloads} from '../components/quote-pdf.js';
 import {lookupApprovedQuotes,lookupQuoteReceptions,assignDiagnosis} from '../services/real-workshop.js';
 import {openInspection} from '../components/technical-sheet.js';
 import {remotePicker,clientPicker,ownerVehicles} from '../components/remote-picker.js';
@@ -95,7 +96,8 @@ export function renderQuotes({root,params,session}){
  if(locked)root.insertAdjacentHTML('afterbegin',hint(reason));
  else bindForm('edit-form',async data=>{if(!r||(!existing&&data.sourceReception!==r.id))throw Error('Busca y selecciona una atención válida.');if(duplicateID)throw Error('Esta atención ya tiene cotización; abre la existente.');const q=await saveQuote({...data,items,version:existing?.version||0,parentQuoteId:parent?.id||existing?.parentQuoteId||''},existing?.id);notify(`Cotización ${q.id} guardada: ${q.status}.`);go('cotizaciones?id='+q.id);});
  root.insertAdjacentHTML('beforeend',hint('Subtotal = cantidad × (precio de venta − descuento por unidad), redondeado a dos decimales. Original/Alternativo identifica calidad; Suministrado por identifica quién aporta el repuesto. Los aportados por el cliente tienen precio cero.'));
- root.insertAdjacentHTML('beforeend',`<section class="panel separated"><h2 class="form-section-title">COTIZACIONES GUARDADAS</h2>${table(['Cotización','Cliente','Total','Autorización','Acción'],s.quotes.map(q=>{const d=(s.diagnoses||[]).find(d=>d.id===q.diagnosisId),r=(s.receptions||[]).find(r=>r.id===(q.receptionId||d?.receptionId));return [e(q.id),e(s.clients.find(c=>c.id===r?.clientId)?.name||r?.clientName||q.clientName||'Cliente #'+r?.clientId),money(quoteTotal(q)),badge(q.status),link('Abrir','cotizaciones?id='+q.id)];}))}</section>`);
+ root.insertAdjacentHTML('beforeend',`<section class="panel separated"><h2 class="form-section-title">COTIZACIONES GUARDADAS</h2>${table(['Cotización','Cliente','Total','Autorización','Acción'],s.quotes.map(q=>{const d=(s.diagnoses||[]).find(d=>d.id===q.diagnosisId),r=(s.receptions||[]).find(r=>r.id===(q.receptionId||d?.receptionId));return [e(q.id),e(s.clients.find(c=>c.id===r?.clientId)?.name||r?.clientName||q.clientName||'Cliente #'+r?.clientId),money(quoteTotal(q)),badge(q.status),link('Abrir','cotizaciones?id='+q.id)+' '+quotePDFButton(q)];}))}</section>`);
+ bindQuoteDownloads(root);
 }
 export function renderOrders(ctx){
  const {root,path,params,session}=ctx,s=getStore(),can=permissionChecker(session.role);

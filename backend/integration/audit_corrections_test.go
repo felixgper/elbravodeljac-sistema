@@ -49,6 +49,7 @@ func TestAuditCorrectionsPostgreSQL(t *testing.T) {
 		}
 	}
 	_, admin := h.user(t, "auditadmin", "Audit_"+h.suffix, permissions)
+	_, reader := h.user(t, "pdfreader", "QuoteReader_"+h.suffix, []string{"cotizaciones.ver"})
 	mechanic, worker := h.user(t, "auditmechanic", "Mecánico", []string{"diagnosticos.ver", "diagnosticos.crear", "ordenes.ver", "ordenes.editar", "pagos.ver"})
 	client := responseID(t, h.call(t, admin, "POST", "/clientes", map[string]string{"name": "Juan Pérez auditoría " + h.suffix, "documentType": "Pasaporte", "documentNumber": "AU" + h.suffix, "phone": "+51987654321", "address": "Entorno exclusivamente de pruebas"}, 201))
 	vehicle := responseID(t, h.call(t, admin, "POST", "/vehiculos", map[string]any{"clientId": client, "plate": "AU" + h.suffix[:5], "brand": "Toyota", "model": "Corolla", "year": 2025, "mileage": "100"}, 201))
@@ -69,12 +70,19 @@ func TestAuditCorrectionsPostgreSQL(t *testing.T) {
 			h.call(t, admin, "POST", "/cotizaciones", invalid, 422)
 			quote := dataObject(t, h.call(t, admin, "POST", "/cotizaciones", quoteBody, 201))
 			qid := quote["id"].(string)
+			h.checkQuotationPDF(t, admin, qid, "Aprobada")
+			h.checkQuotationPDF(t, reader, qid, "Consulta")
+			h.call(t, worker, "GET", "/cotizaciones/"+qid+"/pdf", nil, 403)
+			h.call(t, workshopSession{}, "GET", "/cotizaciones/"+qid+"/pdf", nil, 401)
+			h.call(t, admin, "GET", "/cotizaciones/9223372036854775807/pdf", nil, 404)
+			h.call(t, admin, "GET", "/cotizaciones/invalid/pdf", nil, 400)
 			quoteBody["version"] = quote["version"]
 			quoteBody["items"].([]map[string]string)[0]["concept"] = "Servicio corregido que exige nueva aprobación " + h.suffix
 			changed := dataObject(t, h.call(t, admin, "PUT", "/cotizaciones/"+qid, quoteBody, 200))
 			if changed["status"] != "Pendiente" || changed["approval"] != nil {
 				t.Fatal("Approval was not invalidated", changed)
 			}
+			h.checkQuotationPDF(t, admin, qid, "Pendiente")
 			h.call(t, admin, "POST", "/ordenes", map[string]string{"quoteId": qid, "mechanicId": mechanic}, 422)
 			quoteBody["version"] = quote["version"]
 			h.call(t, admin, "PUT", "/cotizaciones/"+qid, quoteBody, 422)
@@ -237,6 +245,29 @@ func saveAuditArtifact(t *testing.T, name string, data []byte) {
 			t.Fatal(err)
 		}
 		if err := os.WriteFile(filepath.Join(dir, name), data, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// GET exports must not change the quote, its approval, history or detail rows.
+func (h *workshopHarness) checkQuotationPDF(t *testing.T, session workshopSession, id, status string) {
+	t.Helper()
+	query := `SELECT md5(to_jsonb(q)::text||coalesce((SELECT jsonb_agg(to_jsonb(d) ORDER BY d.id_detalle)::text FROM detalle_cotizacion d WHERE d.id_cotizacion=q.id_cotizacion),'')) FROM cotizaciones q WHERE q.id_cotizacion=$1`
+	before := h.scalar(t, query, id)
+	first := h.send(session, "GET", "/cotizaciones/"+id+"/pdf", nil)
+	second := h.send(session, "GET", "/cotizaciones/"+id+"/pdf", nil)
+	if first.err != nil || first.status != 200 || !bytes.HasPrefix(first.raw, []byte("%PDF-1.7")) || !bytes.Equal(first.raw, second.raw) {
+		t.Fatalf("PDF %s: status %d / %v", status, first.status, first.err)
+	}
+	if h.scalar(t, query, id) != before {
+		t.Fatal("PDF changed persisted quotation")
+	}
+	if dir := os.Getenv("AUDIT_ARTIFACT_DIR"); dir != "" {
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "cotizacion-"+status+"-"+id+".pdf"), first.raw, 0600); err != nil {
 			t.Fatal(err)
 		}
 	}

@@ -52,7 +52,7 @@ const supplier=api.saveSupplier({name:'Proveedor de prueba',ruc:'20876543210',ph
 const u=await api.saveUser({name:'Auxiliar de prueba',username:'aux.prueba',email:'aux@example.test',role:'Auxiliar',active:true,password:'Prueba2026!'});assert(u.passwordDigest&&!JSON.stringify(u).includes('Prueba2026!'));
 await login({username:'aux.prueba',password:'Prueba2026!',remember:false});assert.equal(getSession().id,u.id);logout();
 await api.saveUser({...u,active:false},u.id);await assert.rejects(login({username:'aux.prueba',password:'Prueba2026!',remember:false}));
-const after=await getDashboard();assert.equal(after.monthlyIncomeCents,before.monthlyIncomeCents+15500);assert.equal(after.completedServices,before.completedServices+1);assert.equal(getReport('Este mes').income,after.monthlyIncomeCents);
+const after=await getDashboard();assert.equal(after.monthlyIncomeCents,before.monthlyIncomeCents+15500);assert.equal(after.completedServices,before.completedServices+1);assert.equal((await getReport('Este mes')).income,after.monthlyIncomeCents);
 assert.equal(api.itemSubtotal({quantity:'1.25',unitCents:10}),13);
 const raw=localStorage.getItem(STORE_KEY);assert(raw.includes('Receptor de prueba'));assert.equal(getStore().clients.find(c=>c.id===client.id).name,'Cliente de prueba');
 // Fallo de persistencia: un cambio no se presenta como guardado si localStorage no permite escribir.

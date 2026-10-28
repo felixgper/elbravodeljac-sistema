@@ -146,7 +146,7 @@ export async function getDashboard(period='Mes'){
  const fmt=value=>new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeZone:'America/Lima'}).format(new Date(value));
  return {...d,monthlyIncomeCents:safeInteger(d.monthlyIncomeCents),income,period:period+' · '+fmt(d.from)+'–'+fmt(Date.parse(d.until)-1),currentMonth:formatMonth(d.currentMonth)};
 }
-export async function getReport(period){const r=(await request('/reportes?period='+encodeURIComponent(period))).data;return {...r,income:safeInteger(r.incomeCents),months:r.months.map(m=>({...m,label:m.label.length===10?new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'2-digit',timeZone:'America/Lima'}).format(new Date(m.label+'T12:00:00-05:00')):formatMonth(m.label),cents:safeInteger(m.cents)}))};}
+export async function getReport(period,range){const args=new URLSearchParams({period,...(range?{desde:range.start.toISOString(),hasta:range.end.toISOString()}:{})});const r=(await request('/reportes?'+args)).data;return {...r,income:safeInteger(r.incomeCents),months:r.months.map(m=>({...m,label:m.label.length===10?new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'2-digit',timeZone:'America/Lima'}).format(new Date(m.label+'T12:00:00-05:00')):formatMonth(m.label),cents:safeInteger(m.cents)}))};}
 
 function safeInteger(value){const n=Number(value);if(!/^[-]?\d+$/.test(String(value))||!Number.isSafeInteger(n))throw new Error("Total fuera del rango de visualización exacta.");return n;}
 

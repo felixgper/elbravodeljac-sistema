@@ -1,4 +1,4 @@
-import {incomeChart} from '../components/charts.js';
+import {incomeChart,horizontalBars} from '../components/charts.js';
 import {realMode} from '../services/api-service.js';
 import {getStore,saveSupplier,saveUser,deleteSupplier,deleteUser,saveRolePermissions,resetRolePermissions,ROLES,ACTIVE_STATES,getContext} from '../services/workshop-service.js';
 import {rolePermissions,permissionChecker,countPermissions} from '../services/permissions.js';
@@ -34,9 +34,20 @@ export function renderUsers({root,path,params,session}){
  root.insertAdjacentHTML('beforeend',hint(realMode?'Los permisos se verifican en Go. Asignar un rol agrega esa relación y conserva los roles adicionales existentes.':'Accesos de demostración. Los usuarios nuevos pueden iniciar sesión localmente; la autorización definitiva se implementará en el servidor.'));
 }
 export async function renderReports({root}){
- root.innerHTML=pageHeader('Reportes e indicadores','Información para supervisión y análisis del taller')+form('FILTROS',select('Periodo:','period',['Semana','Mes','Año'],'Mes'),submit('Aplicar filtros'),'report-form')+'<div id="report-content"></div>';
- const draw=async period=>{const report=await getReport(period);root.querySelector('#report-content').innerHTML=`<div class="report-columns separated"><section class="panel"><h2 class="form-section-title">SERVICIOS REALIZADOS</h2>${table(['Tipo','Cantidad'],report.services.map(s=>[e(s.label),e(s.count)]),'No hay servicios finalizados en el periodo seleccionado.')}</section><section class="panel"><h2 class="form-section-title">INGRESOS REGISTRADOS</h2>${table(['Período','Ingresos'],report.months.map(m=>[e(m.label),money(m.cents)]))}<h3>Evolución de ingresos</h3>${incomeChart(report.months.map(m=>({month:/^\d{2}\/\d{2}$/.test(m.label)?m.label:m.label.slice(0,3),cents:m.cents})),Math.max(260,root.clientWidth/2-60))}<div class="report-total"><span>Total registrado</span><strong>${money(report.income)}</strong></div></section></div>`;};
- bindForm('report-form',async data=>{await draw(data.period);notify('Filtros aplicados.');});await draw('Mes');
+ const today=new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'America/Lima'}).format(new Date());
+ root.innerHTML=pageHeader('Reportes e indicadores','Análisis detallado de servicios realizados e ingresos registrados')+form('FILTROS',select('Periodo:','period',['Semana','Mes','Año'],'Mes')+field('Fecha de referencia','reference',today,'date','required'),submit('Aplicar filtros'),'report-form')+'<div id="report-content" aria-live="polite"></div>';
+ let drawId=0;
+ const draw=async(period,reference)=>{
+  const id=++drawId,target=root.querySelector('#report-content');target.setAttribute('aria-busy','true');
+  target.innerHTML='<div class="loading-state" role="status">Consultando pagos y servicios…</div>';
+  try{
+   const report=await getReport(period,reference);if(id!==drawId)return;
+   const fmt=d=>new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeZone:'America/Lima'}).format(d),range=report.range,previous=report.comparison;
+   target.innerHTML=hint('Período: '+fmt(range.start)+' – '+fmt(new Date(range.end.getTime()-1))+'. Ingresos netos de pagos registrados, con sus rectificaciones. No incluye cotizaciones pendientes.')+`<div class="report-columns separated"><section class="panel"><h2 class="form-section-title">SERVICIOS REALIZADOS</h2>${table(['Tipo','Cantidad'],report.services.map(s=>[e(s.label),e(s.count)]),'No hay servicios finalizados en el periodo seleccionado.')}<h3>Servicios realizados más frecuentes</h3>${horizontalBars([...report.services].sort((a,b)=>b.count-a.count).slice(0,4),'services')}</section><section class="panel"><h2 class="form-section-title">INGRESOS REGISTRADOS</h2>${table(['Período','Ingresos'],report.months.map(m=>[e(m.label),money(m.cents)]))}<h3>Evolución de ingresos</h3>${incomeChart(report.months.map(m=>({month:/^\d{2}\/\d{2}$/.test(m.label)?m.label:m.label.slice(0,3),cents:m.cents})),Math.max(260,root.clientWidth/2-60))}<div class="report-total"><span>Total registrado</span><strong>${money(report.income)}</strong></div></section></div><section class="panel separated" id="historical-comparison"><h2 class="form-section-title">COMPARACIÓN CON EL PERÍODO ANTERIOR</h2><p>${fmt(range.previous)} – ${fmt(new Date(range.start.getTime()-1))}. Se comparan períodos completos de calendario.</p>${table(['Indicador','Período seleccionado','Período anterior','Diferencia'],[['Ingresos netos',money(report.income),money(previous.income),money(report.income-previous.income)],['Órdenes finalizadas',e(report.orders),e(previous.orders),e(report.orders-previous.orders)]])}</section>`;
+  }catch(error){if(id===drawId)target.innerHTML=hint('No se pudieron consultar los reportes: '+error.message);throw error;}
+  finally{if(id===drawId)target.removeAttribute('aria-busy');}
+ };
+ bindForm('report-form',async data=>{await draw(data.period,data.reference);notify('Filtros aplicados.');});await draw('Mes',today);
 }
 
 const userTabs=active=>`<nav class="tabs" aria-label="Secciones de usuarios"><a class="tab ${active==='usuarios'?'active':''}" href="#/usuarios" ${active==='usuarios'?'aria-current="page"':''}>${icon('user')}<span>Usuarios</span></a><a class="tab ${active==='roles'?'active':''}" href="#/usuarios/roles" ${active==='roles'?'aria-current="page"':''}>${icon('shield')}<span>Roles y permisos</span></a></nav>`;

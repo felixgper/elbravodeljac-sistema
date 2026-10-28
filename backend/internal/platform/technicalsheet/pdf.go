@@ -354,6 +354,11 @@ func or(v, otherwise string) string {
 	return v
 }
 func buildPDF(pages ...[]byte) ([]byte, error) {
+	return buildDocument(true, pages...)
+}
+
+// Only the automotive sheet uses the original two-page image template.
+func buildDocument(template bool, pages ...[]byte) ([]byte, error) {
 	objects := [][]byte{[]byte("<< /Type /Catalog /Pages 2 0 R >>"), []byte("PAGES_PLACEHOLDER"), []byte("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")}
 	kids := ""
 	for i := range pages {
@@ -368,7 +373,7 @@ func buildPDF(pages ...[]byte) ([]byte, error) {
 		w.Write(content)
 		w.Close()
 		objects = append(objects, stream(fmt.Sprintf("/Filter /FlateDecode /Length %d", z.Len()), z.Bytes()))
-		if i >= 2 {
+		if !template || i >= 2 {
 			objects = append(objects, []byte("<< >>"))
 			continue
 		}
