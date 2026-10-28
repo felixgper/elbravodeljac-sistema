@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -119,5 +120,96 @@ func TestQuotationLegacyApproval(t *testing.T) {
 	text := quotationText(t, pdf)
 	if !strings.Contains(text, "no registrada") || strings.Contains(text, "versi\xf3n 0") {
 		t.Fatal("Missing metadata must not become a fictitious approved revision")
+	}
+}
+
+func TestQuotationInstitutionalLogo(t *testing.T) {
+	web, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "dist", "assets", "images", "bravo-borgona.svg"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	embedded, err := assets.ReadFile("assets/bravo-borgona.svg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(web, embedded) {
+		t.Fatal("El logo PDF debe ser idéntico al recurso institucional web")
+	}
+}
+
+func TestQuotationGroupsAndZeroCharge(t *testing.T) {
+	raw := []byte(`{"workshop":{"name":"EL BRAVO DEL JAC","phone":"01-PRUEBA"},"quote":{"id":"165","version":2,"status":"Pendiente","total":"185.00","items":[{"concept":"PRIMER_SERVICIO","type":"Servicio","quantity":"2.00","unitPrice":"100.00","discount":"7.50","subtotal":"185.00"},{"concept":"REPUESTO_APORTADO","type":"Repuesto","origin":"CLIENTE","quantity":"1.00","unitPrice":"0.00","discount":"0.00","subtotal":"0.00"},{"concept":"ACTIVIDAD_INCLUIDA","type":"Servicio","quantity":"1.00","unitPrice":"0.00","discount":"0.00","subtotal":"0.00"}]}}`)
+	pdf, err := RenderQuotation(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := quotationText(t, pdf)
+	for _, value := range []string{"DESCRIPCI", "CANTIDAD", "IMPORTE", "SERVICIOS", "REPUESTOS", "01-PRUEBA", "Sin cargo independiente", "TOTAL COTIZADO", "S/ 185.00", "GRACIAS POR CONFIAR"} {
+		if !strings.Contains(text, value) {
+			t.Fatal("Missing layout/data:", value)
+		}
+	}
+	for _, concept := range []string{"PRIMER_SERVICIO", "REPUESTO_APORTADO", "ACTIVIDAD_INCLUIDA"} {
+		if strings.Count(text, concept) != 1 {
+			t.Fatal("Duplicated/changed concept", concept)
+		}
+	}
+	if strings.Index(text, "ACTIVIDAD_INCLUIDA") > strings.Index(text, "REPUESTO_APORTADO") {
+		t.Fatal("Services and spare parts were not grouped")
+	}
+}
+
+func TestQuotationNormalRowsStayTogether(t *testing.T) {
+	items := []map[string]string{}
+	for n := 0; n < 40; n++ {
+		items = append(items, map[string]string{"concept": fmt.Sprintf("ROW_%02d_BEGIN ", n) + strings.Repeat("Trabajo autorizado ", 8) + fmt.Sprintf(" ROW_%02d_END", n), "type": "Servicio", "quantity": "1.00", "unitPrice": "20.00", "discount": "0.00", "subtotal": "20.00"})
+	}
+	raw, _ := json.Marshal(map[string]any{"quote": map[string]any{"id": "166", "status": "Pendiente", "version": 1, "items": items, "total": "800.00"}})
+	pdf, err := RenderQuotation(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Extract each independent page stream to assert indivisibility of normal rows.
+	pages := []string{}
+	for {
+		start := bytes.Index(pdf, []byte("stream\n"))
+		if start < 0 {
+			break
+		}
+		pdf = pdf[start+7:]
+		end := bytes.Index(pdf, []byte("\nendstream"))
+		r, err := zlib.NewReader(bytes.NewReader(pdf[:end]))
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := io.ReadAll(r)
+		r.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+		pages = append(pages, string(data))
+		pdf = pdf[end+10:]
+	}
+	for n := 0; n < 40; n++ {
+		found := false
+		for _, page := range pages {
+			if strings.Contains(page, fmt.Sprintf("ROW_%02d_BEGIN", n)) {
+				found = strings.Contains(page, fmt.Sprintf("ROW_%02d_END", n))
+			}
+		}
+		if !found {
+			t.Fatal("Normal row split across pages", n)
+		}
+	}
+}
+
+func TestQuotationDescriptionWhitespace(t *testing.T) {
+	for _, description := range []string{"Revisión  y ajuste  autorizado", strings.Repeat("Texto  manual sin sustituir ", 50), strings.Repeat("W", 200)} {
+		if strings.Join(quoteWrap(description, 10.5, 322), "") != description {
+			t.Fatal("El formato alteró caracteres de la descripción")
+		}
+	}
+	if got := quoteWrap("Primera línea\n\nSegunda línea", 10.5, 322); len(got) != 3 || got[1] != "" {
+		t.Fatal("No se preservó el párrafo vacío")
 	}
 }

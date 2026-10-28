@@ -11,3 +11,5 @@ backend/.cache/
 *.test
 !backend/Dockerfile.test
 node_modules/
+# Vistas previas PDF generadas con datos ficticios de la base aislada
+/output/pdf/cotizacion-vista-previa*

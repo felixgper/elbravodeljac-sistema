@@ -236,6 +236,40 @@ func TestAuditCorrectionsPostgreSQL(t *testing.T) {
 			t.Fatal("Net income mismatch", report)
 		}
 	}
+
+	t.Run("nuevo diseño de cotización persistida", func(t *testing.T) {
+		reception := responseID(t, h.call(t, admin, "POST", "/recepciones", map[string]string{"clientId": client, "vehicleId": vehicle, "attentionType": "Directo", "mileage": "100", "symptoms": "Cotización ficticia para revisar maquetación en base test"}, 201))
+		body := map[string]any{"receptionId": reception, "status": "Pendiente", "items": []map[string]string{
+			{"type": "Servicio", "concept": "Inspección y servicio del sistema de frenos\nRevisión de pastillas delanteras\nRectificado y ajuste de discos", "quantity": "1", "unitPrice": "150", "discount": "15"},
+			{"type": "Servicio", "concept": "Revisión preventiva incluida en el servicio anterior", "quantity": "1", "unitPrice": "0", "discount": "0"},
+			{"type": "Servicio", "concept": "Mantenimiento de palieres, terminales y bieletas", "quantity": "2", "unitPrice": "95", "discount": "5"},
+			{"type": "Repuesto", "partKind": "Original", "origin": "Taller", "concept": "Juego de pastillas delanteras", "quantity": "1", "unitPrice": "220", "discount": "20"},
+			{"type": "Repuesto", "partKind": "Alternativo", "origin": "Cliente", "concept": "Filtro de aceite suministrado por el cliente", "quantity": "1", "unitPrice": "0", "discount": "0"},
+		}}
+		quote := dataObject(t, h.call(t, admin, "POST", "/cotizaciones", body, 201))
+		id := quote["id"].(string)
+		for _, state := range []string{"Pendiente", "Aprobada", "Rechazada"} {
+			if state != "Pendiente" {
+				body["status"] = state
+				body["version"] = quote["version"]
+				body["approval"] = nil
+				if state == "Aprobada" {
+					body["approval"] = map[string]string{"name": "Cliente de prueba aislada", "method": "WhatsApp"}
+				}
+				quote = dataObject(t, h.call(t, admin, "PUT", "/cotizaciones/"+id, body, 200))
+			}
+			if quote["total"] != "515.00" {
+				t.Fatal("Los importes originales no concilian", quote["total"])
+			}
+			h.checkQuotationPDF(t, admin, id, state)
+			if dir := os.Getenv("AUDIT_ARTIFACT_DIR"); dir != "" {
+				pdf := h.send(admin, "GET", "/cotizaciones/"+id+"/pdf", nil)
+				if err := os.WriteFile(filepath.Join(dir, "nuevo-diseno-"+state+".pdf"), pdf.raw, 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}
+	})
 	t.Log("Directo/diagnóstico, revisión/aprobación, ampliación, ejecución/ajuste, anticipos/reintentos/reversión, entrega, PDF/anexos e historial verificados")
 }
 func saveAuditArtifact(t *testing.T, name string, data []byte) {

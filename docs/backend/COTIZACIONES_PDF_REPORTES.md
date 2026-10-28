@@ -1,5 +1,10 @@
 # Cotizaciones PDF y organización de Inicio / Reportes
 
+Actualización visual posterior: [nuevo diseño de cotización PDF](DISENO_COTIZACION_PDF.md)
+con logo institucional y tabla de tres columnas. Este informe conserva los
+resultados de la implementación inicial; la actualización detalla el formato
+vigente y sus pruebas adicionales.
+
 Implementado y comprobado el 27/10/2026 en la rama
 `backend/arquitectura-go-mongodb`. Sin push, merge ni migraciones.
 
