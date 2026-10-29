@@ -416,10 +416,10 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 		invalid := admin
 		invalid.csrf = "incorrecto"
 		h.call(t, invalid, "POST", "/cotizaciones", quoteBody("Aprobada"), 403)
-		if got := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); got != "26" {
+		if got := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); got != "27" {
 			t.Fatal(got)
 		}
-		if got := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); got != "47" {
+		if got := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); got != "48" {
 			t.Fatal(got)
 		}
 	})

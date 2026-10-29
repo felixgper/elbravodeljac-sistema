@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const userJSON = `jsonb_build_object('id',u.id_usuario::text,'name',u.nombre,'username',u.usuario,'email',u.correo,'active',u.activo,'roles',coalesce((SELECT jsonb_agg(jsonb_build_object('id',r.id_rol::text,'name',r.nombre_rol) ORDER BY r.id_rol) FROM roles r JOIN usuario_roles ur USING(id_rol) WHERE ur.id_usuario=u.id_usuario),'[]'::jsonb))`
+const userJSON = `jsonb_build_object('id',u.id_usuario::text,'name',u.nombre,'employeeId',u.id_empleado::text,'employeeType',(SELECT e.tipo_empleado FROM empleados e WHERE e.id_empleado=u.id_empleado),'employeeActive',(SELECT e.activo FROM empleados e WHERE e.id_empleado=u.id_empleado),'username',u.usuario,'email',u.correo,'active',u.activo,'roles',coalesce((SELECT jsonb_agg(jsonb_build_object('id',r.id_rol::text,'name',r.nombre_rol) ORDER BY r.id_rol) FROM roles r JOIN usuario_roles ur USING(id_rol) WHERE ur.id_usuario=u.id_usuario),'[]'::jsonb))`
 const roleJSON = `jsonb_build_object('id',r.id_rol::text,'name',r.nombre_rol,'permissions',coalesce((SELECT jsonb_object_agg(x.module,x.actions) FROM (SELECT split_part(p.codigo,'.',1) AS module,jsonb_agg(split_part(p.codigo,'.',2) ORDER BY p.codigo) AS actions FROM rol_permisos rp JOIN permisos p USING(id_permiso) WHERE rp.id_rol=r.id_rol GROUP BY split_part(p.codigo,'.',1))x),'{}'::jsonb))`
 
 func identityActor(ctx context.Context, tx pgx.Tx, id, permission string) (domain.User, error) {
@@ -88,7 +88,7 @@ func (s *Store) SaveUser(ctx context.Context, id string, v domain.UserInput, act
 	if err != nil {
 		return nil, err
 	}
-	security := v.RoleID != nil || v.RemoveRoleID != nil || v.Password != nil || v.Active != nil
+	security := v.EmployeeID != nil || v.RoleID != nil || v.RemoveRoleID != nil || v.Password != nil || v.Active != nil
 	if security && !actor.Can("usuarios.roles") {
 		return nil, domain.ErrForbidden
 	}
@@ -143,6 +143,13 @@ func (s *Store) SaveUser(ctx context.Context, id string, v domain.UserInput, act
 			}
 		}
 		if v.Name != nil {
+			var linked bool
+			if err = tx.QueryRow(ctx, `SELECT id_empleado IS NOT NULL FROM usuarios WHERE id_usuario=$1`, id).Scan(&linked); err != nil {
+				return nil, err
+			}
+			if linked && *v.Name != name {
+				return nil, domain.Invalid("name", "Modifica el nombre principal desde Empleados.")
+			}
 			name = *v.Name
 		}
 		if v.Username != nil {
@@ -157,6 +164,11 @@ func (s *Store) SaveUser(ctx context.Context, id string, v domain.UserInput, act
 		_, err = tx.Exec(ctx, `UPDATE usuarios SET nombre=$2,usuario=$3,correo=nullif($4,''),activo=$5,password_hash=coalesce(nullif($6,''),password_hash) WHERE id_usuario=$1`, id, name, username, email, active, string(hash))
 		if err != nil {
 			return nil, translate(err)
+		}
+	}
+	if v.EmployeeID != nil {
+		if err = bindEmployee(ctx, tx, id, *v.EmployeeID); err != nil {
+			return nil, err
 		}
 	}
 	if v.RoleID != nil {

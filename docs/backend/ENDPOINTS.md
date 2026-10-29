@@ -4,6 +4,10 @@ Base `/api/v1`. **71 de 71 implementadas** tras Fase D. No quedan reservas 501. 
 
 ## Convenciones
 
+Extensión de empleados: cuatro operaciones adicionales y vinculación opcional
+en usuarios, documentadas en [EMPLEADOS.md](EMPLEADOS.md). El cargo laboral no
+concede permisos ni reemplaza los roles N de acceso.
+
 - JSON UTF-8. IDs SQL como strings decimales; campos JSON camelCase del formulario. Rutas {id} usan ID SQL, nunca codigo_ot.
 - Dinero, km y cantidades: strings decimales exactos; respuesta con dos decimales. total/subtotal/saldo son calculados por servidor.
 - Éxito futuro: 200 lectura/edición; 201 alta con Location; 204 eliminación/cierre de sesión. Detalle {data: objeto}; listas {data: [], meta: {page, pageSize, total}}.

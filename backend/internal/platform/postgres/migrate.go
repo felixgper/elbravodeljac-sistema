@@ -23,7 +23,10 @@ var AuditMigration string
 //go:embed migrations/006_pagos_entrega.sql
 var PaymentsMigration string
 
+//go:embed migrations/007_empleados.sql
+var EmployeesMigration string
+
 func (s *Store) Migrate(ctx context.Context) error {
-	_, err := s.Pool.Exec(ctx, FunctionalMigration+"\n"+BrandsMigration+"\n"+AttentionMigration+"\n"+DiagnosisWorkflowMigration+"\n"+AuditMigration+"\n"+PaymentsMigration)
+	_, err := s.Pool.Exec(ctx, FunctionalMigration+"\n"+BrandsMigration+"\n"+AttentionMigration+"\n"+DiagnosisWorkflowMigration+"\n"+AuditMigration+"\n"+PaymentsMigration+"\n"+EmployeesMigration)
 	return err
 }

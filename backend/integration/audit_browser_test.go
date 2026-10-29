@@ -72,6 +72,10 @@ func TestAuditBrowserIsolated(t *testing.T) {
 		}
 	}
 	_, _ = h.user(t, "auditbrowser", "AuditBrowser_"+h.suffix, all)
+	// Explicit access-role fixture: a clean isolated database need not already
+	// contain the Supervisor role used to prove independence from job titles.
+	h.exec(t, `INSERT INTO roles(nombre_rol) VALUES('Supervisor') ON CONFLICT DO NOTHING`)
+	h.exec(t, `INSERT INTO rol_permisos(id_rol,id_permiso) SELECT r.id_rol,p.id_permiso FROM roles r CROSS JOIN permisos p WHERE r.nombre_rol='Supervisor' AND p.codigo='ordenes.ver' ON CONFLICT DO NOTHING`)
 	mechanic, _ := h.user(t, "auditworker", "Mecánico", []string{"inicio.ver", "recepciones.ver", "diagnosticos.ver", "diagnosticos.crear", "ordenes.ver", "ordenes.editar", "vehiculos.ver"})
 	fixture := map[string]string{"url": origin, "username": "auditbrowser_" + h.suffix, "password": h.password, "workerUsername": "auditworker_" + h.suffix, "mechanicId": mechanic, "suffix": h.suffix}
 	input, _ := json.Marshal(fixture)

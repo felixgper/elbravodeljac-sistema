@@ -14,6 +14,8 @@ const linkJSON = `jsonb_build_object('id',l.id::text,'providerId',l.id_proveedor
 
 func (s *Store) RelationalItem(ctx context.Context, resource, id string) (any, error) {
 	switch resource {
+	case "empleados":
+		return readJSON(ctx, s.Pool, "SELECT "+employeeJSON+" FROM empleados e WHERE id_empleado=$1", id)
 	case "usuarios":
 		return readJSON(ctx, s.Pool, "SELECT "+userJSON+" FROM usuarios u WHERE u.id_usuario=$1", id)
 	case "rolePermissions":
@@ -29,6 +31,8 @@ func (s *Store) RelationalList(ctx context.Context, resource, parent string, p d
 	var expr, from, where, sort string
 	args := []any{"%" + p.Query + "%"}
 	switch resource {
+	case "empleados":
+		expr, from, where, sort = employeeJSON, "empleados e", "(e.nombre ILIKE $1 OR e.tipo_empleado ILIKE $1)", "e.id_empleado"
 	case "usuarios":
 		expr, from, where, sort = userJSON, "usuarios u", "(u.nombre ILIKE $1 OR u.usuario ILIKE $1 OR coalesce(u.correo,'') ILIKE $1)", "u.id_usuario"
 	case "roles":

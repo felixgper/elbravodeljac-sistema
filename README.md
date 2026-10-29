@@ -1,5 +1,7 @@
 # El Bravo del JAC · Frontend y backend Go · Fase E
 
+[Empleados y cargo laboral: gestión, vinculación segura y pruebas](docs/backend/EMPLEADOS.md).
+
 [Correcciones de auditoría: aprobación, ejecución, anticipos, entrega y reportes](docs/backend/CORRECCIONES_AUDITORIA_FUNCIONAL.md). Prueba aislada en Windows: `./backend/scripts/test-audit.ps1`.
 
 [Cotizaciones: nueva vacía, búsqueda remota y consulta protegida](docs/backend/CORRECCION_COTIZACIONES.md).

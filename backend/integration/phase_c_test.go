@@ -234,10 +234,10 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 			t.Fatal("administrative race", active)
 		}
 	})
-	if tables := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); tables != "26" {
+	if tables := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); tables != "27" {
 		t.Fatal(tables)
 	}
-	if fks := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); fks != "47" {
+	if fks := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); fks != "48" {
 		t.Fatal(fks)
 	}
 }
