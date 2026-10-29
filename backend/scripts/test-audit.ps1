@@ -36,13 +36,16 @@ try {
  }
  & docker compose --env-file $privatePath -p $testProject -f $testCompose -f $browserCompose up -d --wait postgres-test mongo-test
  if($LASTEXITCODE -ne 0){throw 'No se pudieron iniciar las bases aisladas. No se detuvieron servicios ajenos.'}
+ # Apply only the new additive migration to an existing owned test cluster.
+ Get-Content -LiteralPath backend/internal/platform/postgres/migrations/007_empleados.sql -Raw | & docker compose --env-file $privatePath -p $testProject -f $testCompose -f $browserCompose exec -T postgres-test psql -U postgres -d elbravodeljac_test -v ON_ERROR_STOP=1
+ if($LASTEXITCODE -ne 0){throw 'Falló migración 007 en PostgreSQL de pruebas; no se modificó desarrollo.'}
  $env:INTEGRATION_DATABASE_URL='postgres://postgres:'+$settings.TEST_POSTGRES_PASSWORD+'@127.0.0.1:25432/elbravodeljac_test?sslmode=disable'
  $env:INTEGRATION_MONGODB_URI='mongodb://127.0.0.1:27029/?directConnection=true&retryWrites=false'
  $env:INTEGRATION_MONGODB_DATABASE='elbravodeljac_tecnico_test'
  $env:FRONTEND_AUDIT='1';$env:AUDIT_ARTIFACT_DIR=Join-Path $repoRoot 'backend/.cache/audit-pdf'
  Push-Location backend
  try {
-  & go test ./integration -run 'TestAudit(CorrectionsPostgreSQL|BrowserIsolated)$' -v -count=1 *> .cache/audit-native.log
+  & go test ./integration -run 'Test(Audit(CorrectionsPostgreSQL|BrowserIsolated)|EmployeesPostgreSQL)$' -v -count=1 *> .cache/audit-native.log
   if($LASTEXITCODE -ne 0){throw 'Falló la prueba integral aislada: revisa backend/.cache/audit-native.log'}
   & go vet ./...
   if($LASTEXITCODE -ne 0){throw 'Falló go vet ./...'}

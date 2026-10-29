@@ -171,3 +171,8 @@ Reportes conserva `GET /api/v1/reportes`: la interfaz envía `period`, `desde` y
 consulta del período de calendario anterior para comparar ingresos netos y
 órdenes finalizadas. No se añadieron columnas, migraciones ni cálculos de venta.
 Ver [descarga, organización y pruebas](COTIZACIONES_PDF_REPORTES.md).
+
+Empleados (29/10/2026): GET/POST `/api/v1/empleados` y GET/PATCH
+`/api/v1/empleados/{id}`. Total acumulado: **91 operaciones de aplicación**,
+90 de negocio y frontend/opciones. POST/PATCH usuarios incorpora `employeeId`
+sin reemplazar roles existentes. Ver [contrato y compatibilidad](EMPLEADOS.md).

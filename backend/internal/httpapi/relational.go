@@ -9,13 +9,14 @@ import (
 
 func (s *server) relationalEndpoints() []endpoint {
 	out := []endpoint{}
-	for _, spec := range []struct{ resource, perm string }{{"usuarios", "usuarios.ver"}, {"roles", "usuarios.ver"}, {"permisos", "usuarios.ver"}, {"auxilios", "auxilio.ver"}, {"proveedores", "proveedores.ver"}, {"unidades-auxilio", "auxilio.ver"}} {
+	for _, spec := range []struct{ resource, perm string }{{"empleados", "usuarios.ver"}, {"usuarios", "usuarios.ver"}, {"roles", "usuarios.ver"}, {"permisos", "usuarios.ver"}, {"auxilios", "auxilio.ver"}, {"proveedores", "proveedores.ver"}, {"unidades-auxilio", "auxilio.ver"}} {
 		out = append(out, endpoint{"GET", "/api/v1/" + spec.resource, spec.perm, s.relationalList(spec.resource)})
 	}
-	for _, spec := range []struct{ resource, perm string }{{"usuarios", "usuarios.ver"}, {"auxilios", "auxilio.ver"}, {"proveedores", "proveedores.ver"}} {
+	for _, spec := range []struct{ resource, perm string }{{"empleados", "usuarios.ver"}, {"usuarios", "usuarios.ver"}, {"auxilios", "auxilio.ver"}, {"proveedores", "proveedores.ver"}} {
 		out = append(out, endpoint{"GET", "/api/v1/" + spec.resource + "/{id}", spec.perm, s.relationalItem(spec.resource)})
 	}
 	out = append(out,
+		endpoint{"POST", "/api/v1/empleados", "usuarios.crear", s.saveEmployee}, endpoint{"PATCH", "/api/v1/empleados/{id}", "usuarios.editar", s.saveEmployee},
 		endpoint{"POST", "/api/v1/usuarios", "usuarios.crear", s.saveUser}, endpoint{"PATCH", "/api/v1/usuarios/{id}", "usuarios.editar", s.saveUser}, endpoint{"DELETE", "/api/v1/usuarios/{id}", "usuarios.eliminar", s.deleteUser},
 		endpoint{"GET", "/api/v1/roles/{id}/permisos", "usuarios.ver", s.relationalItem("rolePermissions")}, endpoint{"PUT", "/api/v1/roles/{id}/permisos", "usuarios.roles", s.rolePermissions}, endpoint{"POST", "/api/v1/roles/{id}/permisos/restablecer", "usuarios.roles", s.rolePermissions},
 		endpoint{"POST", "/api/v1/auxilios", "auxilio.crear", s.saveAuxilio}, endpoint{"PATCH", "/api/v1/auxilios/{id}", "auxilio.crear", s.saveAuxilio},

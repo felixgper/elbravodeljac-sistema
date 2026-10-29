@@ -25,7 +25,7 @@ export async function loadModule(module,params=new URLSearchParams(),path=[]) {
   const current=++generation,sessionRef=realSession(),s={},permissions=sessionRef?.permissions||[],can=m=>permissions.includes(m+'.ver');
   const unavailable=[];
   if(module==='usuarios') {
-    s.users=(await allPages('/usuarios')).map(user); s.roles=await allPages('/roles'); s.permissionCatalog=await allPages('/permisos');
+    s.employees=await allPages('/empleados'); s.users=(await allPages('/usuarios')).map(user); s.roles=await allPages('/roles'); s.permissionCatalog=await allPages('/permisos');
     s.rolePermissions={};
     await Promise.all(s.roles.map(async r=>{s.rolePermissions[r.name]=(await request('/roles/'+r.id+'/permisos')).data.permissions;}));
   } else {
@@ -131,6 +131,7 @@ export async function saveUser(input,id){
   // Editar un campo ordinario no vuelve a asignar roles ni revoca sesiones.
   if(!id||!existing?.roleNames?.includes(role.name))body.roleId=role.id;
   if(id && body.active===existing?.active)delete body.active;
+  if(input.employeeId && input.employeeId!==existing?.employeeId)body.employeeId=input.employeeId;
   return user((await request('/usuarios'+(id?'/'+id:''),{method:id?'PATCH':'POST',body})).data);
 }
 const remove=path=>request(path,{method:'DELETE'});

@@ -57,6 +57,7 @@ type MatrixInput struct {
 	Permissions Matrix `json:"permissions"`
 }
 type UserInput struct {
+	EmployeeID   *string `json:"employeeId"`
 	Name         *string `json:"name"`
 	Username     *string `json:"username"`
 	Email        *string `json:"email"`
@@ -94,7 +95,7 @@ func (v UserInput) Validate(create bool) error {
 	for _, f := range []struct {
 		key   string
 		value *string
-	}{{"roleId", v.RoleID}, {"removeRoleId", v.RemoveRoleID}} {
+	}{{"roleId", v.RoleID}, {"removeRoleId", v.RemoveRoleID}, {"employeeId", v.EmployeeID}} {
 		if f.value != nil {
 			if _, err := ID(*f.value); err != nil {
 				return Invalid(f.key, "Rol inválido.")
