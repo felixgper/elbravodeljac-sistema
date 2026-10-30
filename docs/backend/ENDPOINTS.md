@@ -4,6 +4,12 @@ Base `/api/v1`. **71 de 71 implementadas** tras Fase D. No quedan reservas 501. 
 
 ## Convenciones
 
+Catálogo documental: `GET /api/v1/tipos-documento`, con sesión y `clientes.ver`
+o `pagos.ver`. `/roles` devuelve `active`; nuevas asignaciones usan Gerente,
+Administrador y Mecánico. Nuevas asignaciones/modificaciones de `assistantId`
+en órdenes devuelven 422. Detalles y pruebas:
+[Catálogo y tres roles](CATALOGO_DOCUMENTOS_TRES_ROLES.md).
+
 Extensión de empleados: cuatro operaciones adicionales y vinculación opcional
 en usuarios, documentadas en [EMPLEADOS.md](EMPLEADOS.md). El cargo laboral no
 concede permisos ni reemplaza los roles N de acceso.

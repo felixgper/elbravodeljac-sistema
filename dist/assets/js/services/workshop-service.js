@@ -66,12 +66,12 @@ export function saveQuote(input,id){if(realMode)return real.saveQuote(input,id);
   if(current){Object.assign(current,data);return current;}
   const record={id:nextCode(s.quotes,'COT',s),...data,createdAt:nowISO()};s.quotes.push(record);return record;
 });}
-function technicalUser(s,id,assistant=false){const u=requireRecord(s.users,id,assistant?'un auxiliar':'un mecánico');const allowed=assistant?['Auxiliar']:['Mecánico','Supervisor'];if(!u.active||!allowed.includes(u.role))throw new Error(assistant?'Selecciona un auxiliar activo.':'Selecciona un mecánico o supervisor activo.');return u;}
+function technicalUser(s,id){const u=requireRecord(s.users,id,'un mecánico');if(!u.active||u.role!=='Mecánico')throw new Error('Selecciona un mecánico activo.');return u;}
 export function createOrder(input,by){if(realMode)return real.createOrder(input,by);return transaction(s=>{
   const quote=requireRecord(s.quotes,input.quoteId,'una cotización aprobada');
   if(quote.status!=='Aprobada')throw new Error('Solo se crean órdenes desde cotizaciones aprobadas.');
   if(s.orders.some(o=>o.quoteId===quote.id))throw new Error('Esta cotización ya tiene una orden de trabajo.');
-  technicalUser(s,input.mechanicId);if(input.assistantId)technicalUser(s,input.assistantId,true);
+  technicalUser(s,input.mechanicId);if(input.assistantId)throw new Error('No se permiten nuevas asignaciones de Auxiliar.');
   const record={id:nextCode(s.orders,'OT',s),quoteId:quote.id,mechanicId:input.mechanicId,assistantId:input.assistantId||'',state:'Pendiente',createdAt:nowISO(),createdBy:by,updates:[],delivery:null};s.orders.push(record);return record;
 });}
 export function updateOrder(id,input,by){if(realMode)return real.updateOrder(id,input,by);return transaction(s=>{
@@ -80,14 +80,14 @@ export function updateOrder(id,input,by){if(realMode)return real.updateOrder(id,
   if(!ORDER_STATES.includes(input.state))throw new Error('Selecciona un estado válido.');
   if(order.state==='Finalizada'&&input.state!=='Finalizada')throw new Error('Una orden finalizada no puede retroceder de estado.');
   if(input.state==='Cancelada'&&paidTotal(s,id)>0)throw new Error('La orden tiene pagos registrados y no puede cancelarse desde esta demostración.');
-  technicalUser(s,input.mechanicId);if(input.assistantId)technicalUser(s,input.assistantId,true);
+  technicalUser(s,input.mechanicId);if(input.assistantId)throw new Error('No se permiten nuevas asignaciones de Auxiliar.');
   const test=String(input.test??'').trim(),result=input.result||'No aplica';if(!['No aplica','Satisfactoria','Fallida'].includes(result))throw new Error('Selecciona un resultado de prueba válido.');
   if(result!=='No aplica'&&!test)throw new Error('Indica qué prueba se realizó.');
   const lastRepair=order.updates.findLastIndex(u=>u.state==='En reparación');const lastTestIndex=order.updates.findLastIndex(u=>u.result!=='No aplica');
   const lastTest=result!=='No aplica'?{test,result}:lastTestIndex>lastRepair?order.updates[lastTestIndex]:null;
   if(input.state==='Finalizada'&&(!lastTest?.test||lastTest.result!=='Satisfactoria'))throw new Error('Para finalizar registra una prueba satisfactoria. Si falló, corrige la reparación y vuelve a probar.');
   const note=text(input.note,'la observación / avance de esta actualización',4000);
-  Object.assign(order,{mechanicId:input.mechanicId,assistantId:input.assistantId||'',state:input.state});order.updates.push({...audit(by),note,test,result,state:input.state});return order;
+  Object.assign(order,{mechanicId:input.mechanicId,state:input.state});order.updates.push({...audit(by),note,test,result,state:input.state});return order;
 });}
 export function deleteOrder(id){if(realMode)return real.deleteOrder(id);return transaction(s=>{const order=requireRecord(s.orders,id,'una orden');if(order.delivery||s.payments.some(p=>p.orderId===id))throw new Error('Esta orden tiene pagos o una entrega registrada. Se conserva por trazabilidad.');s.orders=s.orders.filter(o=>o.id!==id);return order;});}
 export function saveRescue(input,by){if(realMode)return real.saveRescue(input,by);return transaction(s=>{
@@ -142,7 +142,7 @@ export async function saveUser(input,id){if(realMode)return real.saveUser(input,
     const username=text(input.username,'el usuario',60).toLowerCase(),mail=email(input.email,true);if(!/^[a-z0-9_.-]{3,60}$/.test(username))throw new Error('El usuario debe tener 3 a 60 letras, números, punto, guion o guion bajo.');
     if(s.users.some(u=>u.id!==id&&(u.username===username||u.email===mail)))throw new Error('El usuario o el correo ya están registrados.');if(!ROLES.includes(input.role))throw new Error('Selecciona un rol válido.');
     const current=id?requireRecord(s.users,id,'un usuario'):null;
-    const isAdmin=role=>['Administrador','Propietario'].includes(role);if(current?.active&&isAdmin(current.role)&&(!input.active||!isAdmin(input.role))&&!s.users.some(u=>u.id!==id&&u.active&&isAdmin(u.role)))throw new Error('Debe conservarse al menos un administrador o propietario activo.');
+    const isAdmin=role=>role==='Gerente';if(current?.active&&isAdmin(current.role)&&(!input.active||!isAdmin(input.role))&&!s.users.some(u=>u.id!==id&&u.active&&isAdmin(u.role)))throw new Error('Debe conservarse al menos un Gerente activo.');
     const data={name:text(input.name,'el nombre del trabajador',180),username,email:mail,role:input.role,active:Boolean(input.active)};
     if(current){Object.assign(current,data);return current;}
     const record={id:newId('usr'),...data,passwordDigest:digest,createdAt:nowISO()};s.users.push(record);return record;
@@ -168,8 +168,8 @@ export function deleteSupplier(id){if(realMode)return real.deleteSupplier(id);re
 export function deleteUser(id,by){if(realMode)return real.deleteUser(id,by);return transaction(s=>{
   const user=requireRecord(s.users,id,'un usuario');
   if(id===by)throw new Error('No puedes eliminar tu propio usuario mientras tienes la sesión iniciada.');
-  const isAdmin=role=>['Administrador','Propietario'].includes(role);
-  if(user.active&&isAdmin(user.role)&&!s.users.some(u=>u.id!==id&&u.active&&isAdmin(u.role)))throw new Error('Debe conservarse al menos un administrador o propietario activo.');
+  const isAdmin=role=>role==='Gerente';
+  if(user.active&&isAdmin(user.role)&&!s.users.some(u=>u.id!==id&&u.active&&isAdmin(u.role)))throw new Error('Debe conservarse al menos un Gerente activo.');
   const used=s.orders.some(o=>o.mechanicId===id||o.assistantId===id||o.createdBy===id)||s.receptions.some(r=>r.createdBy===id)||s.diagnoses.some(d=>d.createdBy===id)||s.payments.some(p=>p.createdBy===id)||s.rescues.some(r=>r.technicianId===id||r.createdBy===id);
   if(used)throw new Error('Este usuario tiene actividad registrada en el taller. Para conservar el historial, edítalo y márcalo como inactivo.');
   s.users=s.users.filter(u=>u.id!==id);return user;
@@ -178,14 +178,14 @@ export function deleteUser(id,by){if(realMode)return real.deleteUser(id,by);retu
 // ── Roles y permisos ─────────────────────────────────────────────────────────
 export function saveRolePermissions(role,input){if(realMode)return real.saveRolePermissions(role,input);return transaction(s=>{
   if(!ROLES.includes(role))throw new Error('Selecciona un rol válido.');
-  if(role===LOCKED_ROLE)throw new Error('El rol Propietario siempre conserva el acceso completo.');
+  if(role===LOCKED_ROLE)throw new Error('El rol Gerente siempre conserva el acceso completo.');
   const clean=sanitizePermissions(input);
-  if(role==='Administrador'){for(const [module,actions] of Object.entries(REQUIRED_FOR_ADMIN))for(const action of actions)if(!clean[module]?.includes(action))throw new Error('El Administrador debe poder ver usuarios y gestionar roles para no perder el control del sistema.');}
+
   if(!Object.keys(clean).length)throw new Error('Deja al menos un módulo visible para este rol.');
   const current=s.rolePermissions||{};s.rolePermissions={...Object.fromEntries(ROLES.map(r=>[r,current[r]||defaultPermissions()[r]])),[role]:clean};return clean;
 });}
 export function resetRolePermissions(role){if(realMode)return real.resetRolePermissions(role);return transaction(s=>{
   if(!ROLES.includes(role))throw new Error('Selecciona un rol válido.');
-  if(role===LOCKED_ROLE)throw new Error('El rol Propietario siempre conserva el acceso completo.');
+  if(role===LOCKED_ROLE)throw new Error('El rol Gerente siempre conserva el acceso completo.');
   const defaults=defaultPermissions(),current=s.rolePermissions||{};s.rolePermissions={...Object.fromEntries(ROLES.map(r=>[r,current[r]||defaults[r]])),[role]:defaults[role]};return defaults[role];
 });}

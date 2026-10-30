@@ -83,10 +83,10 @@ func TestVehicleBrandsPostgreSQL(t *testing.T) {
 	if err = store.Migrate(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if n := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); n != "27" {
+	if n := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); n != "28" {
 		t.Fatal(n)
 	}
-	if n := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE connamespace='public'::regnamespace AND contype='f'`); n != "48" {
+	if n := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE connamespace='public'::regnamespace AND contype='f'`); n != "50" {
 		t.Fatal(n)
 	}
 }

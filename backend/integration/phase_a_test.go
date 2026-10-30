@@ -50,7 +50,7 @@ func TestPhaseAWithPostgreSQL(t *testing.T) {
 	if err = pool.QueryRow(ctx, `SELECT count(*) FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`).Scan(&fks); err != nil {
 		t.Fatal(err)
 	}
-	if tables != 27 || fks != 48 {
+	if tables != 28 || fks != 50 {
 		t.Fatalf("Esquema inesperado: %d tablas, %d FK", tables, fks)
 	}
 	random := make([]byte, 16)
@@ -201,9 +201,9 @@ func TestPhaseAWithPostgreSQL(t *testing.T) {
 		clientID = dataID(expect(call("POST", "/api/v1/clientes", clientPayload("A"+suffix[:12]), true), 201))
 		expect(call("POST", "/api/v1/clientes", clientPayload("A"+suffix[:12]), true), 409)
 		expect(call("GET", "/api/v1/clientes/"+clientID, nil, true), 200)
-		expect(call("PATCH", "/api/v1/clientes/"+clientID, map[string]string{"name": "Actualizado"}, true), 200)
+		expect(call("PATCH", "/api/v1/clientes/"+clientID, map[string]string{"name": "Actualizado" + suffix}, true), 200)
 		expect(call("PATCH", "/api/v1/clientes/"+clientID, map[string]string{"name": strings.Repeat("ñ", 151)}, true), 422)
-		res := expect(call("GET", "/api/v1/clientes?q=Actualizado&pageSize=1", nil, true), 200)
+		res := expect(call("GET", "/api/v1/clientes?q=Actualizado"+suffix+"&pageSize=1", nil, true), 200)
 		if !strings.Contains(string(res.body), clientID) {
 			t.Fatal("search missing")
 		}

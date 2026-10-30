@@ -1,0 +1,11 @@
+# Dedicated non-destructive validation of document/role migrations.
+# Start once; subsequent test runs reuse this cluster without up/down/reset.
+services:
+  postgres-test:
+    ports: !override ["127.0.0.1:25433:5432"]
+  mongo-test:
+    ports: !override ["127.0.0.1:27030:27017"]
+
+networks:
+  test-only:
+    internal: false

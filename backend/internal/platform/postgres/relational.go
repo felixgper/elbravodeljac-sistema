@@ -36,7 +36,7 @@ func (s *Store) RelationalList(ctx context.Context, resource, parent string, p d
 	case "usuarios":
 		expr, from, where, sort = userJSON, "usuarios u", "(u.nombre ILIKE $1 OR u.usuario ILIKE $1 OR coalesce(u.correo,'') ILIKE $1)", "u.id_usuario"
 	case "roles":
-		expr, from, where, sort = `jsonb_build_object('id',r.id_rol::text,'name',r.nombre_rol)`, "roles r", "r.nombre_rol ILIKE $1", "r.id_rol"
+		expr, from, where, sort = `jsonb_build_object('id',r.id_rol::text,'name',r.nombre_rol,'active',r.activo)`, "roles r", "r.nombre_rol ILIKE $1", "r.id_rol"
 	case "permisos":
 		expr, from, where, sort = `jsonb_build_object('id',p.id_permiso::text,'code',p.codigo,'description',p.descripcion)`, "permisos p", "p.codigo ILIKE $1", "p.id_permiso"
 	case "proveedores":
@@ -189,7 +189,7 @@ func (s *Store) SaveAuxilio(ctx context.Context, id string, v domain.AuxilioInpu
 			v.State = state
 		}
 	}
-	if err = technicalUser(ctx, tx, v.TechnicianID, false); err != nil {
+	if err = technicalUser(ctx, tx, v.TechnicianID); err != nil {
 		return nil, err
 	}
 	var unit string

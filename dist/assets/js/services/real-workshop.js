@@ -24,6 +24,7 @@ let generation=0;
 export async function loadModule(module,params=new URLSearchParams(),path=[]) {
   const current=++generation,sessionRef=realSession(),s={},permissions=sessionRef?.permissions||[],can=m=>permissions.includes(m+'.ver');
   const unavailable=[];
+  if(module==='clientes'||module==='pagos')s.documentTypes=(await request('/tipos-documento')).data;
   if(module==='usuarios') {
     s.employees=await allPages('/empleados'); s.users=(await allPages('/usuarios')).map(user); s.roles=await allPages('/roles'); s.permissionCatalog=await allPages('/permisos');
     s.rolePermissions={};
@@ -106,10 +107,10 @@ export async function saveQuote(input,id){
   const items=input.items.map(i=>({...pick(i,['concept','type','quantity','unitPrice','partKind','discount','serviceId','sparePartId']),origin:i.type==='Servicio'?'':i.origin}));
   return quote((await request('/cotizaciones'+(id?'/'+id:''),{method:id?'PUT':'POST',body:{diagnosisId:input.diagnosisId||'',receptionId:input.receptionId||'',status:input.status,items,version:input.version||0,parentQuoteId:input.parentQuoteId||'',...(input.status==='Aprobada'?{approval:{name:input.approvalName,method:input.approvalMethod}}:{})}})).data);
 }
-export async function createOrder(input){return order((await request('/ordenes',{method:'POST',body:pick(input,['quoteId','mechanicId','assistantId'])})).data);}
+export async function createOrder(input){return order((await request('/ordenes',{method:'POST',body:pick(input,['quoteId','mechanicId'])})).data);}
 export async function updateOrder(id,input){
   const body=pick(input,['state','note','test','result']);
-  if(realSession()?.permissions.includes('ordenes.asignar'))Object.assign(body,pick(input,['mechanicId','assistantId']));
+  if(realSession()?.permissions.includes('ordenes.asignar'))Object.assign(body,pick(input,['mechanicId']));
   return order((await request('/ordenes/'+id,{method:'PATCH',body})).data);
 }
 export async function saveRescue(input){return (await request('/auxilios',{method:'POST',body:{...pick(input,['clientId','vehicleId','location','incident','description','technicianId']),unitId:input.unit}})).data;}
@@ -126,12 +127,13 @@ export async function saveContact(input){const c=(await request('/clientes/'+inp
 export async function confirmDelivery(input){return (await request('/ordenes/'+input.orderId+'/entrega',{method:'POST',body:{...pick(input,['method','verified','conformity','conformityNotes',...(input.kind!=='Propietario o titular'?['contactId']:[])]),recipientKind:input.kind,kind:input.kind==='Propietario o titular'?'Titular / representante':'Tercero'}})).data;}
 export async function saveSupplier(input,id){if(input.parts)throw new Error('PostgreSQL no dispone de especialidad. El campo de repuestos se consulta mediante relaciones de catálogo; no se descartará información.');return (await request('/proveedores'+(id?'/'+id:''),{method:id?'PATCH':'POST',body:pick(input,['name','ruc','phone'])})).data;}
 export async function saveUser(input,id){
-  const s=realStore(),old=s.users.find(u=>u.id===id),role=s.roles.find(r=>r.name===(input.role||old?.roleNames?.[0]));if(!role)throw new Error('El rol seleccionado no existe en PostgreSQL.');
+  const s=realStore(),old=s.users.find(u=>u.id===id),role=s.roles.find(r=>r.active!==false&&r.name===input.role);if(!role&&!id)throw new Error('El rol seleccionado no existe en PostgreSQL.');
   const body=pick(input,['name','username','email','active',...(!id?['password']:[])]),existing=s.users.find(u=>u.id===id);
   // Editar un campo ordinario no vuelve a asignar roles ni revoca sesiones.
-  if(!id||!existing?.roleNames?.includes(role.name))body.roleId=role.id;
+  if(role&&(!id||!existing?.roleNames?.includes(role.name)))body.roleId=role.id;
   if(id && body.active===existing?.active)delete body.active;
   if(input.employeeId && input.employeeId!==existing?.employeeId)body.employeeId=input.employeeId;
+  if(input.removeRoleId)body.removeRoleId=input.removeRoleId;
   return user((await request('/usuarios'+(id?'/'+id:''),{method:id?'PATCH':'POST',body})).data);
 }
 const remove=path=>request(path,{method:'DELETE'});

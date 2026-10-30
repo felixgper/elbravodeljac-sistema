@@ -89,7 +89,7 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 		h.call(t, admin, "PATCH", "/usuarios/"+adminID, map[string]string{"roleId": lowRole}, 403)
 		h.call(t, limited, "PATCH", "/usuarios/"+worker, map[string]string{"roleId": adminRole}, 403)
 		h.call(t, admin, "DELETE", "/usuarios/"+adminID, nil, 403)
-		h.call(t, admin, "POST", "/roles/"+auxRole+"/permisos/restablecer", nil, 200)
+		h.call(t, admin, "POST", "/roles/"+auxRole+"/permisos/restablecer", nil, 422)
 		res := h.send(workshopSession{}, "POST", "/auth/login", map[string]string{"username": "cworker_" + h.suffix, "password": h.password})
 		if res.err != nil || res.status != 200 {
 			t.Fatalf("worker login %d %v", res.status, res.err)
@@ -194,10 +194,11 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 	t.Run("último acceso administrativo transacción y concurrencia", func(t *testing.T) {
 		// Remove the second admin first: a non-admin permission manager cannot remove the last.
 		h.call(t, admin, "PATCH", "/usuarios/"+secondID, map[string]bool{"active": false}, 200)
-		h.call(t, limited, "PUT", "/roles/"+adminRole+"/permisos", map[string]any{"permissions": map[string][]string{}}, 422)
-		if count := h.scalar(t, `SELECT count(*)::text FROM rol_permisos WHERE id_rol=$1`, adminRole); count == "0" {
-			t.Fatal("last administrative access lost")
-		}
+		h.call(t, limited, "PUT", "/roles/"+adminRole+"/permisos", map[string]any{"permissions": map[string][]string{}}, 200)
+		// Other test managers exist in this persistent cluster; clearing this
+		// custom role is legitimate. Last Gerente is tested in an isolated database.
+		h.call(t, limited, "PUT", "/roles/"+adminRole+"/permisos", map[string]any{"permissions": domain.PermissionPolicy().Defaults["Gerente"]}, 403)
+		h.exec(t, `INSERT INTO rol_permisos(id_rol,id_permiso) SELECT $1,id_permiso FROM permisos ON CONFLICT DO NOTHING`, adminRole)
 		h.call(t, admin, "PATCH", "/usuarios/"+secondID, map[string]bool{"active": true}, 200)
 		// Re-authenticate second: deactivation invalidated the former JWT.
 		res := h.send(workshopSession{}, "POST", "/auth/login", map[string]string{"username": "csecond_" + h.suffix, "password": h.password})
@@ -234,10 +235,10 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 			t.Fatal("administrative race", active)
 		}
 	})
-	if tables := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); tables != "27" {
+	if tables := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); tables != "28" {
 		t.Fatal(tables)
 	}
-	if fks := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); fks != "48" {
+	if fks := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); fks != "50" {
 		t.Fatal(fks)
 	}
 }

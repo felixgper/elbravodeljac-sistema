@@ -16,6 +16,15 @@ assert.equal(saved.id,'2');assert.equal(calls.at(-1).url,'/api/v1/clientes');ass
 assert(permissionChecker('Administrador')('clientes','ver'));assert(!permissionChecker('Administrador')('usuarios','roles'),'No se confía en el nombre de rol');
 ok({data:{id:'1',assignments:[],advances:[],tests:[],states:[]}});await workshop.updateOrder('1',{state:'En reparación',note:'Avance',mechanicId:'99',assistantId:'98',result:'No aplica',test:''});
 assert(!calls.at(-1).body.includes('mechanicId'),'Sin permiso no se envían reasignaciones');
+assert(!calls.at(-1).body.includes('assistantId'),'La edición no altera auxiliares históricos');
+const {documentOptions}=await import('../dist/assets/js/services/document-types.js');
+state.replaceRealStore({documentTypes:[{documentType:'DNI',label:'DNI',active:true},{documentType:'RUC',label:'RUC',active:true},{documentType:'Licencia',label:'Licencia',active:false}]});
+assert.deepEqual(documentOptions().map(d=>d.value),['DNI','RUC']);
+assert(documentOptions('Licencia').some(d=>d.value==='Licencia'));
+assert(!documentOptions('',true).some(d=>d.value==='RUC'));
+state.replaceRealStore({roles:[{id:'9',name:'Auxiliar',active:false},{id:'10',name:'Mecánico',active:true}],users:[{id:'2',active:true,roleNames:['Auxiliar']}]});
+ok({data:{id:'2',roles:[{id:'9',name:'Auxiliar'}]}});await workshop.saveUser({name:'Histórico editado',role:'',active:true},'2');assert(!calls.at(-1).body.includes('roleId'),'No convertir un rol histórico al editar otro campo');
+ok({data:{id:'2',roles:[{id:'10',name:'Mecánico'}]}});await workshop.saveUser({role:'Mecánico',removeRoleId:'9'},'2');assert.equal(JSON.parse(calls.at(-1).body).removeRoleId,'9');assert.equal(JSON.parse(calls.at(-1).body).roleId,'10');
 state.replaceRealStore({roles:[{id:'10',name:'Mecánico'},{id:'11',name:'Supervisor'}],users:[{id:'2',active:true,roleNames:['Mecánico','Supervisor']}]});
 ok({data:{id:'2',roles:[{id:'10',name:'Mecánico'},{id:'11',name:'Supervisor'}]}});await workshop.saveUser({name:'Editado',role:'Mecánico',active:true},'2');assert(!calls.at(-1).body.includes('roleId'));assert(!calls.at(-1).body.includes('removeRoleId'));
 await assert.rejects(workshop.saveSupplier({parts:'Texto sin columna'}),/no dispone/);

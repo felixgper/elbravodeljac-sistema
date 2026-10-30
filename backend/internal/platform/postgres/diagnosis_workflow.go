@@ -34,7 +34,7 @@ func (s *Store) AssignDiagnosis(ctx context.Context, id string, v domain.Diagnos
 	if attention != "Diagnostico" {
 		return nil, domain.Invalid("attentionType", "El servicio directo no requiere asignación de diagnóstico.")
 	}
-	if err = technicalUser(ctx, tx, v.TechnicianID, false); err != nil {
+	if err = technicalUser(ctx, tx, v.TechnicianID); err != nil {
 		return nil, err
 	}
 	var finalized bool
@@ -105,7 +105,7 @@ func (s *Store) SaveDiagnosis(ctx context.Context, id string, v domain.Diagnosis
 	if v.TechnicianID != "" && v.TechnicianID != technician {
 		return nil, domain.Invalid("technicianId", "El responsable corresponde a la asignación de recepción.")
 	}
-	if err = technicalUser(ctx, tx, technician, false); err != nil {
+	if err = technicalUser(ctx, tx, technician); err != nil {
 		return nil, err
 	}
 	event, _ := json.Marshal(map[string]any{"by": u.ID, "action": v.Status, "findings": v.Findings, "evaluation": v.Evaluation, "recommendations": v.Recommendations, "notes": v.Notes})

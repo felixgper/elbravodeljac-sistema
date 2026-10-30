@@ -114,6 +114,7 @@ func (s *Store) PatchClient(ctx context.Context, id string, patch map[string]str
 		return v, err
 	}
 	fields := map[string]*string{"name": &v.Name, "documentType": &v.DocumentType, "documentNumber": &v.DocumentNumber, "phone": &v.Phone, "address": &v.Address, "email": &v.Email}
+	originalKind, originalNumber := v.DocumentType, v.DocumentNumber
 	for k, value := range patch {
 		ptr, ok := fields[k]
 		if !ok {
@@ -121,7 +122,11 @@ func (s *Store) PatchClient(ctx context.Context, id string, patch map[string]str
 		}
 		*ptr = value
 	}
-	if err := v.ClientInput.Validate(); err != nil {
+	validate := v.ClientInput.Validate
+	if v.DocumentType == originalKind && v.DocumentNumber == originalNumber {
+		validate = v.ClientInput.ValidateRetainedIdentity
+	}
+	if err := validate(); err != nil {
 		return v, err
 	}
 	v, err = scanClient(tx.QueryRow(ctx, `UPDATE clientes SET nombre=$2,tipo_documento=$3,numero_documento=$4,telefono=$5,direccion=$6,correo=nullif($7,'') WHERE id_cliente=$1 RETURNING `+clientCols, id, v.Name, v.DocumentType, v.DocumentNumber, v.Phone, v.Address, v.Email))

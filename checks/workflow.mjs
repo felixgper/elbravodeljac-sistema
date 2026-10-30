@@ -24,10 +24,10 @@ const quoteInput={diagnosisId:diagnosis.id,status:'Pendiente',items:[{concept:'C
 let quote=api.saveQuote(quoteInput);assert.equal(api.quoteTotal(quote),15500);assert.equal(quote.items[2].unitCents,0);
 assert.throws(()=>api.createOrder({quoteId:quote.id,mechanicId:'u-pedro'},actor),/aprobadas/);
 quote=api.saveQuote({...quoteInput,status:'Aprobada'},quote.id);
-let order=api.createOrder({quoteId:quote.id,mechanicId:'u-pedro',assistantId:'u-kevin'},actor);assert.equal(order.state,'Pendiente');
+let order=api.createOrder({quoteId:quote.id,mechanicId:'u-pedro'},actor);assert.equal(order.state,'Pendiente');
 assert.throws(()=>api.createOrder({quoteId:quote.id,mechanicId:'u-pedro'},actor),/ya tiene/);
 assert.throws(()=>api.saveQuote({...quoteInput,status:'Aprobada'},quote.id),/originó/);
-const input={mechanicId:'u-pedro',assistantId:'u-kevin',state:'En reparación',note:'Revisión adicional',test:'',result:'No aplica'};
+const input={mechanicId:'u-pedro',state:'En reparación',note:'Revisión adicional',test:'',result:'No aplica'};
 api.updateOrder(order.id,input,actor);
 assert.throws(()=>api.updateOrder(order.id,{...input,state:'Finalizada'},actor),/prueba satisfactoria/);
 api.updateOrder(order.id,{...input,state:'En pruebas',note:'Prueba inicial falló',test:'Prueba de ruta',result:'Fallida'},actor);
@@ -49,7 +49,7 @@ assert.throws(()=>api.saveVehicle({...vehicle,mileage:'2024.25',transfer:true,ne
 const transferred=api.saveVehicle({...vehicle,mileage:'2024.25',transfer:true,newClientId:'c1',transferVerified:true},vehicle.id,actor);assert.equal(transferred.id,vehicle.id);assert.equal(transferred.transfers.length,1);assert.equal(getStore().receptions.find(r=>r.id===reception.id).clientId,beforeTransfer);
 const rescue=api.saveRescue({clientId:'c1',vehicleId:vehicle.id,location:'Los Olivos',incident:'Falla mecánica',unit:'Unidad 01',description:'Vehículo de prueba',technicianId:'u-pedro'},actor);assert(rescue.id);
 const supplier=api.saveSupplier({name:'Proveedor de prueba',ruc:'20876543210',phone:'+51987654300',parts:'Filtros'});assert.throws(()=>api.saveSupplier({...supplier}),/ya existe/i);
-const u=await api.saveUser({name:'Auxiliar de prueba',username:'aux.prueba',email:'aux@example.test',role:'Auxiliar',active:true,password:'Prueba2026!'});assert(u.passwordDigest&&!JSON.stringify(u).includes('Prueba2026!'));
+const u=await api.saveUser({name:'Auxiliar de prueba',username:'aux.prueba',email:'aux@example.test',role:'Mecánico',active:true,password:'Prueba2026!'});assert(u.passwordDigest&&!JSON.stringify(u).includes('Prueba2026!'));
 await login({username:'aux.prueba',password:'Prueba2026!',remember:false});assert.equal(getSession().id,u.id);logout();
 await api.saveUser({...u,active:false},u.id);await assert.rejects(login({username:'aux.prueba',password:'Prueba2026!',remember:false}));
 const after=await getDashboard();assert.equal(after.monthlyIncomeCents,before.monthlyIncomeCents+15500);assert.equal(after.completedServices,before.completedServices+1);assert.equal((await getReport('Este mes')).income,after.monthlyIncomeCents);

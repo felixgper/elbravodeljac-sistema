@@ -26,7 +26,13 @@ var PaymentsMigration string
 //go:embed migrations/007_empleados.sql
 var EmployeesMigration string
 
+//go:embed migrations/008_tipos_documento.sql
+var DocumentTypesMigration string
+
+//go:embed migrations/009_tres_roles.sql
+var ThreeRolesMigration string
+
 func (s *Store) Migrate(ctx context.Context) error {
-	_, err := s.Pool.Exec(ctx, FunctionalMigration+"\n"+BrandsMigration+"\n"+AttentionMigration+"\n"+DiagnosisWorkflowMigration+"\n"+AuditMigration+"\n"+PaymentsMigration+"\n"+EmployeesMigration)
+	_, err := s.Pool.Exec(ctx, FunctionalMigration+"\n"+BrandsMigration+"\n"+AttentionMigration+"\n"+DiagnosisWorkflowMigration+"\n"+AuditMigration+"\n"+PaymentsMigration+"\n"+EmployeesMigration+"\n"+DocumentTypesMigration+"\n"+ThreeRolesMigration)
 	return err
 }

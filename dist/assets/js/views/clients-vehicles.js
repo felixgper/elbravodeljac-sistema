@@ -1,3 +1,4 @@
+import {documentOptions} from '../services/document-types.js';
 import {request} from '../services/api-service.js';
 import {sheetButton,bindSheetDownloads} from '../components/technical-sheet.js';
 import {bindBrandPicker} from '../components/brand-picker.js';
@@ -19,7 +20,7 @@ export async function renderClients({root,path,params,session}){
   const id=path[1]==='editar'?path[2]:null,c=id?s.clients.find(c=>c.id===id):{};if(!c)throw new Error('No se encontró el cliente.');
   root.innerHTML=pageHeader(id?'Editar cliente':'Nuevo cliente','Complete los datos y seleccione el documento correspondiente.')+form('DATOS DEL CLIENTE',
    field('Nombre completo o razón social','name',c.name||'','text','required maxlength="150" autocomplete="organization"')+
-   select('Tipo de documento','documentType',['DNI','RUC',{value:'CE',label:'Carné de extranjería'},'Pasaporte'],c.documentType||'DNI','required')+
+   select('Tipo de documento','documentType',documentOptions(c.documentType||''),c.documentType||'DNI','required')+
    field('Número de documento','documentNumber',c.documentNumber||'','text','required maxlength="20" autocomplete="off"')+
    field('Teléfono','phone',c.phone||'','tel','required maxlength="20" autocomplete="tel"')+
    field('Correo electrónico (opcional)','email',c.email||'','email','maxlength="150" autocomplete="email"')+
