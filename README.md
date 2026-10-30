@@ -1,5 +1,12 @@
 # El Bravo del JAC · Frontend y backend Go · Fase E
 
+[Catálogo documental y tres roles: migraciones, conservación y pruebas](docs/backend/CATALOGO_DOCUMENTOS_TRES_ROLES.md).
+Rama de revisión `feature/catalogo-documentos-tres-roles`: 28 tablas / 50 FK,
+roles nuevos Gerente, Administrador y Mecánico; auxiliares históricos conservados.
+El entorno aislado existente se abre en `http://localhost:8080/` con las
+credenciales locales de `backend/.cache/acceso-desarrollo.txt`. Reiniciar Go
+requiere volver a iniciar sesión.
+
 [Empleados y cargo laboral: gestión, vinculación segura y pruebas](docs/backend/EMPLEADOS.md).
 
 [Correcciones de auditoría: aprobación, ejecución, anticipos, entrega y reportes](docs/backend/CORRECCIONES_AUDITORIA_FUNCIONAL.md). Prueba aislada en Windows: `./backend/scripts/test-audit.ps1`.

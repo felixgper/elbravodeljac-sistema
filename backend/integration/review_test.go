@@ -45,7 +45,7 @@ func TestFunctionalReviewPostgreSQL(t *testing.T) {
 	}
 	_, admin := h.user(t, "review", "Review_"+h.suffix, all)
 	mechanic, _ := h.user(t, "reviewmech", "Mecánico", []string{"ordenes.ver", "ordenes.editar"})
-	assistant, _ := h.user(t, "reviewaux", "Auxiliar", []string{"auxilio.ver"})
+	_, _ = h.user(t, "reviewaux", "Auxiliar", []string{"auxilio.ver"})
 	h.exec(t, `INSERT INTO clientes(nombre,tipo_documento,numero_documento,telefono,direccion) SELECT 'Félix González '||$1||' '||g,'Pasaporte','R'||$1||g::text,'+51987654321','Prueba aislada' FROM generate_series(1,1500) g`, h.suffix)
 	client := h.scalar(t, `SELECT id_cliente::text FROM clientes WHERE numero_documento=$1`, "R"+h.suffix+"1")
 	t.Run("búsqueda paginada normalizada e índice", func(t *testing.T) {
@@ -118,10 +118,10 @@ func TestFunctionalReviewPostgreSQL(t *testing.T) {
 			t.Fatal("SQL accepted anonymous untyped detail")
 		}
 	})
-	order := responseID(t, h.call(t, admin, "POST", "/ordenes", map[string]string{"quoteId": quoteID, "mechanicId": mechanic, "assistantId": assistant}, 201))
+	order := responseID(t, h.call(t, admin, "POST", "/ordenes", map[string]string{"quoteId": quoteID, "mechanicId": mechanic}, 201))
 	t.Run("avance sin prueba y asignación sin duplicados", func(t *testing.T) {
-		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "En reparación", "note": "Avance sin prueba", "mechanicId": mechanic, "assistantId": assistant}, 200)
-		if n := h.scalar(t, `SELECT count(*)::text FROM asignaciones_ot WHERE id_orden=$1`, order); n != "2" {
+		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "En reparación", "note": "Avance sin prueba", "mechanicId": mechanic}, 200)
+		if n := h.scalar(t, `SELECT count(*)::text FROM asignaciones_ot WHERE id_orden=$1`, order); n != "1" {
 			t.Fatal("redundant assignments", n)
 		}
 		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "Finalizada", "note": "Falta prueba"}, 422)
@@ -149,10 +149,10 @@ func TestFunctionalReviewPostgreSQL(t *testing.T) {
 			}
 		}
 	})
-	if n := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); n != "27" {
+	if n := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); n != "28" {
 		t.Fatal(n)
 	}
-	if n := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); n != "48" {
+	if n := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); n != "50" {
 		t.Fatal(n)
 	}
 }

@@ -1,18 +1,8 @@
 // Catálogo de módulos, acciones y permisos iniciales de cada rol.
 // Los permisos se guardan por rol; cada usuario hereda los de su rol.
-export const ROLES = ['Administrador', 'Supervisor', 'Mecánico', 'Auxiliar', 'Propietario', 'Administrativo'];
-
-// Orden en que se muestran los roles en la pantalla de permisos.
-export const ROLE_ORDER = ['Propietario', 'Administrador', 'Supervisor', 'Administrativo', 'Mecánico', 'Auxiliar'];
-
-export const ROLE_INFO = {
-  Propietario: {icon: 'crown', tone: 'gold', summary: 'Acceso total. No se puede restringir.'},
-  Administrador: {icon: 'gear', tone: 'copper', summary: 'Gestiona el taller y los usuarios.'},
-  Supervisor: {icon: 'shield', tone: 'blue', summary: 'Supervisa órdenes y personal técnico.'},
-  Administrativo: {icon: 'reception', tone: 'green', summary: 'Atención al cliente, recepción y cobros.'},
-  Mecánico: {icon: 'wrench', tone: 'gray', summary: 'Diagnostica y actualiza órdenes.'},
-  Auxiliar: {icon: 'users', tone: 'rose', summary: 'Ve y actualiza sus tareas asignadas.'},
-};
+export const ROLES=['Gerente','Administrador','Mecánico'];
+export const ROLE_ORDER=[...ROLES];
+export const ROLE_INFO={Gerente:{icon:'crown',tone:'gold',summary:'Dirección, usuarios y permisos.'},Administrador:{icon:'gear',tone:'copper',summary:'Operación diaria del taller.'},Mecánico:{icon:'wrench',tone:'gray',summary:'Diagnósticos y órdenes asignadas.'}};
 
 // [id de acción, etiqueta]. Solo existen las acciones que el sistema realmente tiene.
 export const PERMISSION_MODULES = [
@@ -36,32 +26,11 @@ export const TOTAL_PERMISSIONS = PERMISSION_MODULES.reduce((n, m) => n + m.actio
 const all = () => Object.fromEntries(PERMISSION_MODULES.map(m => [m.id, m.actions.map(a => a[0])]));
 const only = spec => spec;
 
-export function defaultPermissions() {
-  return {
-    Propietario: all(),
-    Administrador: all(),
-    Supervisor: only({
-      inicio: ['ver'], clientes: ['ver'], vehiculos: ['ver'], recepciones: ['ver'],
-      diagnosticos: ['ver', 'crear','asignar','supervisar'], cotizaciones: ['ver', 'crear', 'editar'],
-      ordenes: ['ver', 'crear', 'editar', 'asignar'], auxilio: ['ver', 'crear'],
-      mecanicos: ['ver'], reportes: ['ver'],
-    }),
-    Administrativo: only({
-      inicio: ['ver'], clientes: ['ver', 'crear', 'editar'], vehiculos: ['ver', 'crear', 'editar'],
-      recepciones: ['ver', 'crear'], cotizaciones: ['ver'], ordenes: ['ver'], auxilio: ['ver', 'crear'],
-      pagos: ['ver', 'registrar', 'entregar'],
-    }),
-    'Mecánico': only({
-      inicio: ['ver'], vehiculos: ['ver'], recepciones: ['ver'], diagnosticos: ['ver', 'crear'],
-      ordenes: ['ver', 'editar'], auxilio: ['ver'],
-    }),
-    Auxiliar: only({auxilio: ['ver']}),
-  };
-}
+export function defaultPermissions(){return structuredClone({"Gerente": {"inicio": ["ver"], "clientes": ["ver", "crear", "editar", "eliminar"], "vehiculos": ["ver", "crear", "editar", "eliminar"], "recepciones": ["ver", "crear"], "diagnosticos": ["ver", "crear", "asignar", "supervisar"], "cotizaciones": ["ver", "crear", "editar"], "ordenes": ["ver", "crear", "editar", "eliminar", "asignar"], "auxilio": ["ver", "crear"], "pagos": ["ver", "registrar", "entregar", "rectificar"], "mecanicos": ["ver"], "proveedores": ["ver", "crear", "editar", "eliminar"], "reportes": ["ver"], "usuarios": ["ver", "crear", "editar", "eliminar", "roles"]}, "Administrador": {"inicio": ["ver"], "clientes": ["ver", "crear", "editar", "eliminar"], "vehiculos": ["ver", "crear", "editar", "eliminar"], "recepciones": ["ver", "crear"], "diagnosticos": ["ver", "crear", "asignar", "supervisar"], "cotizaciones": ["ver", "crear", "editar"], "ordenes": ["ver", "crear", "editar", "eliminar", "asignar"], "auxilio": ["ver", "crear"], "pagos": ["ver", "registrar", "entregar"], "mecanicos": ["ver"], "proveedores": ["ver", "crear", "editar", "eliminar"], "reportes": ["ver"]}, "Mecánico": {"inicio": ["ver"], "vehiculos": ["ver"], "recepciones": ["ver"], "diagnosticos": ["ver", "crear"], "ordenes": ["ver", "editar"], "auxilio": ["ver"]}});}
 
 // Reglas que nunca se pueden romper para no dejar el sistema sin gestión.
-export const LOCKED_ROLE = 'Propietario';
-export const REQUIRED_FOR_ADMIN = {usuarios: ['ver', 'roles']};
+export const LOCKED_ROLE = 'Gerente';
+export const REQUIRED_FOR_ADMIN = {usuarios: ['ver', 'editar', 'roles']};
 
 // Limpia una matriz: solo módulos y acciones válidas, y sin acciones sueltas si falta "ver".
 export function sanitizePermissions(input = {}) {

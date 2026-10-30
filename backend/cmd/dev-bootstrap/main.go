@@ -58,8 +58,8 @@ func provision(ctx context.Context) error {
 	if err = tx.QueryRow(ctx, `SELECT count(*) FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`).Scan(&fks); err != nil {
 		return err
 	}
-	if tables != 26 || fks != 47 {
-		return errors.New("El esquema de desarrollo no coincide con las 26 tablas y 47 FK (42 originales y cinco referencias aditivas)")
+	if tables != 28 || fks != 50 {
+		return errors.New("El esquema de desarrollo no coincide con las 28 tablas y 50 FK (catálogo documental y referencias aditivas)")
 	}
 	if err = tx.QueryRow(ctx, `SELECT count(*) FROM usuarios`).Scan(&users); err != nil {
 		return err
@@ -92,7 +92,7 @@ func provision(ctx context.Context) error {
 		}
 	}
 	var roleID, userID string
-	if err = tx.QueryRow(ctx, `SELECT id_rol::text FROM roles WHERE nombre_rol='Administrador'`).Scan(&roleID); err != nil {
+	if err = tx.QueryRow(ctx, `SELECT id_rol::text FROM roles WHERE nombre_rol='Gerente'`).Scan(&roleID); err != nil {
 		return err
 	}
 	name := "Administración de pruebas"

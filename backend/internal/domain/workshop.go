@@ -266,17 +266,12 @@ type CreateOrderInput struct {
 }
 
 func (v CreateOrderInput) Validate() error {
-	if v.AssistantID != "" && v.AssistantID == v.MechanicID {
-		return Invalid("assistantId", "Selecciona personas distintas para mecánico responsable y auxiliar.")
+	if v.AssistantID != "" {
+		return Invalid("assistantId", "No se admiten nuevas asignaciones de auxiliar; se conserva el historial.")
 	}
 	for field, id := range map[string]string{"quoteId": v.QuoteID, "mechanicId": v.MechanicID} {
 		if _, err := ID(id); err != nil {
 			return Invalid(field, "ID inválido.")
-		}
-	}
-	if v.AssistantID != "" {
-		if _, err := ID(v.AssistantID); err != nil {
-			return Invalid("assistantId", "ID inválido.")
 		}
 	}
 	return nil
@@ -292,6 +287,9 @@ type UpdateOrderInput struct {
 }
 
 func (v *UpdateOrderInput) Validate() error {
+	if v.AssistantID != nil {
+		return Invalid("assistantId", "Las asignaciones auxiliares son históricas y no se modifican desde nuevas operaciones.")
+	}
 	state, err := OrderState(v.State)
 	if err != nil {
 		return err
@@ -306,11 +304,6 @@ func (v *UpdateOrderInput) Validate() error {
 	if v.MechanicID != nil {
 		if _, err := ID(*v.MechanicID); err != nil {
 			return Invalid("mechanicId", "ID inválido.")
-		}
-	}
-	if v.AssistantID != nil && *v.AssistantID != "" {
-		if _, err := ID(*v.AssistantID); err != nil {
-			return Invalid("assistantId", "ID inválido.")
 		}
 	}
 	switch strings.ToLower(v.Result) {

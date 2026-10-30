@@ -95,6 +95,7 @@ func New(store application.Store, opts Options) (http.Handler, error) {
 	})
 	mux.HandleFunc("POST /api/v1/auth/login", s.login)
 	mux.HandleFunc("GET /api/v1/frontend/opciones", s.protect("", s.frontendOptions))
+	mux.HandleFunc("GET /api/v1/tipos-documento", s.protect("", s.documentTypes))
 	implemented := map[string]bool{"POST /api/v1/auth/login": true}
 	for _, e := range append(append(append(s.endpoints(), s.workshopEndpoints()...), s.relationalEndpoints()...), s.technicalEndpoints()...) {
 		implemented[e.method+" "+e.path] = true

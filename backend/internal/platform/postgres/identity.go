@@ -10,7 +10,7 @@ import (
 )
 
 const userJSON = `jsonb_build_object('id',u.id_usuario::text,'name',u.nombre,'employeeId',u.id_empleado::text,'employeeType',(SELECT e.tipo_empleado FROM empleados e WHERE e.id_empleado=u.id_empleado),'employeeActive',(SELECT e.activo FROM empleados e WHERE e.id_empleado=u.id_empleado),'username',u.usuario,'email',u.correo,'active',u.activo,'roles',coalesce((SELECT jsonb_agg(jsonb_build_object('id',r.id_rol::text,'name',r.nombre_rol) ORDER BY r.id_rol) FROM roles r JOIN usuario_roles ur USING(id_rol) WHERE ur.id_usuario=u.id_usuario),'[]'::jsonb))`
-const roleJSON = `jsonb_build_object('id',r.id_rol::text,'name',r.nombre_rol,'permissions',coalesce((SELECT jsonb_object_agg(x.module,x.actions) FROM (SELECT split_part(p.codigo,'.',1) AS module,jsonb_agg(split_part(p.codigo,'.',2) ORDER BY p.codigo) AS actions FROM rol_permisos rp JOIN permisos p USING(id_permiso) WHERE rp.id_rol=r.id_rol GROUP BY split_part(p.codigo,'.',1))x),'{}'::jsonb))`
+const roleJSON = `jsonb_build_object('id',r.id_rol::text,'name',r.nombre_rol,'active',r.activo,'permissions',coalesce((SELECT jsonb_object_agg(x.module,x.actions) FROM (SELECT split_part(p.codigo,'.',1) AS module,jsonb_agg(split_part(p.codigo,'.',2) ORDER BY p.codigo) AS actions FROM rol_permisos rp JOIN permisos p USING(id_permiso) WHERE rp.id_rol=r.id_rol GROUP BY split_part(p.codigo,'.',1))x),'{}'::jsonb))`
 
 func identityActor(ctx context.Context, tx pgx.Tx, id, permission string) (domain.User, error) {
 	// Serialize every identity mutation and recheck the actor after acquiring it.
@@ -19,7 +19,7 @@ func identityActor(ctx context.Context, tx pgx.Tx, id, permission string) (domai
 	}
 	var u domain.User
 	u.ID = id
-	err := tx.QueryRow(ctx, `SELECT activo,ARRAY(SELECT DISTINCT p.codigo FROM permisos p JOIN rol_permisos rp USING(id_permiso) JOIN usuario_roles ur USING(id_rol) WHERE ur.id_usuario=u.id_usuario) FROM usuarios u WHERE id_usuario=$1`, id).Scan(&u.Active, &u.Permissions)
+	err := tx.QueryRow(ctx, `SELECT activo,ARRAY(SELECT DISTINCT p.codigo FROM permisos p JOIN rol_permisos rp USING(id_permiso) JOIN usuario_roles ur USING(id_rol) WHERE ur.id_usuario=u.id_usuario),EXISTS(SELECT 1 FROM usuarios mu JOIN usuario_roles mur USING(id_usuario) JOIN roles mr USING(id_rol) WHERE mu.activo AND mr.activo AND mr.nombre_rol='Gerente') FROM usuarios u WHERE id_usuario=$1`, id).Scan(&u.Active, &u.Permissions, &u.ManagerRequired)
 	if errors.Is(err, pgx.ErrNoRows) || (err == nil && (!u.Active || !u.Can(permission))) {
 		return u, domain.ErrForbidden
 	}
@@ -30,7 +30,7 @@ func hasAdminAccess(ctx context.Context, tx pgx.Tx, id string) (bool, error) {
 	err := tx.QueryRow(ctx, `SELECT count(DISTINCT p.codigo)=3 FROM usuario_roles ur JOIN rol_permisos rp USING(id_rol) JOIN permisos p USING(id_permiso) WHERE ur.id_usuario=$1 AND p.codigo IN ('usuarios.ver','usuarios.roles','usuarios.editar')`, id).Scan(&yes)
 	return yes, err
 }
-func preserveAdmin(ctx context.Context, tx pgx.Tx) error {
+func preserveAdmin(ctx context.Context, tx pgx.Tx, managerRequired bool) error {
 	var yes bool
 	err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM usuarios u JOIN usuario_roles ur USING(id_usuario) JOIN rol_permisos rp USING(id_rol) JOIN permisos p USING(id_permiso) WHERE u.activo AND p.codigo IN ('usuarios.ver','usuarios.roles','usuarios.editar') GROUP BY u.id_usuario HAVING count(DISTINCT p.codigo)=3)`).Scan(&yes)
 	if err != nil {
@@ -39,12 +39,25 @@ func preserveAdmin(ctx context.Context, tx pgx.Tx) error {
 	if !yes {
 		return domain.Invalid("administration", "Debe quedar al menos un usuario activo con usuarios.ver, usuarios.roles y usuarios.editar.")
 	}
+	if managerRequired {
+		err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM usuarios u JOIN usuario_roles ur USING(id_usuario) JOIN roles r USING(id_rol) WHERE u.activo AND r.activo AND r.nombre_rol='Gerente')`).Scan(&yes)
+		if err != nil {
+			return err
+		}
+		if !yes {
+			return domain.Invalid("administration", "Debe conservarse al menos un Gerente activo.")
+		}
+	}
 	return nil
 }
 func grantableRole(ctx context.Context, tx pgx.Tx, id string, actor domain.User) error {
 	var name string
-	if err := tx.QueryRow(ctx, `SELECT nombre_rol FROM roles WHERE id_rol=$1`, id).Scan(&name); err != nil {
+	var active bool
+	if err := tx.QueryRow(ctx, `SELECT nombre_rol,activo FROM roles WHERE id_rol=$1`, id).Scan(&name, &active); err != nil {
 		return translate(err)
+	}
+	if !active || name == "Auxiliar" || name == "Supervisor" || name == "Administrativo" || name == "Propietario" {
+		return domain.Invalid("roleId", "Rol retirado: conserva sus referencias históricas, pero no admite nuevas asignaciones.")
 	}
 	rows, err := tx.Query(ctx, `SELECT p.codigo FROM permisos p JOIN rol_permisos rp USING(id_permiso) WHERE rp.id_rol=$1`, id)
 	if err != nil {
@@ -127,7 +140,7 @@ func (s *Store) SaveUser(ctx context.Context, id string, v domain.UserInput, act
 		if protected && !actor.Can("usuarios.roles") {
 			return nil, domain.ErrForbidden
 		}
-		if v.Active != nil && *v.Active {
+		if v.Active != nil && *v.Active && !active {
 			rows, err := tx.Query(ctx, `SELECT id_rol::text FROM usuario_roles WHERE id_usuario=$1`, id)
 			if err != nil {
 				return nil, err
@@ -185,7 +198,7 @@ func (s *Store) SaveUser(ctx context.Context, id string, v domain.UserInput, act
 			return nil, domain.Invalid("removeRoleId", "La asignación que se pide retirar no existe.")
 		}
 	}
-	if err = preserveAdmin(ctx, tx); err != nil {
+	if err = preserveAdmin(ctx, tx, actor.ManagerRequired); err != nil {
 		return nil, err
 	}
 	out, err := readJSON(ctx, tx, "SELECT "+userJSON+" FROM usuarios u WHERE id_usuario=$1", id)
@@ -224,7 +237,7 @@ func (s *Store) DeleteUser(ctx context.Context, id string, actor domain.User) er
 	if tag.RowsAffected() == 0 {
 		return domain.ErrNotFound
 	}
-	if err = preserveAdmin(ctx, tx); err != nil {
+	if err = preserveAdmin(ctx, tx, actor.ManagerRequired); err != nil {
 		return err
 	}
 	return translate(tx.Commit(ctx))
@@ -243,11 +256,18 @@ func (s *Store) SetRolePermissions(ctx context.Context, id string, v domain.Matr
 	if err = tx.QueryRow(ctx, `SELECT nombre_rol FROM roles WHERE id_rol=$1 FOR UPDATE`, id).Scan(&role); err != nil {
 		return nil, translate(err)
 	}
+	var active bool
+	if err = tx.QueryRow(ctx, `SELECT activo FROM roles WHERE id_rol=$1`, id).Scan(&active); err != nil {
+		return nil, err
+	}
+	if !active {
+		return nil, domain.Invalid("role", "La matriz histórica de un rol retirado no se modifica.")
+	}
 	var own bool
 	if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM usuario_roles WHERE id_usuario=$1 AND id_rol=$2)`, actor.ID, id).Scan(&own); err != nil {
 		return nil, err
 	}
-	if own || role == "Propietario" {
+	if own || role == "Gerente" || role == "Propietario" {
 		return nil, domain.ErrForbidden
 	}
 	if reset {
@@ -274,15 +294,6 @@ func (s *Store) SetRolePermissions(ctx context.Context, id string, v domain.Matr
 		}
 		if !exists {
 			return nil, domain.Invalid("permissions", "El código no existe en el catálogo PostgreSQL; no se inventará.")
-		}
-	}
-	if role == "Administrador" {
-		found := map[string]bool{}
-		for _, code := range codes {
-			found[code] = true
-		}
-		if !found["usuarios.ver"] || !found["usuarios.roles"] || !found["usuarios.editar"] {
-			return nil, domain.Invalid("permissions", "Administrador conserva los permisos mínimos de gestión.")
 		}
 	}
 	known := map[string]bool{}
@@ -312,7 +323,7 @@ func (s *Store) SetRolePermissions(ctx context.Context, id string, v domain.Matr
 			return nil, translate(err)
 		}
 	}
-	if err = preserveAdmin(ctx, tx); err != nil {
+	if err = preserveAdmin(ctx, tx, actor.ManagerRequired); err != nil {
 		return nil, err
 	}
 	out, err := readJSON(ctx, tx, "SELECT "+roleJSON+" FROM roles r WHERE id_rol=$1", id)

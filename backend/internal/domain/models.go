@@ -20,14 +20,15 @@ func (e *Validation) Error() string       { return e.Field + ": " + e.Message }
 func Invalid(field, message string) error { return &Validation{field, message} }
 
 type User struct {
-	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	Username     string   `json:"username"`
-	Email        string   `json:"email"`
-	Active       bool     `json:"active"`
-	Roles        []string `json:"roles"`
-	Permissions  []string `json:"permissions"`
-	PasswordHash string   `json:"-"`
+	ID              string   `json:"id"`
+	Name            string   `json:"name"`
+	Username        string   `json:"username"`
+	Email           string   `json:"email"`
+	Active          bool     `json:"active"`
+	Roles           []string `json:"roles"`
+	Permissions     []string `json:"permissions"`
+	PasswordHash    string   `json:"-"`
+	ManagerRequired bool     `json:"-"`
 }
 
 func (u User) Can(code string) bool {
@@ -144,16 +145,35 @@ func text(field, value string, max int, required bool) error {
 	return nil
 }
 func documentAndPhone(kind, number, phone string) error {
-	if kind != "DNI" && kind != "RUC" && kind != "CE" && kind != "Pasaporte" {
-		return Invalid("documentType", "Tipo de documento inválido.")
+	// Catalogue membership/active state is checked transactionally in PostgreSQL.
+	if err := text("documentType", kind, 20, true); err != nil {
+		return err
 	}
 	if !regexp.MustCompile(`^[A-Z0-9]{5,20}$`).MatchString(number) || (kind == "DNI" && !regexp.MustCompile(`^[0-9]{8}$`).MatchString(number)) || (kind == "RUC" && !regexp.MustCompile(`^[0-9]{11}$`).MatchString(number)) {
 		return Invalid("documentNumber", "Número de documento inválido para este tipo.")
 	}
+	return validatePhone(phone)
+}
+func validatePhone(phone string) error {
 	if !regexp.MustCompile(`^\+?[0-9]{7,15}$`).MatchString(phone) {
 		return Invalid("phone", "Usa un teléfono de 7 a 15 dígitos, con + opcional.")
 	}
 	return nil
+}
+func NormalizeDocumentType(value string) string {
+	key := strings.ToLower(strings.TrimSpace(value))
+	key = strings.NewReplacer("á", "a", "é", "e", "í", "i", "ó", "o", "ú", "u", ".", "", " ", "").Replace(key)
+	switch key {
+	case "dni", "documentonacionaldeidentidad":
+		return "DNI"
+	case "ruc", "registrounicodecontribuyentes":
+		return "RUC"
+	case "ce", "carnedeextranjeria", "carnetdeextranjeria":
+		return "CE"
+	case "pasaporte":
+		return "Pasaporte"
+	}
+	return value
 }
 func normalizePhone(value string) string {
 	return strings.Map(func(r rune) rune {
@@ -164,7 +184,16 @@ func normalizePhone(value string) string {
 	}, strings.TrimSpace(value))
 }
 func (v *ClientInput) Validate() error {
-	v.DocumentNumber = strings.ToUpper(strings.TrimSpace(v.DocumentNumber))
+	return v.validate(true)
+}
+
+// Ordinary edits must not rewrite or invalidate an unchanged historical identity.
+func (v *ClientInput) ValidateRetainedIdentity() error { return v.validate(false) }
+func (v *ClientInput) validate(identity bool) error {
+	if identity {
+		v.DocumentType = NormalizeDocumentType(v.DocumentType)
+		v.DocumentNumber = strings.ToUpper(strings.TrimSpace(v.DocumentNumber))
+	}
 	v.Phone = normalizePhone(v.Phone)
 	v.Email = strings.ToLower(strings.TrimSpace(v.Email))
 	for _, e := range []error{text("name", v.Name, 150, true), text("documentType", v.DocumentType, 20, true), text("documentNumber", v.DocumentNumber, 20, true), text("phone", v.Phone, 20, true), text("email", v.Email, 150, false), text("address", v.Address, 10000, true)} {
@@ -172,7 +201,13 @@ func (v *ClientInput) Validate() error {
 			return e
 		}
 	}
-	if err := documentAndPhone(v.DocumentType, v.DocumentNumber, v.Phone); err != nil {
+	var err error
+	if identity {
+		err = documentAndPhone(v.DocumentType, v.DocumentNumber, v.Phone)
+	} else {
+		err = validatePhone(v.Phone)
+	}
+	if err != nil {
 		return err
 	}
 	if v.Email != "" && !regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`).MatchString(v.Email) {
@@ -181,6 +216,7 @@ func (v *ClientInput) Validate() error {
 	return nil
 }
 func (v *ContactInput) Validate() error {
+	v.DocumentType = NormalizeDocumentType(v.DocumentType)
 	v.DocumentNumber = strings.ToUpper(strings.TrimSpace(v.DocumentNumber))
 	v.Phone = normalizePhone(v.Phone)
 	for _, e := range []error{text("name", v.Name, 150, true), text("documentType", v.DocumentType, 20, true), text("documentNumber", v.DocumentNumber, 20, true), text("phone", v.Phone, 20, true), text("relation", v.Relation, 50, true)} {

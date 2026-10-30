@@ -1,3 +1,4 @@
+import {documentOptions} from '../services/document-types.js';
 import {remotePicker} from '../components/remote-picker.js';
 import {lookupOrders,reversePayment} from '../services/real-workshop.js';
 import {sheetButton,bindSheetDownloads} from '../components/technical-sheet.js';
@@ -25,7 +26,7 @@ export function renderPayments({root,params,session}){
  bindForm('payment-form',async data=>{const p=await registerPayment({...data,requestId:paymentRequestID},session.id);notify(`Pago ${p.id} registrado por ${money(p.amountCents)}.`);go('pagos?orden='+p.orderId);});
  bindForm('delivery-form',async data=>{await confirmDelivery({...data,orderId:order?.id},session.id);notify('Entrega confirmada y registrada.');go('pagos?orden='+order.id);});
  root.querySelector('#new-contact').onclick=()=>{
-  const dialog=showModal('Nuevo contacto para retiro',hint('Esta persona se vincula al cliente seleccionado. Registrar el contacto no autoriza automáticamente la entrega.')+form('DATOS DEL CONTACTO',field('Nombre completo','name','','text','required maxlength="150"')+select('Tipo de documento','documentType',['DNI',{value:'CE',label:'Carné de extranjería'},'Pasaporte'])+field('N.º documento','documentNumber','','text','required maxlength="20"')+field('Teléfono internacional','phone','','tel','required maxlength="20" placeholder="+51987654321"')+select('Relación con el cliente','relation',['Conductor','Representante','Familiar','Otro']),submit('Guardar contacto')+button('Cancelar','cancel'),'contact-form'));
+  const dialog=showModal('Nuevo contacto para retiro',hint('Esta persona se vincula al cliente seleccionado. Registrar el contacto no autoriza automáticamente la entrega.')+form('DATOS DEL CONTACTO',field('Nombre completo','name','','text','required maxlength="150"')+select('Tipo de documento','documentType',documentOptions('',true))+field('N.º documento','documentNumber','','text','required maxlength="20"')+field('Teléfono internacional','phone','','tel','required maxlength="20" placeholder="+51987654321"')+select('Relación con el cliente','relation',['Conductor','Representante','Familiar','Otro']),submit('Guardar contacto')+button('Cancelar','cancel'),'contact-form'));
   dialog.querySelector('[data-action="cancel"]').onclick=()=>dialog.close();
   bindForm('contact-form',async data=>{const contact=await saveContact({...data,clientId:c.client.id});const sel=root.querySelector('[name="contactId"]');sel.innerHTML=contactOptions().map(o=>`<option value="${e(o.value)}" ${o.value===contact.id?'selected':''}>${e(o.label)}</option>`).join('');dialog.close();notify('Contacto registrado. Verifica la autorización para este retiro.');});
  };

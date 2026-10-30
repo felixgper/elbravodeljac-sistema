@@ -18,6 +18,8 @@ services:
       - ./backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql:/docker-entrypoint-initdb.d/006-audit.sql:ro
       - ./backend/internal/platform/postgres/migrations/006_pagos_entrega.sql:/docker-entrypoint-initdb.d/007-payments.sql:ro
       - ./backend/internal/platform/postgres/migrations/007_empleados.sql:/docker-entrypoint-initdb.d/008-employees.sql:ro
+      - ./backend/internal/platform/postgres/migrations/008_tipos_documento.sql:/docker-entrypoint-initdb.d/009-document-types.sql:ro
+      - ./backend/internal/platform/postgres/migrations/009_tres_roles.sql:/docker-entrypoint-initdb.d/010-three-roles.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d elbravodeljac_test"]
       interval: 2s

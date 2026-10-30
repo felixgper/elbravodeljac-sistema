@@ -45,7 +45,7 @@ func (s *Store) CreateReception(ctx context.Context, v domain.ReceptionInput, u 
 		if !u.Can("diagnosticos.asignar") {
 			return nil, domain.ErrForbidden
 		}
-		if err = technicalUser(ctx, tx, v.TechnicianID, false); err != nil {
+		if err = technicalUser(ctx, tx, v.TechnicianID); err != nil {
 			return nil, err
 		}
 	}
@@ -223,17 +223,12 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 	}
 	return out, translate(tx.Commit(ctx))
 }
-func technicalUser(ctx context.Context, tx pgx.Tx, id string, assistant bool) error {
+func technicalUser(ctx context.Context, tx pgx.Tx, id string) error {
 	var found string
-	roles := []string{"mecánico", "mecanico", "supervisor"}
-	field := "mechanicId"
-	if assistant {
-		roles = []string{"auxiliar"}
-		field = "assistantId"
-	}
-	err := tx.QueryRow(ctx, `SELECT u.id_usuario::text FROM usuarios u WHERE u.id_usuario=$1 AND u.activo AND EXISTS(SELECT 1 FROM usuario_roles ur JOIN roles r USING(id_rol) WHERE ur.id_usuario=u.id_usuario AND lower(r.nombre_rol)=ANY($2)) FOR SHARE OF u`, id, roles).Scan(&found)
+	roles := []string{"mecánico", "mecanico"}
+	err := tx.QueryRow(ctx, `SELECT u.id_usuario::text FROM usuarios u WHERE u.id_usuario=$1 AND u.activo AND EXISTS(SELECT 1 FROM usuario_roles ur JOIN roles r USING(id_rol) WHERE ur.id_usuario=u.id_usuario AND r.activo AND lower(r.nombre_rol)=ANY($2)) FOR SHARE OF u`, id, roles).Scan(&found)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.Invalid(field, "Selecciona personal activo con rol técnico compatible.")
+		return domain.Invalid("mechanicId", "Selecciona un mecánico activo.")
 	}
 	return translate(err)
 }
@@ -257,13 +252,8 @@ func (s *Store) CreateOrder(ctx context.Context, v domain.CreateOrderInput, u do
 	if state != "aprobada" {
 		return nil, domain.Invalid("quoteId", "Solo se crea una OT desde una cotización aprobada.")
 	}
-	if err = technicalUser(ctx, tx, v.MechanicID, false); err != nil {
+	if err = technicalUser(ctx, tx, v.MechanicID); err != nil {
 		return nil, err
-	}
-	if v.AssistantID != "" {
-		if err = technicalUser(ctx, tx, v.AssistantID, true); err != nil {
-			return nil, err
-		}
 	}
 	var id string
 	err = tx.QueryRow(ctx, `WITH n AS (SELECT nextval(pg_get_serial_sequence('ordenes_trabajo','id_orden')) AS id) INSERT INTO ordenes_trabajo(id_orden,id_cotizacion,codigo_ot,id_usuario_creacion,flujo_version) SELECT id,$1,'OT-'||id::text,$2,1 FROM n RETURNING id_orden::text`, v.QuoteID, u.ID).Scan(&id)
@@ -276,11 +266,6 @@ func (s *Store) CreateOrder(ctx context.Context, v domain.CreateOrderInput, u do
 	}
 	if err = insertAssignment(ctx, tx, id, v.MechanicID, "MECANICO", at); err != nil {
 		return nil, err
-	}
-	if v.AssistantID != "" {
-		if err = insertAssignment(ctx, tx, id, v.AssistantID, "AUXILIAR", at); err != nil {
-			return nil, err
-		}
 	}
 	if _, err = tx.Exec(ctx, `INSERT INTO historial_estados_ot(id_orden,id_usuario,estado_nuevo,fecha) VALUES($1,$2,'creada',$3)`, id, u.ID, at); err != nil {
 		return nil, translate(err)
@@ -306,7 +291,7 @@ func canEditOrder(ctx context.Context, tx pgx.Tx, id string, u domain.User) erro
 		return nil
 	}
 	var assigned bool
-	err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM asignaciones_ot WHERE id_orden=$1 AND id_usuario=$2 AND activo)`, id, u.ID).Scan(&assigned)
+	err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM asignaciones_ot WHERE id_orden=$1 AND id_usuario=$2 AND activo AND rol_en_trabajo='MECANICO')`, id, u.ID).Scan(&assigned)
 	if err != nil {
 		return err
 	}
@@ -324,7 +309,7 @@ func (s *Store) UpdateOrder(ctx context.Context, id string, v domain.UpdateOrder
 	if err := v.Validate(); err != nil {
 		return nil, err
 	}
-	if (v.MechanicID != nil || v.AssistantID != nil) && !u.Can("ordenes.asignar") {
+	if (v.MechanicID != nil) && !u.Can("ordenes.asignar") {
 		return nil, domain.ErrForbidden
 	}
 	tx, err := s.Pool.Begin(ctx)
@@ -355,27 +340,12 @@ func (s *Store) UpdateOrder(ctx context.Context, id string, v domain.UpdateOrder
 			return nil, domain.ErrConflict
 		}
 	}
-	var currentMechanic, currentAssistant string
-	if err = tx.QueryRow(ctx, `SELECT coalesce(max(id_usuario::text) FILTER(WHERE rol_en_trabajo='MECANICO'),''),coalesce(max(id_usuario::text) FILTER(WHERE rol_en_trabajo='AUXILIAR'),'') FROM asignaciones_ot WHERE id_orden=$1 AND activo`, id).Scan(&currentMechanic, &currentAssistant); err != nil {
+	var currentMechanic string
+	if err = tx.QueryRow(ctx, `SELECT coalesce(max(id_usuario::text),'') FROM asignaciones_ot WHERE id_orden=$1 AND activo AND rol_en_trabajo='MECANICO'`, id).Scan(&currentMechanic); err != nil {
 		return nil, err
 	}
-	nextMechanic, nextAssistant := currentMechanic, currentAssistant
 	if v.MechanicID != nil {
-		nextMechanic = *v.MechanicID
-	}
-	if v.AssistantID != nil {
-		nextAssistant = *v.AssistantID
-	}
-	if nextAssistant != "" && nextAssistant == nextMechanic {
-		return nil, domain.Invalid("assistantId", "Mecánico responsable y auxiliar deben ser personas distintas.")
-	}
-	if v.MechanicID != nil {
-		if err = technicalUser(ctx, tx, *v.MechanicID, false); err != nil {
-			return nil, err
-		}
-	}
-	if v.AssistantID != nil && *v.AssistantID != "" {
-		if err = technicalUser(ctx, tx, *v.AssistantID, true); err != nil {
+		if err = technicalUser(ctx, tx, *v.MechanicID); err != nil {
 			return nil, err
 		}
 	}
@@ -383,20 +353,12 @@ func (s *Store) UpdateOrder(ctx context.Context, id string, v domain.UpdateOrder
 	if err != nil {
 		return nil, err
 	}
-	for _, assignment := range []struct {
-		id   *string
-		role string
-	}{{v.MechanicID, "MECANICO"}, {v.AssistantID, "AUXILIAR"}} {
-		if assignment.id == nil || (assignment.role == "MECANICO" && *assignment.id == currentMechanic) || (assignment.role == "AUXILIAR" && *assignment.id == currentAssistant) {
-			continue
-		}
-		if _, err = tx.Exec(ctx, `UPDATE asignaciones_ot SET activo=false WHERE id_orden=$1 AND rol_en_trabajo=$2 AND activo`, id, assignment.role); err != nil {
+	if v.MechanicID != nil && *v.MechanicID != currentMechanic {
+		if _, err = tx.Exec(ctx, `UPDATE asignaciones_ot SET activo=false WHERE id_orden=$1 AND rol_en_trabajo='MECANICO' AND activo`, id); err != nil {
 			return nil, translate(err)
 		}
-		if *assignment.id != "" {
-			if err = insertAssignment(ctx, tx, id, *assignment.id, assignment.role, at); err != nil {
-				return nil, err
-			}
+		if err = insertAssignment(ctx, tx, id, *v.MechanicID, "MECANICO", at); err != nil {
+			return nil, err
 		}
 	}
 	if _, err = tx.Exec(ctx, `INSERT INTO avances_ot(id_orden,id_usuario,observacion,fecha) VALUES($1,$2,$3,$4)`, id, u.ID, v.Note, at); err != nil {

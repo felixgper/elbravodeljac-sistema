@@ -68,7 +68,7 @@
     ]
   },
   "defaults": {
-    "Propietario": {
+    "Gerente": {
       "inicio": [
         "ver"
       ],
@@ -89,10 +89,10 @@
         "crear"
       ],
       "diagnosticos": [
-        "asignar",
+        "ver",
         "crear",
-        "supervisar",
-        "ver"
+        "asignar",
+        "supervisar"
       ],
       "cotizaciones": [
         "ver",
@@ -157,10 +157,10 @@
         "crear"
       ],
       "diagnosticos": [
-        "asignar",
+        "ver",
         "crear",
-        "supervisar",
-        "ver"
+        "asignar",
+        "supervisar"
       ],
       "cotizaciones": [
         "ver",
@@ -181,8 +181,7 @@
       "pagos": [
         "ver",
         "registrar",
-        "entregar",
-        "rectificar"
+        "entregar"
       ],
       "mecanicos": [
         "ver"
@@ -194,95 +193,6 @@
         "eliminar"
       ],
       "reportes": [
-        "ver"
-      ],
-      "usuarios": [
-        "ver",
-        "crear",
-        "editar",
-        "eliminar",
-        "roles"
-      ]
-    },
-    "Supervisor": {
-      "inicio": [
-        "ver"
-      ],
-      "clientes": [
-        "ver"
-      ],
-      "vehiculos": [
-        "ver"
-      ],
-      "recepciones": [
-        "ver"
-      ],
-      "diagnosticos": [
-        "asignar",
-        "crear",
-        "supervisar",
-        "ver"
-      ],
-      "cotizaciones": [
-        "ver",
-        "crear",
-        "editar"
-      ],
-      "ordenes": [
-        "ver",
-        "crear",
-        "editar",
-        "asignar"
-      ],
-      "auxilio": [
-        "ver",
-        "crear"
-      ],
-      "mecanicos": [
-        "ver"
-      ],
-      "reportes": [
-        "ver"
-      ]
-    },
-    "Administrativo": {
-      "inicio": [
-        "ver"
-      ],
-      "clientes": [
-        "ver",
-        "crear",
-        "editar"
-      ],
-      "vehiculos": [
-        "ver",
-        "crear",
-        "editar"
-      ],
-      "recepciones": [
-        "ver",
-        "crear"
-      ],
-      "cotizaciones": [
-        "ver",
-        "crear",
-        "editar"
-      ],
-      "ordenes": [
-        "ver"
-      ],
-      "auxilio": [
-        "ver",
-        "crear"
-      ],
-      "pagos": [
-        "ver",
-        "registrar",
-        "entregar"
-      ],
-      "diagnosticos": [
-        "asignar",
-        "supervisar",
         "ver"
       ]
     },
@@ -304,11 +214,6 @@
         "ver",
         "editar"
       ],
-      "auxilio": [
-        "ver"
-      ]
-    },
-    "Auxiliar": {
       "auxilio": [
         "ver"
       ]

@@ -50,7 +50,7 @@ func TestAuditCorrectionsPostgreSQL(t *testing.T) {
 	}
 	_, admin := h.user(t, "auditadmin", "Audit_"+h.suffix, permissions)
 	_, reader := h.user(t, "pdfreader", "QuoteReader_"+h.suffix, []string{"cotizaciones.ver"})
-	mechanic, worker := h.user(t, "auditmechanic", "Mecánico", []string{"diagnosticos.ver", "diagnosticos.crear", "ordenes.ver", "ordenes.editar", "pagos.ver"})
+	mechanic, worker := h.user(t, "auditmechanic", "Mecánico", []string{"diagnosticos.ver", "diagnosticos.crear", "ordenes.ver", "ordenes.editar"})
 	client := responseID(t, h.call(t, admin, "POST", "/clientes", map[string]string{"name": "Juan Pérez auditoría " + h.suffix, "documentType": "Pasaporte", "documentNumber": "AU" + h.suffix, "phone": "+51987654321", "address": "Entorno exclusivamente de pruebas"}, 201))
 	vehicle := responseID(t, h.call(t, admin, "POST", "/vehiculos", map[string]any{"clientId": client, "plate": "AU" + h.suffix[:5], "brand": "Toyota", "model": "Corolla", "year": 2025, "mileage": "100"}, 201))
 	approval := map[string]string{"name": "Juan Pérez", "method": "WhatsApp"}

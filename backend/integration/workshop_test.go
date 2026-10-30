@@ -210,7 +210,7 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 	permissions := []string{"diagnosticos.asignar", "diagnosticos.supervisar", "clientes.ver", "clientes.crear", "clientes.editar", "vehiculos.ver", "vehiculos.crear", "vehiculos.editar", "recepciones.ver", "recepciones.crear", "diagnosticos.ver", "diagnosticos.crear", "cotizaciones.ver", "cotizaciones.crear", "cotizaciones.editar", "ordenes.ver", "ordenes.crear", "ordenes.editar", "ordenes.eliminar", "ordenes.asignar", "mecanicos.ver", "auxilio.ver", "pagos.ver", "pagos.registrar", "pagos.entregar"}
 	_, admin := h.user(t, "manager", "Manager_"+h.suffix, permissions)
 	mechanic, mechanicSession := h.user(t, "mechanic", "Mecánico", []string{"ordenes.ver", "ordenes.editar"})
-	mechanic2, mechanic2Session := h.user(t, "technician", "Supervisor", []string{"ordenes.ver", "ordenes.editar"})
+	mechanic2, mechanic2Session := h.user(t, "technician", "Mecánico", []string{"ordenes.ver", "ordenes.editar"})
 	aux, auxSession := h.user(t, "helper", "Auxiliar", []string{"auxilio.ver"})
 	client := responseID(t, h.call(t, admin, "POST", "/clientes", map[string]any{"name": "Fixture taller", "documentType": "Pasaporte", "documentNumber": "W" + strings.ToUpper(h.suffix), "phone": "+51987654321", "address": "Lima"}, 201))
 	otherClient := responseID(t, h.call(t, admin, "POST", "/clientes", map[string]any{"name": "Otro fixture", "documentType": "Pasaporte", "documentNumber": "X" + strings.ToUpper(h.suffix), "phone": "+51987654321", "address": "Lima"}, 201))
@@ -285,7 +285,8 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 	}
 	t.Run("creación OT asignaciones y códigos", func(t *testing.T) {
 		h.call(t, admin, "POST", "/ordenes", map[string]string{"quoteId": quote, "mechanicId": aux}, 422)
-		order = responseID(t, h.call(t, admin, "POST", "/ordenes", map[string]string{"quoteId": quote, "mechanicId": mechanic, "assistantId": aux}, 201))
+		h.call(t, admin, "POST", "/ordenes", map[string]string{"quoteId": quote, "mechanicId": mechanic, "assistantId": aux}, 422)
+		order = responseID(t, h.call(t, admin, "POST", "/ordenes", map[string]string{"quoteId": quote, "mechanicId": mechanic}, 201))
 		h.call(t, admin, "POST", "/ordenes", map[string]string{"quoteId": quote, "mechanicId": mechanic}, 409)
 		h.call(t, admin, "PUT", "/cotizaciones/"+quote, quoteBody("Rechazada"), 409)
 		h.call(t, admin, "GET", "/ordenes?estado=Pendiente", nil, 200)
@@ -302,6 +303,7 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 		t.Fatal("No se creó OT")
 	}
 	t.Run("permisos por objeto avances pruebas y finalización", func(t *testing.T) {
+		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "En reparación", "note": "No permitir auxiliar", "assistantId": aux}, 422)
 		h.call(t, mechanic2Session, "GET", "/ordenes/"+order, nil, 404)
 		h.call(t, mechanicSession, "PATCH", "/ordenes/"+order, map[string]string{"state": "En reparación", "note": "No puede reasignar", "mechanicId": mechanic2}, 403)
 		h.call(t, admin, "PATCH", "/ordenes/"+order, map[string]string{"state": "En reparación", "note": "Reasignación", "mechanicId": mechanic2}, 200)
@@ -416,10 +418,10 @@ func TestWorkshopHTTPPostgreSQL(t *testing.T) {
 		invalid := admin
 		invalid.csrf = "incorrecto"
 		h.call(t, invalid, "POST", "/cotizaciones", quoteBody("Aprobada"), 403)
-		if got := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); got != "27" {
+		if got := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); got != "28" {
 			t.Fatal(got)
 		}
-		if got := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); got != "48" {
+		if got := h.scalar(t, `SELECT count(*)::text FROM pg_constraint WHERE contype='f' AND connamespace='public'::regnamespace`); got != "50" {
 			t.Fatal(got)
 		}
 	})
