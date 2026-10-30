@@ -1,0 +1,594 @@
+[
+  {
+    "a": "clientes",
+    "b": "contactos_cliente",
+    "verb": "DESIGNA CONTACTO",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_contactos_cliente_id_cliente"
+    ],
+    "column": "contactos_cliente.id_cliente",
+    "logical": false,
+    "id": "R08",
+    "cx": 800,
+    "cy": 1640,
+    "x": 300,
+    "y": 710
+  },
+  {
+    "a": "vehiculos",
+    "b": "historial_propietarios",
+    "verb": "CONSERVA TITULARIDAD",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_historial_vehiculo"
+    ],
+    "column": "historial_propietarios.id_vehiculo",
+    "logical": false,
+    "id": "R15",
+    "cx": 2300,
+    "cy": 1640,
+    "x": 1000,
+    "y": 710
+  },
+  {
+    "a": "recepciones",
+    "b": "auxilios",
+    "verb": "SE VINCULA CON",
+    "ca": "(0,N)",
+    "cb": "(0,1)",
+    "physical": [
+      "fk_auxilios_id_recepcion"
+    ],
+    "column": "auxilios.id_recepcion",
+    "logical": false,
+    "id": "R16",
+    "cx": 3800,
+    "cy": 1640,
+    "x": 1700,
+    "y": 710
+  },
+  {
+    "a": "clientes",
+    "b": "vehiculos",
+    "verb": "POSEE",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_vehiculos_cliente"
+    ],
+    "column": "vehiculos.id_cliente",
+    "logical": false,
+    "id": "R01",
+    "cx": 1600,
+    "cy": 2300,
+    "x": 650,
+    "y": 1050
+  },
+  {
+    "a": "vehiculos",
+    "b": "recepciones",
+    "verb": "INGRESA",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_recepciones_id_vehiculo"
+    ],
+    "column": "recepciones.id_vehiculo",
+    "logical": false,
+    "id": "R02",
+    "cx": 3100,
+    "cy": 2300,
+    "x": 1350,
+    "y": 1050
+  },
+  {
+    "a": "recepciones",
+    "b": "diagnosticos",
+    "verb": "RECIBE DIAGNÓSTICO",
+    "ca": "(0,1)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_diagnosticos_id_recepcion"
+    ],
+    "column": "diagnosticos.id_recepcion",
+    "logical": false,
+    "id": "R03",
+    "cx": 4600,
+    "cy": 2300,
+    "x": 2050,
+    "y": 1050
+  },
+  {
+    "a": "diagnosticos",
+    "b": "cotizaciones",
+    "verb": "SUSTENTA",
+    "ca": "(0,N)",
+    "cb": "(0,1)",
+    "physical": [
+      "fk_cotizaciones_id_diagnostico"
+    ],
+    "column": "cotizaciones.id_diagnostico",
+    "logical": false,
+    "id": "R04",
+    "cx": 6100,
+    "cy": 2300,
+    "x": 2750,
+    "y": 1050
+  },
+  {
+    "a": "cotizaciones",
+    "b": "ordenes_trabajo",
+    "verb": "AUTORIZA ORDEN",
+    "ca": "(0,1)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_ordenes_trabajo_id_cotizacion"
+    ],
+    "column": "ordenes_trabajo.id_cotizacion",
+    "logical": false,
+    "id": "R05",
+    "cx": 7600,
+    "cy": 2300,
+    "x": 3450,
+    "y": 1050
+  },
+  {
+    "a": "ordenes_trabajo",
+    "b": "pagos",
+    "verb": "RECIBE PAGO",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_pagos_id_orden"
+    ],
+    "column": "pagos.id_orden",
+    "logical": false,
+    "id": "R06",
+    "cx": 9100,
+    "cy": 2300,
+    "x": 4150,
+    "y": 1050
+  },
+  {
+    "a": "empleados",
+    "b": "usuarios",
+    "verb": "TIENE CUENTA",
+    "ca": "(0,1)",
+    "cb": "(0,1)",
+    "physical": [
+      "usuarios_id_empleado_fkey"
+    ],
+    "column": "usuarios.id_empleado",
+    "logical": false,
+    "id": "R09",
+    "cx": 6100,
+    "cy": 4900,
+    "x": 2750,
+    "y": 3050
+  },
+  {
+    "a": "usuarios",
+    "b": "roles",
+    "verb": "ASUME ROL",
+    "ca": "(0,N)",
+    "cb": "(0,N)",
+    "physical": [
+      "fk_usuario_roles_rol",
+      "fk_usuario_roles_usuario"
+    ],
+    "bridge": "usuario_roles",
+    "logical": false,
+    "id": "R10",
+    "cx": 7600,
+    "cy": 4900,
+    "x": 3450,
+    "y": 3050
+  },
+  {
+    "a": "roles",
+    "b": "permisos",
+    "verb": "CONCEDE PERMISO",
+    "ca": "(0,N)",
+    "cb": "(0,N)",
+    "physical": [
+      "fk_rol_permisos_permiso",
+      "fk_rol_permisos_rol"
+    ],
+    "bridge": "rol_permisos",
+    "logical": false,
+    "id": "R11",
+    "cx": 9100,
+    "cy": 4900,
+    "x": 4150,
+    "y": 3050
+  },
+  {
+    "a": "proveedores",
+    "b": "repuestos",
+    "verb": "ABASTECE",
+    "ca": "(0,N)",
+    "cb": "(0,N)",
+    "physical": [
+      "fk_repuesto_proveedor_id_proveedor",
+      "fk_repuesto_proveedor_id_repuesto"
+    ],
+    "bridge": "repuesto_proveedor",
+    "logical": false,
+    "id": "R12",
+    "cx": 1600,
+    "cy": 3540,
+    "x": 1350,
+    "y": 2450
+  },
+  {
+    "a": "unidades_auxilio",
+    "b": "auxilios",
+    "verb": "SE DESPLIEGA EN",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_auxilios_id_unidad_auxilio"
+    ],
+    "column": "auxilios.id_unidad_auxilio",
+    "logical": false,
+    "id": "R19",
+    "cx": 4600,
+    "cy": 1000,
+    "x": 2050,
+    "y": 360
+  },
+  {
+    "a": "ordenes_trabajo",
+    "b": "asignaciones_ot",
+    "verb": "TIENE ASIGNACIÓN",
+    "ca": "(1,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_asignaciones_ot_id_orden"
+    ],
+    "column": "asignaciones_ot.id_orden",
+    "logical": false,
+    "id": "R17",
+    "cx": 8300,
+    "cy": 2940,
+    "x": 3800,
+    "y": 1450
+  },
+  {
+    "a": "cotizaciones",
+    "b": "detalle_cotizacion",
+    "verb": "CONTIENE CONCEPTO",
+    "ca": "(1,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_detalle_cotizacion_id_cotizacion"
+    ],
+    "column": "detalle_cotizacion.id_cotizacion",
+    "logical": false,
+    "id": "R21",
+    "cx": 6100,
+    "cy": 2940,
+    "x": 3100,
+    "y": 1450
+  },
+  {
+    "a": "cotizaciones",
+    "b": "cotizaciones",
+    "verb": "TIENE AMPLIACIÓN",
+    "ca": "(0,N)",
+    "cb": "(0,1)",
+    "physical": [
+      "cotizaciones_id_cotizacion_base_fkey"
+    ],
+    "column": "cotizaciones.id_cotizacion_base",
+    "logical": false,
+    "id": "R13",
+    "cx": 6800,
+    "cy": 1680,
+    "x": 3450,
+    "y": 850
+  },
+  {
+    "a": "servicios",
+    "b": "detalle_cotizacion",
+    "verb": "REFERENCIA SERVICIO",
+    "ca": "(0,N)",
+    "cb": "(0,1)",
+    "physical": [
+      "fk_detalle_cotizacion_id_servicio"
+    ],
+    "column": "detalle_cotizacion.id_servicio",
+    "logical": false,
+    "id": "R18",
+    "cx": 4600,
+    "cy": 3600,
+    "x": 2750,
+    "y": 2180
+  },
+  {
+    "a": "diagnosticos",
+    "b": "resultados_escaner",
+    "verb": "DOCUMENTA ESCÁNER",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [],
+    "logical": true,
+    "id": "R23",
+    "cx": 6100,
+    "cy": 1640,
+    "x": 2750,
+    "y": 710
+  },
+  {
+    "a": "vehiculos",
+    "b": "auxilios",
+    "verb": "REQUIERE AUXILIO",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_auxilios_id_vehiculo"
+    ],
+    "column": "auxilios.id_vehiculo",
+    "logical": false,
+    "id": "R26",
+    "cx": 3100,
+    "cy": 1640,
+    "x": 1350,
+    "y": 710
+  },
+  {
+    "a": "ordenes_trabajo",
+    "b": "avances_ot",
+    "verb": "REGISTRA AVANCE",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_avances_ot_id_orden"
+    ],
+    "column": "avances_ot.id_orden",
+    "logical": false,
+    "id": "R25",
+    "cx": 9100,
+    "cy": 2940,
+    "x": 4350,
+    "y": 1450
+  },
+  {
+    "a": "clientes",
+    "b": "historial_propietarios",
+    "verb": "FIGURA COMO TITULAR",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_historial_cliente"
+    ],
+    "column": "historial_propietarios.id_cliente",
+    "logical": false,
+    "id": "R24",
+    "cx": 1600,
+    "cy": 1640,
+    "x": 650,
+    "y": 360
+  },
+  {
+    "a": "usuarios",
+    "b": "asignaciones_ot",
+    "verb": "DESEMPEÑA FUNCIÓN",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_asignaciones_ot_id_usuario"
+    ],
+    "column": "asignaciones_ot.id_usuario",
+    "logical": false,
+    "id": "R22",
+    "cx": 7600,
+    "cy": 4240,
+    "x": 3450,
+    "y": 2750
+  },
+  {
+    "a": "clientes",
+    "b": "recepciones",
+    "verb": "SOLICITA ATENCIÓN",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_recepciones_id_cliente_atencion"
+    ],
+    "column": "recepciones.id_cliente_atencion",
+    "logical": false,
+    "id": "R29",
+    "cx": 2300,
+    "cy": 2920,
+    "x": 1000,
+    "y": 1350
+  },
+  {
+    "a": "ordenes_trabajo",
+    "b": "entregas",
+    "verb": "CULMINA EN ENTREGA",
+    "ca": "(0,1)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_entregas_id_orden"
+    ],
+    "column": "entregas.id_orden",
+    "logical": false,
+    "id": "R07",
+    "cx": 9800,
+    "cy": 1680,
+    "x": 4850,
+    "y": 1320
+  },
+  {
+    "a": "clientes",
+    "b": "auxilios",
+    "verb": "SOLICITA AUXILIO",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_auxilios_id_cliente_solicitante"
+    ],
+    "column": "auxilios.id_cliente_solicitante",
+    "logical": false,
+    "id": "R36",
+    "cx": 1600,
+    "cy": 1060,
+    "x": 650,
+    "y": 710
+  },
+  {
+    "a": "diagnosticos",
+    "b": "evidencias_tecnicas",
+    "verb": "REÚNE EVIDENCIA",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [],
+    "logical": true,
+    "id": "R35",
+    "cx": 7300,
+    "cy": 1640,
+    "x": 3450,
+    "y": 710
+  },
+  {
+    "a": "repuestos",
+    "b": "detalle_cotizacion",
+    "verb": "REFERENCIA REPUESTO",
+    "ca": "(0,N)",
+    "cb": "(0,1)",
+    "physical": [
+      "fk_detalle_cotizacion_id_repuesto"
+    ],
+    "column": "detalle_cotizacion.id_repuesto",
+    "logical": false,
+    "id": "R28",
+    "cx": 3800,
+    "cy": 2980,
+    "x": 2400,
+    "y": 1850
+  },
+  {
+    "a": "ordenes_trabajo",
+    "b": "pruebas_ot",
+    "verb": "INCLUYE PRUEBA",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_pruebas_ot_id_orden"
+    ],
+    "column": "pruebas_ot.id_orden",
+    "logical": false,
+    "id": "R33",
+    "cx": 9800,
+    "cy": 2940,
+    "x": 4950,
+    "y": 1450
+  },
+  {
+    "a": "recepciones",
+    "b": "cotizaciones",
+    "verb": "ORIGINA COTIZACIÓN",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "cotizaciones_id_recepcion_fkey"
+    ],
+    "column": "cotizaciones.id_recepcion",
+    "logical": false,
+    "id": "R27",
+    "cx": 5300,
+    "cy": 1680,
+    "x": 3100,
+    "y": 710
+  },
+  {
+    "a": "ordenes_trabajo",
+    "b": "historial_estados_ot",
+    "verb": "CONSERVA ESTADOS",
+    "ca": "(1,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_historial_estados_ot_id_orden"
+    ],
+    "column": "historial_estados_ot.id_orden",
+    "logical": false,
+    "id": "R20",
+    "cx": 7600,
+    "cy": 2940,
+    "x": 5550,
+    "y": 1450
+  },
+  {
+    "a": "usuarios",
+    "b": "recepciones",
+    "verb": "SE ASIGNA A DIAGNÓSTICO",
+    "ca": "(0,N)",
+    "cb": "(0,1)",
+    "physical": [
+      "recepciones_id_mecanico_diagnostico_fkey"
+    ],
+    "column": "recepciones.id_mecanico_diagnostico",
+    "logical": false,
+    "id": "R39",
+    "cx": 5300,
+    "cy": 4220,
+    "x": 2050,
+    "y": 1450
+  },
+  {
+    "a": "usuarios",
+    "b": "diagnosticos",
+    "verb": "DIAGNOSTICA",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_diagnosticos_id_tecnico"
+    ],
+    "column": "diagnosticos.id_tecnico",
+    "logical": false,
+    "id": "R31",
+    "cx": 6100,
+    "cy": 3600,
+    "x": 2400,
+    "y": 2750
+  },
+  {
+    "a": "usuarios",
+    "b": "auxilios",
+    "verb": "ATIENDE AUXILIO",
+    "ca": "(0,N)",
+    "cb": "(1,1)",
+    "physical": [
+      "fk_auxilios_id_tecnico"
+    ],
+    "column": "auxilios.id_tecnico",
+    "logical": false,
+    "id": "R44",
+    "cx": 4800,
+    "cy": 2940,
+    "x": 2050,
+    "y": 2750
+  },
+  {
+    "a": "contactos_cliente",
+    "b": "entregas",
+    "verb": "RECIBE ENTREGA",
+    "ca": "(0,N)",
+    "cb": "(0,1)",
+    "physical": [
+      "fk_entregas_id_contacto_receptor"
+    ],
+    "column": "entregas.id_contacto_receptor",
+    "logical": false,
+    "id": "R49",
+    "cx": 6100,
+    "cy": 1060,
+    "x": 4700,
+    "y": 360
+  }
+]

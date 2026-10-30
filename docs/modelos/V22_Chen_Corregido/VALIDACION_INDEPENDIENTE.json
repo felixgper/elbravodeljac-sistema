@@ -1,0 +1,22 @@
+{
+  "valid": true,
+  "pages": 1,
+  "entities": 26,
+  "relationships": 35,
+  "attributes": 0,
+  "bridge_tables_covered": 3,
+  "physical_tables_covered": 27,
+  "fks_explicitly_represented": 36,
+  "unchanged_entity_positions": 26,
+  "unchanged_original_diamond_positions": 33,
+  "originals_preserved": true,
+  "migrations_unchanged": true,
+  "cardinality_changes_checked": 7,
+  "operational_relationships_added": 2,
+  "connectors": 70,
+  "all_ports_attached": true,
+  "no_shape_overlaps": true,
+  "no_connectors_through_shapes": true,
+  "no_retraced_line_stubs": true,
+  "local_xml_validation": true
+}

@@ -1,0 +1,17 @@
+{
+  "pages": 1,
+  "entities": 26,
+  "relationships": 35,
+  "attributes": 0,
+  "ovals": 0,
+  "all_entities_connected": true,
+  "shape_overlaps": [],
+  "connectors_through_shapes": [],
+  "text_overflow": [],
+  "crossings": 12,
+  "png": [
+    6200,
+    3400
+  ],
+  "connector_length": 43560
+}
