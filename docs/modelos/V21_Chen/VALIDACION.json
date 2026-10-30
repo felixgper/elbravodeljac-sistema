@@ -1,0 +1,63 @@
+{
+  "page_count": 1,
+  "tables": 27,
+  "foreign_keys": 48,
+  "relational_entities": 24,
+  "mongo_entities": 2,
+  "nm_relationships": 3,
+  "total_diamonds": 49,
+  "attributes": 154,
+  "editable_vertices": 334,
+  "connectors": 252,
+  "all_entities_connected": true,
+  "physical_fk_coverage": 48,
+  "duplicated_fk_coverage": 0,
+  "cardinality_labels": 98,
+  "shape_overlaps": [],
+  "connector_shape_hits": [],
+  "text_overflow": [],
+  "outside_canvas": [],
+  "crossing_bridges": 251,
+  "canvas": [
+    12600,
+    6150
+  ],
+  "png": [
+    12600,
+    6150
+  ],
+  "sources": [
+    {
+      "path": "database/postgresql/esquema_actual.sql",
+      "sha256": "5c4b2b3221c1af2411882d62747332272137ffb1978a1713658579bfdab0de5d"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/001_revision_funcional.sql",
+      "sha256": "dbbb8d4fff31c1d007a3e753d96cdfbac1d910868410f39d8096204b720c67d4"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/002_marcas_vehiculos.sql",
+      "sha256": "7d7ac507ebfa6aa269f7cb9df1712e112f615ef082797e0b521c06199e73a6c2"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql",
+      "sha256": "d84536afbe15dbf9ffc972771aeb45aac2450651b0de58e0b044bed3d22332e9"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql",
+      "sha256": "b0f7aa472d589d3c1079945f45f84058365e0054567a433add93c72b6b3765d4"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql",
+      "sha256": "f6f2fea272fbb1b9443ed1a171664e5437e5866b38eff054c17a1f61b94a31b5"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/006_pagos_entrega.sql",
+      "sha256": "755db3fe2bc0df974168971c87dc639628d3fa76e009583affaa7a4774d69aa5"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/007_empleados.sql",
+      "sha256": "3803c70d8d8fb77cc75263ece7b4d5de80d342e0d40c6744c4e1c39d43b77832"
+    }
+  ]
+}

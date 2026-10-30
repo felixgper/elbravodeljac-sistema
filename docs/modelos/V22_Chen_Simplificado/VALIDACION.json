@@ -1,0 +1,20 @@
+{
+  "pages": 1,
+  "entities": 26,
+  "relationships": 33,
+  "attributes": 0,
+  "ovals": 0,
+  "all_entities_connected": true,
+  "shape_overlaps": [],
+  "connectors_through_shapes": [],
+  "text_overflow": [],
+  "crossings": 13,
+  "png": [
+    6200,
+    3400
+  ],
+  "xml_validated": true,
+  "unique_ids": true,
+  "all_connector_ports_attached": true,
+  "no_visible_fields": true
+}

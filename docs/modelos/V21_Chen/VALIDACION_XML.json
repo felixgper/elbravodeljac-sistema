@@ -1,0 +1,14 @@
+{
+  "valid": true,
+  "pages": 1,
+  "vertices": 334,
+  "connectors": 252,
+  "relational_entities": 24,
+  "bridge_relationships": 3,
+  "physical_fks_covered": 48,
+  "diamonds": 49,
+  "cardinality_labels": 98,
+  "source_hashes_unchanged": true,
+  "local_validation_only": true,
+  "cardinalities_recomputed_from_catalog": true
+}
