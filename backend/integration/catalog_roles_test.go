@@ -91,12 +91,13 @@ func TestCatalogRolesMigrationAndHTTP(t *testing.T) {
 	}
 	owner := legacyUser("owner", "Propietario", all)
 	oldAdmin := legacyUser("legacy", "Administrador", all)
-	oldAux := legacyUser("historical", "Auxiliar", []string{"auxilio.ver"})
+	oldAux := legacyUser("historical", "Auxiliar", []string{"auxilio.ver", "diagnosticos.ver", "diagnosticos.crear"})
 	unknown := h.scalar(t, `INSERT INTO clientes(nombre,tipo_documento,numero_documento,telefono,direccion) VALUES('Histórico','Licencia','abc-001','987654321','Lima') RETURNING id_cliente::text`)
 	// Historical auxiliary participation, created before the retirement migration.
 	vehicle := h.scalar(t, `INSERT INTO vehiculos(id_cliente,placa,marca,modelo) VALUES($1,'MIG-001','JAC','Prueba') RETURNING id_vehiculo::text`, unknown)
-	reception := h.scalar(t, `INSERT INTO recepciones(id_vehiculo,id_cliente_atencion,id_recepcionista,km_ingreso,sintomas,tipo_atencion) VALUES($1,$2,$3,0,'Histórico','Directo') RETURNING id_recepcion::text`, vehicle, unknown, oldAdmin)
-	quote := h.scalar(t, `INSERT INTO cotizaciones(id_recepcion,estado,total) VALUES($1,'aprobada',0) RETURNING id_cotizacion::text`, reception)
+	reception := h.scalar(t, `INSERT INTO recepciones(id_vehiculo,id_cliente_atencion,id_recepcionista,km_ingreso,sintomas,tipo_atencion,id_mecanico_diagnostico) VALUES($1,$2,$3,0,'Histórico','Diagnostico',$4) RETURNING id_recepcion::text`, vehicle, unknown, oldAdmin, owner)
+	diagnosis := h.scalar(t, `INSERT INTO diagnosticos(id_recepcion,id_tecnico,resumen,estado,evaluacion,recomendaciones) VALUES($1,$2,'Histórico','Finalizado','Evaluado','Revisión') RETURNING id_diagnostico::text`, reception, owner)
+	quote := h.scalar(t, `INSERT INTO cotizaciones(id_recepcion,id_diagnostico,estado,total) VALUES($1,$2,'aprobada',0) RETURNING id_cotizacion::text`, reception, diagnosis)
 	order := h.scalar(t, `INSERT INTO ordenes_trabajo(id_cotizacion,codigo_ot,id_usuario_creacion) VALUES($1,'OT-MIG',$2) RETURNING id_orden::text`, quote, oldAdmin)
 	h.exec(t, `INSERT INTO asignaciones_ot(id_orden,id_usuario,rol_en_trabajo) VALUES($1,$2,'AUXILIAR')`, order, oldAux)
 	auxBefore := h.scalar(t, `SELECT md5(jsonb_agg(to_jsonb(a) ORDER BY id_asignacion)::text) FROM asignaciones_ot a`)
@@ -172,6 +173,10 @@ func TestCatalogRolesMigrationAndHTTP(t *testing.T) {
 			t.Fatal("SQL permitió nuevo auxiliar")
 		}
 		h.call(t, gerente, "PATCH", "/ordenes/"+order, map[string]string{"state": "En reparación", "note": "No alterar auxiliar", "assistantId": oldAux}, 422)
+	})
+	t.Run("auxiliar histórico no autoriza escritura técnica", func(t *testing.T) {
+		historical := login("historical")
+		h.call(t, historical, "POST", "/diagnosticos/"+diagnosis+"/escaneres", map[string]any{}, 403)
 	})
 	gerenteRole := h.scalar(t, `SELECT id_rol::text FROM roles WHERE nombre_rol='Gerente'`)
 	h.call(t, admin, "PATCH", "/usuarios/"+adminID, map[string]string{"roleId": gerenteRole}, 403)

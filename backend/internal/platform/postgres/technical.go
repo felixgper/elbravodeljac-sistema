@@ -25,7 +25,9 @@ func (s *Store) AuthorizeDiagnosis(ctx context.Context, id, actor string, write 
 		return nil
 	}
 	var assigned bool
-	err = s.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM cotizaciones q JOIN ordenes_trabajo o USING(id_cotizacion) JOIN asignaciones_ot a USING(id_orden) WHERE q.id_diagnostico=$1 AND a.id_usuario=$2 AND a.activo)`, id, actor).Scan(&assigned)
+	// Historical auxiliary participation permits consultation, never a new
+	// technical write. Access-role permissions alone do not assign a mechanic.
+	err = s.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM cotizaciones q JOIN ordenes_trabajo o USING(id_cotizacion) JOIN asignaciones_ot a USING(id_orden) WHERE q.id_diagnostico=$1 AND a.id_usuario=$2 AND a.activo AND (NOT $3 OR a.rol_en_trabajo='MECANICO'))`, id, actor, write).Scan(&assigned)
 	if err != nil {
 		return err
 	}

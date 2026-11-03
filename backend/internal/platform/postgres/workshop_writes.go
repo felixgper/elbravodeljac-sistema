@@ -226,7 +226,7 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 func technicalUser(ctx context.Context, tx pgx.Tx, id string) error {
 	var found string
 	roles := []string{"mecánico", "mecanico"}
-	err := tx.QueryRow(ctx, `SELECT u.id_usuario::text FROM usuarios u WHERE u.id_usuario=$1 AND u.activo AND EXISTS(SELECT 1 FROM usuario_roles ur JOIN roles r USING(id_rol) WHERE ur.id_usuario=u.id_usuario AND r.activo AND lower(r.nombre_rol)=ANY($2)) FOR SHARE OF u`, id, roles).Scan(&found)
+	err := tx.QueryRow(ctx, `SELECT u.id_usuario::text FROM usuarios u WHERE u.id_usuario=$1 AND u.activo AND NOT EXISTS(SELECT 1 FROM empleados e WHERE e.id_empleado=u.id_empleado AND NOT e.activo) AND EXISTS(SELECT 1 FROM usuario_roles ur JOIN roles r USING(id_rol) WHERE ur.id_usuario=u.id_usuario AND r.activo AND lower(r.nombre_rol)=ANY($2)) FOR SHARE OF u`, id, roles).Scan(&found)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.Invalid("mechanicId", "Selecciona un mecánico activo.")
 	}

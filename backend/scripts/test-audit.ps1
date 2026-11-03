@@ -1,11 +1,15 @@
-param([switch]$SkipContainerSuite,[switch]$StartIsolated)
+param([switch]$SkipContainerSuite,[switch]$StartIsolated,
+ [string]$TestProject='elbravodeljac-catalogo-roles-test',
+ [string]$TestOverride='compose.catalogo-test.yaml',
+ [ValidateRange(1024,65535)][int]$PostgresPort=25433,
+ [ValidateRange(1024,65535)][int]$MongoPort=27030)
 $ErrorActionPreference='Stop'
 $repoRoot=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $privatePath=Join-Path $repoRoot '.env.audit-tests.local'
-$testProject='elbravodeljac-catalogo-roles-test'
+if($TestProject -notmatch '^elbravodeljac-[a-z0-9-]+-(test|qa)$'){throw 'Se exige un nombre exclusivo de pruebas.'}
 
 $testCompose=Join-Path $repoRoot 'compose.test.yaml'
-$browserCompose=Join-Path $repoRoot 'compose.catalogo-test.yaml'
+$browserCompose=Join-Path $repoRoot $TestOverride
 $trackedEnv=@('INTEGRATION_DATABASE_URL','INTEGRATION_MONGODB_URI','INTEGRATION_MONGODB_DATABASE','FRONTEND_AUDIT','FRONTEND_E2E','PLAYWRIGHT_MODULE','AUDIT_ARTIFACT_DIR')
 $previous=@{};foreach($key in $trackedEnv){$previous[$key]=[Environment]::GetEnvironmentVariable($key,'Process')}
 function Assert-OwnedCompose([string]$name,[string[]]$files){
@@ -40,8 +44,8 @@ try {
   Get-Content -LiteralPath (Join-Path backend/internal/platform/postgres/migrations $migration) -Raw | & docker compose --env-file $privatePath -p $testProject -f $testCompose -f $browserCompose exec -T postgres-test psql -X -U postgres -d elbravodeljac_test -v ON_ERROR_STOP=1
   if($LASTEXITCODE -ne 0){throw "Falló $migration en la base aislada existente. No se reinician contenedores."}
  }
- $env:INTEGRATION_DATABASE_URL='postgres://postgres:'+$settings.TEST_POSTGRES_PASSWORD+'@127.0.0.1:25433/elbravodeljac_test?sslmode=disable'
- $env:INTEGRATION_MONGODB_URI='mongodb://127.0.0.1:27030/?directConnection=true&retryWrites=false'
+ $env:INTEGRATION_DATABASE_URL='postgres://postgres:'+$settings.TEST_POSTGRES_PASSWORD+"@127.0.0.1:$PostgresPort/elbravodeljac_test?sslmode=disable"
+ $env:INTEGRATION_MONGODB_URI="mongodb://127.0.0.1:$MongoPort/?directConnection=true&retryWrites=false"
  $env:INTEGRATION_MONGODB_DATABASE='elbravodeljac_tecnico_test'
  $env:FRONTEND_AUDIT='1';$env:FRONTEND_E2E='1';$env:AUDIT_ARTIFACT_DIR=Join-Path $repoRoot 'backend/.cache/audit-pdf'
  Push-Location backend

@@ -2,7 +2,7 @@ import {quotePDFButton,bindQuoteDownloads} from '../components/quote-pdf.js';
 import {lookupApprovedQuotes,lookupQuoteReceptions,assignDiagnosis} from '../services/real-workshop.js';
 import {openInspection} from '../components/technical-sheet.js';
 import {remotePicker,clientPicker,ownerVehicles} from '../components/remote-picker.js';
-import {saveUnit} from '../services/real-workshop.js';
+import {saveUnit,updateRescue} from '../services/real-workshop.js';
 import {todayLabel} from '../components/ui.js';
 import {realMode} from '../services/api-service.js';
 import {getStore,saveReception,saveDiagnosis,saveQuote,createOrder,updateOrder,deleteOrder,saveRescue,getContext,quoteTotal,itemSubtotal,decimalMinor,ORDER_STATES,ACTIVE_STATES} from '../services/workshop-service.js';
@@ -135,7 +135,14 @@ export async function renderRescues({root,path,session}){
  if(realMode){await clientPicker(root,'auxilio');await ownerVehicles(root,'auxilio',s);}
  if(!root.isConnected)return;
  bindForm('edit-form',async data=>{const a=await saveRescue(data,session.id);notify(`Auxilio ${a.id} registrado.`);go('auxilio');});
- root.insertAdjacentHTML('beforeend',`<section class="panel separated"><h2 class="form-section-title">AUXILIOS REGISTRADOS</h2>${table(['Solicitud','Fecha','Cliente','Vehículo','Ubicación','Técnico'],s.rescues.slice().reverse().map(a=>[e(a.id),date(a.createdAt),e(s.clients.find(c=>c.id===a.clientId)?.name||a.clientName),e(s.vehicles.find(v=>v.id===a.vehicleId)?.plate||a.vehiclePlate),e(a.location),e(s.users.find(u=>u.id===a.technicianId)?.name||a.technicianName)]))}</section>`);
+ root.insertAdjacentHTML('beforeend',`<section class="panel separated"><h2 class="form-section-title">AUXILIOS REGISTRADOS</h2>${table(['Solicitud','Fecha','Cliente','Vehículo','Ubicación','Técnico','Estado','Acción'],s.rescues.slice().reverse().map(a=>[e(a.id),date(a.createdAt),e(s.clients.find(c=>c.id===a.clientId)?.name||a.clientName),e(s.vehicles.find(v=>v.id===a.vehicleId)?.plate||a.vehiclePlate),e(a.location),e(s.users.find(u=>u.id===a.technicianId)?.name||a.technicianName),badge(({pendiente:'Pendiente',en_atencion:'En atención',finalizado:'Finalizado',cancelado:'Cancelado'})[a.state]||'Pendiente'),realMode&&permissionChecker(session.role)('auxilio','crear')&&!['finalizado','cancelado'].includes(a.state)?`<button type="button" class="secondary-button" data-update-rescue="${e(a.id)}">Actualizar</button>`:'—']))}</section>`);
+ root.querySelectorAll('[data-update-rescue]').forEach(b=>b.onclick=()=>{
+  const a=s.rescues.find(x=>x.id===b.dataset.updateRescue);
+  const dialog=showModal('Actualizar auxilio · '+a.id,form('ESTADO DEL INCIDENTE',select('Estado','state',[{value:'pendiente',label:'Pendiente'},{value:'en_atencion',label:'En atención'},{value:'finalizado',label:'Finalizado'},{value:'cancelado',label:'Cancelado'}],a.state||'pendiente','required')+select('Técnico responsable','technicianId',mechOptions(s),a.technicianId,'required')+select('Unidad','unitId',selectOptions(s.units,u=>u.code),a.unitId,'required'),submit('Guardar cambios')+button('Cancelar','cancel'),'rescue-state-form'));
+  dialog.querySelector('[data-action=cancel]').onclick=()=>dialog.close();
+  bindForm('rescue-state-form',async data=>{await updateRescue(a.id,data);dialog.close();notify('Auxilio actualizado.');go('auxilio');});
+ });
+
 }
 function renderTasks({root,session},s){
  const kevin=session.id,name=s.users.find(u=>u.id===kevin)?.name||session.name;

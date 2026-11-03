@@ -181,3 +181,5 @@ export const reversePayment=(orderId,paymentId,reason,requestId,replacement)=>re
 
 export const lookupOrders=(q='',page=1,signal)=>request((realSession()?.permissions.includes('ordenes.ver')?'/ordenes?':'/frontend/opciones?module=pagos&resource=ordenes&')+'q='+encodeURIComponent(q)+'&page='+page+'&pageSize=20',{signal});
 export const lookupApprovedQuotes=(q='',page=1,signal)=>request((realSession()?.permissions.includes('cotizaciones.ver')?'/cotizaciones?estado=Aprobada&sinOrden=true&':'/frontend/opciones?module=ordenes&resource=cotizaciones&')+'q='+encodeURIComponent(q)+'&page='+page+'&pageSize=20',{signal});
+
+export const updateRescue=(id,input)=>request('/auxilios/'+id,{method:'PATCH',body:pick(input,['state','technicianId','unitId'])});
