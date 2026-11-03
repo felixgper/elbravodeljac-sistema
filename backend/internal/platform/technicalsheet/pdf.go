@@ -13,6 +13,7 @@ import (
 )
 
 type Line struct {
+	Type      string `json:"type"`
 	Notes     string `json:"notes"`
 	ID        string `json:"id"`
 	Concept   string `json:"concept"`
@@ -26,26 +27,36 @@ type Workshop struct {
 	RUC     string `json:"ruc"`
 	Address string `json:"address"`
 }
+type TechnicalTest struct {
+	Kind   string `json:"kind"`
+	Result string `json:"result"`
+	Notes  string `json:"notes"`
+}
 type Snapshot struct {
-	AuthorizedTotal string   `json:"authorizedTotal"`
-	Workshop        Workshop `json:"workshop"`
-	Code            string   `json:"code"`
-	Client          string   `json:"client"`
-	Document        string   `json:"document"`
-	Phone           string   `json:"phone"`
-	Address         string   `json:"address"`
-	Email           string   `json:"email"`
-	Plate           string   `json:"plate"`
-	Vehicle         string   `json:"vehicle"`
-	Mileage         string   `json:"mileage"`
-	Symptoms        string   `json:"symptoms"`
-	In              string   `json:"in"`
-	Out             string   `json:"out"`
-	Mechanic        string   `json:"mechanic"`
-	Total           string   `json:"total"`
-	Lines           []Line   `json:"lines"`
-	Advances        []string `json:"advances"`
-	Control         Control  `json:"control"`
+	Diagnosis       string          `json:"diagnosis"`
+	Evaluation      string          `json:"evaluation"`
+	Recommendations string          `json:"recommendations"`
+	DiagnosisNotes  string          `json:"diagnosisNotes"`
+	Tests           []TechnicalTest `json:"tests"`
+	AuthorizedTotal string          `json:"authorizedTotal"`
+	Workshop        Workshop        `json:"workshop"`
+	Code            string          `json:"code"`
+	Client          string          `json:"client"`
+	Document        string          `json:"document"`
+	Phone           string          `json:"phone"`
+	Address         string          `json:"address"`
+	Email           string          `json:"email"`
+	Plate           string          `json:"plate"`
+	Vehicle         string          `json:"vehicle"`
+	Mileage         string          `json:"mileage"`
+	Symptoms        string          `json:"symptoms"`
+	In              string          `json:"in"`
+	Out             string          `json:"out"`
+	Mechanic        string          `json:"mechanic"`
+	Total           string          `json:"total"`
+	Lines           []Line          `json:"lines"`
+	Advances        []string        `json:"advances"`
+	Control         Control         `json:"control"`
 }
 
 const width = 595.5
@@ -61,6 +72,7 @@ func date(s string) string {
 }
 
 type canvas struct {
+	color string
 	bytes.Buffer
 	err    error
 	bold   bool
@@ -76,7 +88,7 @@ func (c *canvas) text(x, y, size float64, s string, white bool) {
 		c.err = fmt.Errorf("La ficha contiene caracteres fuera de la tipografía de la plantilla")
 		return
 	}
-	color := "0.20 0.04 0.09"
+	color := or(c.color, "0.12 0.12 0.13")
 	if white {
 		color = "1 1 1"
 	}
@@ -152,190 +164,14 @@ func (c *canvas) workMark(x, y float64) {
 	fmt.Fprintf(c, "1 1 1 RG 1.5 w %.2f %.2f m %.2f %.2f l %.2f %.2f l S\n", x-4, height-y, x-1, height-y-3, x+4, height-y+4)
 }
 
+// Render uses the current visual layout from an immutable attention snapshot.
+// Updating presentation never rewrites historical archived PDF bytes.
 func Render(raw []byte) ([]byte, error) {
-	var s Snapshot
-	if err := json.Unmarshal(raw, &s); err != nil {
+	var snapshot Snapshot
+	if err := json.Unmarshal(raw, &snapshot); err != nil {
 		return nil, err
 	}
-	if s.Control.Reconciliation != nil {
-		s.Control.TechnicalNotes += "\nConciliación autorizada por usuario " + s.Control.Reconciliation.By + ": " + s.Control.Reconciliation.Reason + ". Presupuesto S/ " + s.AuthorizedTotal + "; importe definitivo S/ " + s.Total + "."
-	}
-	p1, p2 := &canvas{}, &canvas{}
-	for _, p := range []*canvas{p1, p2} {
-		fmt.Fprintf(p, "q %.2f 0 0 %.2f 0 0 cm /Bg Do Q\n", width, height)
-	}
-	p1.text(490, 67, 8, "RUC "+s.Workshop.RUC, true)
-	p1.box(455, 73, 106, 10, 7.5, s.Workshop.Address, true)
-	p2.box(45, 802, 305, 14, 9, s.Workshop.Address+" - RUC "+s.Workshop.RUC, true)
-	p1.boxBold(185, 141, 187, 43, 16, s.Symptoms, false)
-	p1.text(399, 171, 9, date(s.In), false)
-	p1.text(490, 171, 9, date(s.Out), false)
-	p1.boxBold(43.5, 241, 242, 23, 15, s.Client, false)
-	p1.box(43.5, 280, 115, 12, 9, s.Document, false)
-	p1.box(166, 280, 120, 12, 9, s.Phone, false)
-	p1.box(43.5, 309, 115, 15, 8, s.Address, false)
-	p1.box(166, 309, 120, 15, 8, s.Email, false)
-	p1.boxBold(480, 224, 67, 18, 12, s.Plate, false)
-	p1.boxBold(317, 253, 238, 22, 14, s.Vehicle, false)
-	p1.text(317, 301, 9, s.Mileage+" km", false)
-	p1.box(439, 292, 116, 20, 9, s.Mechanic, false)
-	performed := map[string]bool{}
-	for _, id := range s.Control.PerformedItems {
-		performed[id] = true
-	}
-	var work []string
-	for _, l := range s.Lines {
-		if performed[l.ID] {
-			work = append(work, l.Concept)
-		}
-	}
-
-	if len(work) == 0 {
-		work = []string{"Sin trabajos confirmados en el control técnico"}
-	}
-	chunks := make([][]string, 4)
-	for i, l := range work {
-		chunks[i%4] = append(chunks[i%4], l)
-	}
-	for i, lines := range chunks {
-		if len(lines) > 0 {
-			x := 66.6 + float64(i%2)*271.3
-			y := 376.0 + float64(i/2)*46
-			p1.box(x, y, 214, 27, 9, strings.Join(lines, "; "), false)
-			if len(performed) > 0 {
-				p1.workMark(x-17, y+11)
-			}
-		}
-	}
-	displayLines := s.Lines
-	if len(displayLines) > 12 {
-		for _, l := range displayLines[12:] {
-			p1.extras = append(p1.extras, l.Concept+orNote(l.Notes)+" | "+l.Quantity+" x S/ "+l.UnitPrice+" - dto/u S/ "+l.Discount+" | Subtotal S/ "+l.Subtotal)
-		}
-		displayLines = displayLines[:12]
-		p1.text(35, 636, 6, "Detalle adicional en anexos; el total incluye todos los conceptos realizados.", false)
-	}
-	n := len(displayLines)
-
-	rows := n
-	if rows < 4 {
-		rows = 4
-	}
-	row := 114.0 / float64(rows)
-	if row < 7 {
-		return nil, fmt.Errorf("Demasiados conceptos para imprimir sin recortes en las dos páginas originales")
-	}
-	// Hide old row separators only within the detail body; preserve its original bounds/header.
-	fmt.Fprintf(p1, "1 1 1 rg 30 %.2f 535 114 re f\n", height-626)
-	for j := 0; j < rows; j++ {
-		y := 512 + float64(j)*row
-		if j%2 == 1 {
-			fmt.Fprintf(p1, "0.97 0.975 0.98 rg 30 %.2f 535 %.2f re f\n", height-y-row, row)
-		}
-		fmt.Fprintf(p1, "0.90 G 0.4 w 30 %.2f m 565 %.2f l S\n", height-y-row, height-y-row)
-	}
-	for i, l := range displayLines {
-		y := 512 + float64(i)*row
-		p1.text(42, y+9, 7, fmt.Sprint(i+1), false)
-		p1.box(72, y, 427, row-1, 9, l.Concept+orNote(l.Notes)+" | "+l.Quantity+" x S/ "+l.UnitPrice+" - dto/u S/ "+l.Discount, false)
-		p1.box(505, y, 51, row-1, 9, "S/ "+l.Subtotal, false)
-	}
-	p1.boxBold(458, 642, 95, 27, 21, "S/ "+s.Total, true)
-	p1.box(124, 772, 150, 10, 7, "Operario: "+s.Mechanic, false)
-	p2.box(509, 15, 52, 14, 10, s.Plate, true)
-	p2.box(426, 32, 135, 11, 8, s.Vehicle+" - "+s.Mileage+" km", true)
-	p2.text(211, 82, 6, "Sin marca = Sin evaluar", false)
-	for _, g := range Catalog.Groups {
-		for _, i := range g.Items {
-			v := s.Control.Inspections[i.ID]
-			offset := map[string]float64{"Bien": 0, "Atención": 13.5, "Urgente": 27}[v]
-			if v != "" && v != "Sin evaluar" {
-				p2.text(i.X+offset-2, i.Y+3, 8, "X", false)
-			}
-		}
-	}
-	for _, g := range Catalog.Maintenance {
-		selected := map[string]bool{}
-		for _, v := range s.Control.Maintenance[g.ID] {
-			selected[v] = true
-		}
-		for _, i := range g.Options {
-			if selected[i.ID] || (g.ID == "aceite" && i.ID == "0") || (g.ID == "marca_aceite" && i.ID == "0") || (g.ID == "filtro_aceite" && i.ID == "1") {
-				p2.mark(i.X, i.Y, selected[i.ID])
-			}
-		}
-	}
-	selected := map[string]bool{}
-	for _, v := range s.Control.OtherServices {
-		selected[v] = true
-	}
-	for _, i := range Catalog.OtherServices {
-		if selected[i.ID] {
-			p2.text(i.X-2, i.Y+3, 8, "X", false)
-		}
-	}
-	p2.box(246, 219, 118, 13, 7, s.Control.OtherFluids, false)
-	p2.box(374, 338, 178, 13, 8, s.Control.Coils, false)
-	for i, k := range []string{"frontLeft", "frontRight", "rearLeft", "rearRight"} {
-		if value := s.Control.Tires[k]; value != "" {
-			x := 438.0
-			if i%2 == 1 {
-				x = 525
-			}
-			y := 240.5
-			if i >= 2 {
-				y = 253
-			}
-			fmt.Fprintf(p2, "1 1 1 rg %.2f %.2f 13 10 re f\n", x-1, height-y-2)
-			p2.text(x, y, 6.5, value, false)
-		}
-	}
-	p2.box(41, 661, 237, 70, 9, s.Control.ClientNotes, false)
-	p2.box(315, 661, 237, 70, 9, s.Control.TechnicalNotes, false)
-	p2.box(350, 759, 205, 14, 8, "a los "+or(s.Control.NextMileage, "Sin evaluar")+" km - fecha "+nextDate(s.Control.NextDate), false)
-	if p1.err != nil {
-		return nil, p1.err
-	}
-	if p2.err != nil {
-		return nil, p2.err
-	}
-	pages := [][]byte{p1.Bytes(), p2.Bytes()}
-	extras := append(p1.extras, p2.extras...)
-	if len(extras) > 0 {
-		var appendix *canvas
-		var y float64
-		newPage := func() {
-			if appendix != nil {
-				pages = append(pages, appendix.Bytes())
-			}
-			appendix = &canvas{}
-			appendix.text(40, 42, 16, "EL BRAVO DEL JAC - ANEXO", false)
-			appendix.box(40, 55, 510, 25, 9, s.Code+" - "+s.Plate+" - "+s.Client, false)
-			appendix.text(42, 818, 8, fmt.Sprintf("Anexo %d", len(pages)-1), false)
-			y = 100
-		}
-		for _, text := range extras {
-			lines := wrap(text, 9, 510)
-			if appendix == nil || (float64(len(lines))*13 <= 680 && y+float64(len(lines))*13 > 780) {
-				newPage()
-			}
-			for _, line := range lines {
-				if y > 780 {
-					newPage()
-				}
-				appendix.text(42, y, 9, line, false)
-				if appendix.err != nil {
-					return nil, appendix.err
-				}
-				y += 13
-			}
-			y += 8
-		}
-		if appendix != nil {
-			pages = append(pages, appendix.Bytes())
-		}
-	}
-	return buildPDF(pages...)
+	return renderSheetLayout(snapshot)
 }
 func nextDate(v string) string {
 	if v == "" {
@@ -357,7 +193,7 @@ func buildPDF(pages ...[]byte) ([]byte, error) {
 	return buildDocument(true, pages...)
 }
 
-// Automotive sheets retain their approved template; quotations embed only the official raster emblem.
+// Current documents embed the official raster emblem; legacy backgrounds remain available only for compatibility.
 func buildDocument(template bool, pages ...[]byte) ([]byte, error) {
 	objects := [][]byte{[]byte("<< /Type /Catalog /Pages 2 0 R >>"), []byte("PAGES_PLACEHOLDER"), []byte("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")}
 	kids := ""

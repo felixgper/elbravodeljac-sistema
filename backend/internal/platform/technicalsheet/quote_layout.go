@@ -7,7 +7,7 @@ import (
 
 const quoteQuantity = 376.0
 const quoteAmount = 444.0
-const quoteBottom = 741.0
+const quoteBottom = 751.0
 
 // Values returned by PostgreSQL are printed verbatim. In particular, Importe is
 // the stored subtotal, not the unit price and not an extra grouped charge.
@@ -21,12 +21,6 @@ func renderQuotationLayout(s Quotation) ([]byte, error) {
 		status = "Pendiente de aprobación"
 	}
 	finish := func() error {
-		quoteRect(c, 34, 774, 527, 32, "0.96 0.94 0.95", false)
-		c.bold = true
-		quoteCenter(c, 34, 561, 794, 11, "¡GRACIAS POR CONFIAR EN NOSOTROS!", false)
-		c.bold = false
-		c.text(34, 823, 8, fmt.Sprintf("Cotización %s · versión %d", q.ID, q.Version), false)
-		quoteRightText(c, 561, 823, 8, fmt.Sprintf("Página %d", len(pages)+1), false)
 		if c.err != nil {
 			return fmt.Errorf("La cotización contiene caracteres no disponibles en la tipografía PDF; no se ha omitido ni cambiado el texto")
 		}
@@ -35,26 +29,7 @@ func renderQuotationLayout(s Quotation) ([]byte, error) {
 	}
 	newPage := func(first bool) {
 		c = &canvas{}
-		quoteRect(c, 34, 30, 527, 82, "0.98 0.97 0.97", false)
-		quoteRect(c, 34, 109, 527, 3, "0.38 0.05 0.12", false)
-		quoteRect(c, 47, 36, 70, 70, "0.38 0.05 0.12", false)
-		drawQuoteLogo(c, 53, 42, 58)
-		c.bold = true
-		name := quoteWrap(or(s.Workshop.Name, "EL BRAVO DEL JAC"), 16, 285)
-		for i, line := range name {
-			if i < 2 {
-				c.text(132, 58+float64(i)*19, 16, line, false)
-			}
-		}
-		c.bold = false
-		c.text(132, 96, 9, "TALLER AUTOMOTRIZ", false)
-		c.bold = true
-		c.text(434, 50, 9, "COTIZACIÓN", false)
-		for i, line := range quoteWrap("N.º "+q.ID, 10, 117) {
-			c.text(434, 69+float64(i)*13, 10, line, false)
-		}
-		c.bold = false
-		c.text(434, 96, 9, fmt.Sprintf("VERSIÓN %d", q.Version), false)
+		documentHeader(c, "COTIZACIÓN", "N.º "+q.ID, fmt.Sprintf("VERSIÓN %d", q.Version), s.Workshop.Name)
 		y = 135
 		if !first {
 			for _, text := range []string{"Cliente: " + s.Client + " · Placa: " + s.Plate, "Estado: " + status + " · Emisión: " + date(q.CreatedAt)} {
@@ -67,16 +42,34 @@ func renderQuotationLayout(s Quotation) ([]byte, error) {
 		}
 	}
 	newPage(true)
-	// Workshop and quote data follow the two-column structure of the reference.
-	left := []string{or(s.Workshop.Name, "Nombre comercial no registrado"), "RUC: " + or(s.Workshop.RUC, "No registrado"), "Dirección: " + or(s.Workshop.Address, "No registrada")}
+	// Workshop legal/contact data remain sourced from the same snapshot.
+	legal := []string{}
+	if s.Workshop.RUC != "" {
+		legal = append(legal, "RUC: "+s.Workshop.RUC)
+	}
+	if s.Workshop.Address != "" {
+		legal = append(legal, s.Workshop.Address)
+	}
 	if s.Workshop.Phone != "" {
-		left = append(left, "Teléfono: "+s.Workshop.Phone)
+		legal = append(legal, "Teléfono: "+s.Workshop.Phone)
 	}
-	emission := "Emisión: " + or(date(q.CreatedAt), "No registrada")
+	for _, line := range quoteWrap(strings.Join(legal, " · "), 9, 527) {
+		if line != "" {
+			c.text(34, y, 9, line, false)
+			y += 13
+		}
+	}
+	y += 16
+	left := []string{"Cliente: " + s.Client, "Documento: " + s.Document}
+	for _, entry := range []struct{ label, value string }{{"Teléfono", s.Phone}, {"Correo", s.Email}, {"Dirección", s.Address}} {
+		if entry.value != "" {
+			left = append(left, entry.label+": "+entry.value)
+		}
+	}
+	right := []string{"Vehículo: " + s.Vehicle, "Placa: " + s.Plate, "Emisión: " + or(date(q.CreatedAt), "No registrada")}
 	if q.ReceptionID != "" {
-		emission += " · Recepción: " + q.ReceptionID
+		right = append(right, "Recepción: "+q.ReceptionID)
 	}
-	right := []string{emission, "Cliente: " + s.Client, "Documento: " + s.Document, "Placa: " + s.Plate, "Vehículo: " + s.Vehicle}
 	if q.ParentQuoteID != "" {
 		right = append(right, "Adicional a cotización: "+q.ParentQuoteID)
 	}
@@ -84,9 +77,16 @@ func renderQuotationLayout(s Quotation) ([]byte, error) {
 		x, w   float64
 		title  string
 		values []string
-	}{{34, 243, "DATOS DEL TALLER", left}, {306, 255, "DATOS DE LA COTIZACIÓN", right}}
+	}{{34, 255, "CLIENTE", left}, {306, 255, "VEHÍCULO Y ATENCIÓN", right}}
 	maxY := y
 	for _, col := range columns {
+		height := 30.0
+		for _, value := range col.values {
+			height += float64(len(quoteWrap(value, 9.5, col.w-20))) * 12.5
+		}
+		documentPanel(c, col.x, y-12, col.w, height)
+		col.x += 10
+		col.w -= 20
 		c.bold = true
 		c.text(col.x, y, 9, col.title, false)
 		c.bold = false
@@ -118,19 +118,19 @@ func renderQuotationLayout(s Quotation) ([]byte, error) {
 	c.bold = false
 	y += 10
 	tableHeader := func() {
-		quoteRect(c, 34, y, 527, 28, "0.94 0.93 0.94", true)
+		quoteRect(c, 34, y, 527, 28, brandBurgundy, false)
 		quoteGrid(c, y, 28)
 		c.bold = true
-		c.text(44, y+18, 9, "DESCRIPCIÓN DE SERVICIOS", false)
-		quoteCenter(c, 376, 444, y+18, 9, "CANTIDAD", false)
-		quoteCenter(c, 444, 561, y+18, 9, "IMPORTE", false)
+		c.text(44, y+18, 9, "DESCRIPCIÓN / CONCEPTO", true)
+		quoteCenter(c, 376, 444, y+18, 9, "CANTIDAD", true)
+		quoteCenter(c, 444, 561, y+18, 9, "IMPORTE", true)
 		c.bold = false
 		y += 28
 	}
 	section := func(name string) {
-		quoteRect(c, 34, y, 527, 23, "0.38 0.05 0.12", true)
+		quoteRect(c, 34, y, 527, 23, brandSurface, false)
 		c.bold = true
-		c.text(44, y+16, 9.5, name, true)
+		c.text(44, y+16, 9.5, name, false)
 		c.bold = false
 		y += 23
 	}
@@ -158,7 +158,7 @@ func renderQuotationLayout(s Quotation) ([]byte, error) {
 			tableHeader()
 		}
 		section(group.name)
-		for _, item := range items {
+		for itemIndex, item := range items {
 			lines, detail := quoteRowContent(item)
 			rowHeight := float64(len(lines))*13 + float64(len(detail))*11 + 18
 			// Normal rows are indivisible. A row taller than a full page needs
@@ -188,6 +188,9 @@ func renderQuotationLayout(s Quotation) ([]byte, error) {
 				}{line, 9, 11})
 			}
 			start := y
+			if itemIndex%2 == 1 && y+rowHeight <= quoteBottom {
+				quoteRect(c, 34, y, 527, rowHeight, brandSurface, false)
+			}
 			cy := y + 14
 			printed := false
 			for _, line := range all {
@@ -233,7 +236,7 @@ func renderQuotationLayout(s Quotation) ([]byte, error) {
 	} else {
 		notes = append(notes, "Presupuesto propuesto. Este documento no constituye una autorización de trabajo.")
 	}
-	needed := 48.0
+	needed := 58.0
 	for _, note := range notes {
 		needed += float64(len(quoteWrap(note, 9, 527)))*13 + 4
 	}
@@ -244,12 +247,13 @@ func renderQuotationLayout(s Quotation) ([]byte, error) {
 		newPage(false)
 	}
 	y += 8
-	quoteRect(c, 34, y, 527, 35, "0.38 0.05 0.12", false)
+	quoteRect(c, 336, y, 225, 40, brandBurgundy, false)
+	c.text(34, y+18, 9, "Moneda: soles (PEN)", false)
 	c.bold = true
-	c.text(44, y+23, 12, "TOTAL COTIZADO:", true)
-	quoteRightText(c, 551, y+23, 14, "S/ "+q.Total, true)
+	c.text(346, y+15, 9, "TOTAL COTIZADO", true)
+	quoteRightText(c, 551, y+32, 16, "S/ "+q.Total, true)
 	c.bold = false
-	y += 47
+	y += 54
 	for _, note := range notes {
 		for _, line := range quoteWrap(note, 9, 527) {
 			if y > quoteBottom {
@@ -266,7 +270,7 @@ func renderQuotationLayout(s Quotation) ([]byte, error) {
 	if err := finish(); err != nil {
 		return nil, err
 	}
-	return buildDocument(false, pages...)
+	return finishDocument(pages, fmt.Sprintf("Cotización %s · versión %d", q.ID, q.Version))
 }
 
 func quoteRect(c *canvas, x, y, w, h float64, color string, border bool) {

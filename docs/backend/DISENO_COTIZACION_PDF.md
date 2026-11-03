@@ -6,6 +6,13 @@ solicitada). Se adoptó la distribución de encabezado, datos en bloques, tabla 
 tres columnas con bordes, agrupación, total y agradecimiento. No se incorporaron
 marca, fotografía, logotipos, clientes, teléfonos ni datos de Autoservis Marcelo.
 
+## Evolución visual Diseño 19
+
+El diseño actual comparte encabezado, emblema, márgenes y pie con la nueva ficha
+técnica. Véase `DOCUMENTOS_PDF_DISENO19.md` para la presentación actual, muestras
+y comprobaciones. La distribución de referencia descrita a continuación explica
+el origen de la cotización; los importes y agrupaciones se conservan.
+
 ## Formato implementado
 
 - A4, márgenes de 34 puntos, borgoña/blanco/gris y emblema oficial Diseño 19.
@@ -13,7 +20,8 @@ marca, fotografía, logotipos, clientes, teléfonos ni datos de Autoservis Marce
   conservando sus píxeles y proporciones. La copia para Go es idéntica al PNG
   web y una prueba comprueba esa igualdad. No necesita conversores ni descargas.
   Es una imagen raster con fondo carbón, no un logo vectorizado ni transparente.
-  Los PDF históricos almacenados y la plantilla de ficha técnica no se alteran.
+  Los PDF históricos almacenados no se sobrescriben. La nueva ficha técnica
+  utiliza una composición de texto y tablas con la misma identidad.
 - Datos del taller desde la vista existente; teléfono solo si el registro
   configurado expone `phone`. Actualmente la vista no lo configura: no se inventa
   ni se copia el teléfono del documento de referencia. Datos del cliente,

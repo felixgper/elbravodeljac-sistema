@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"fmt"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/httpapi"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/postgres"
@@ -95,9 +96,25 @@ func TestAttentionInspectionAndOriginalSheet(t *testing.T) {
 				t.Fatal("PDF not generated on delivery")
 			}
 			pdf := h.send(manager, "GET", "/ordenes/"+order+"/ficha-tecnica.pdf", nil)
-			if pdf.status != 200 || !bytes.HasPrefix(pdf.raw, []byte("%PDF-1.7")) || !bytes.Contains(pdf.raw, []byte("/Count 2")) {
-				t.Fatalf("PDF failed %d %s", pdf.status, pdf.raw)
+			if pdf.status != 200 || !bytes.HasPrefix(pdf.raw, []byte("%PDF-1.7")) || documentPageCount(pdf.raw) < 2 {
+				t.Fatalf("PDF failed status=%d pages=%d", pdf.status, documentPageCount(pdf.raw))
 			}
+
+			// Mimic an older archived PDF while retaining the immutable attention snapshot.
+			archived := h.scalar(t, `SELECT encode(ficha_pdf,'hex') FROM entregas WHERE id_orden=$1`, order)
+			frozen := h.scalar(t, `SELECT ficha_snapshot::text FROM entregas WHERE id_orden=$1`, order)
+			if attention == "Diagnostico" && h.scalar(t, `SELECT coalesce(ficha_snapshot->>'diagnosis','') FROM entregas WHERE id_orden=$1`, order) == "" {
+				t.Fatal("Diagnosis absent from frozen sheet snapshot")
+			}
+			h.exec(t, `UPDATE entregas SET ficha_pdf=decode('255044462d312e34206c656761646f','hex') WHERE id_orden=$1`, order)
+			refreshed := h.send(manager, "GET", "/ordenes/"+order+"/ficha-tecnica.pdf", nil)
+			if refreshed.status != 200 || !bytes.Equal(pdf.raw, refreshed.raw) {
+				t.Fatal("Frozen snapshot not used for visual update")
+			}
+			if h.scalar(t, `SELECT encode(ficha_pdf,'hex') FROM entregas WHERE id_orden=$1`, order) != "255044462d312e34206c656761646f" || h.scalar(t, `SELECT ficha_snapshot::text FROM entregas WHERE id_orden=$1`, order) != frozen {
+				t.Fatal("Download mutated historical archive")
+			}
+			h.exec(t, `UPDATE entregas SET ficha_pdf=decode($2,'hex') WHERE id_orden=$1`, order, archived)
 			h.exec(t, `UPDATE clientes SET nombre=$2 WHERE id_cliente=$1`, client, "Cliente actualizado después de entrega")
 			again := h.send(manager, "GET", "/ordenes/"+order+"/ficha-tecnica.pdf", nil)
 			if !bytes.Equal(pdf.raw, again.raw) {
@@ -119,7 +136,8 @@ func TestAttentionInspectionAndOriginalSheet(t *testing.T) {
 		})
 	}
 	t.Run("contenido_excesivo_no_recorta_ni_pierde_entrega", func(t *testing.T) {
-		symptoms := strings.Repeat("Síntoma extenso ", 100)
+		// A genuinely oversized (but valid <4000-character) intake must continue.
+		symptoms := strings.Repeat("Síntoma extenso ", 240) + "FIN_SINTOMAS"
 		rx := responseID(t, h.call(t, manager, "POST", "/recepciones", map[string]string{"clientId": client, "vehicleId": vehicle, "mileage": "100", "symptoms": symptoms, "attentionType": "Directo"}, 201))
 		quote := responseID(t, h.call(t, manager, "POST", "/cotizaciones", map[string]any{"receptionId": rx, "status": "Aprobada", "items": []map[string]string{{"concept": "Servicio autorizado", "type": "Servicio", "quantity": "1", "unitPrice": "10"}}}, 201))
 		order := responseID(t, h.call(t, manager, "POST", "/ordenes", map[string]string{"quoteId": quote, "mechanicId": technician}, 201))
@@ -156,4 +174,17 @@ func TestAttentionInspectionAndOriginalSheet(t *testing.T) {
 		}
 	}
 	t.Log("Atención directa/técnica, controles, PDF inmutable, permisos e ingresos verificados")
+}
+
+// The redesigned sheet may continue across pages rather than shrinking text.
+func documentPageCount(raw []byte) int {
+	index := bytes.Index(raw, []byte("/Count "))
+	if index < 0 {
+		return 0
+	}
+	var count int
+	if _, err := fmt.Sscanf(string(raw[index:]), "/Count %d", &count); err != nil {
+		return 0
+	}
+	return count
 }
