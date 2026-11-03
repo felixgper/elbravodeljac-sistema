@@ -1,0 +1,16 @@
+[
+  {
+    "ref": "docs/modelo-conceptual-chen-v21",
+    "file": "docs/modelos/V22_Chen_Corregido/El_Bravo_del_JAC_V22_Chen_Corregido.drawio",
+    "sha256": "0b5c04466dce7cc2dba1a9f1d484f2de5038b72cfb126d9f94139c52ef1c95f7",
+    "pages": 1,
+    "cells": 207
+  },
+  {
+    "ref": "docs/propuesta-modelo-v20",
+    "file": "docs/modelos/V20/El_Bravo_del_JAC_V20_Logico_Crows_Foot.drawio",
+    "sha256": "bb321f14e569b72beb8aa1391c2e024b50b426409755482bc3a7b10aabc03696",
+    "pages": 1,
+    "cells": 723
+  }
+]
