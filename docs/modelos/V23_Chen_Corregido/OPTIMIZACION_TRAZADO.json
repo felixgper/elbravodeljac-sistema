@@ -1,0 +1,69 @@
+{
+  "selected": {
+    "mode": "short",
+    "seed": 0,
+    "crossings": 35
+  },
+  "trials": [
+    {
+      "mode": "short",
+      "seed": 0,
+      "crossings": 35,
+      "length": 108336
+    },
+    {
+      "mode": "core-users",
+      "seed": 0,
+      "crossings": 49,
+      "length": 109456
+    },
+    {
+      "mode": "core-long",
+      "seed": 0,
+      "crossings": 52,
+      "length": 108576
+    },
+    {
+      "mode": "long",
+      "seed": 0,
+      "crossings": 56,
+      "length": 106776
+    },
+    {
+      "mode": "shuffle",
+      "seed": 0,
+      "crossings": 43,
+      "length": 108136
+    },
+    {
+      "mode": "shuffle",
+      "seed": 1,
+      "crossings": 36,
+      "length": 109216
+    },
+    {
+      "mode": "shuffle",
+      "seed": 2,
+      "crossings": 46,
+      "length": 109896
+    },
+    {
+      "mode": "shuffle",
+      "seed": 3,
+      "crossings": 50,
+      "length": 111216
+    },
+    {
+      "mode": "shuffle",
+      "seed": 4,
+      "crossings": 48,
+      "length": 109296
+    },
+    {
+      "mode": "shuffle",
+      "seed": 5,
+      "crossings": 50,
+      "length": 110056
+    }
+  ]
+}

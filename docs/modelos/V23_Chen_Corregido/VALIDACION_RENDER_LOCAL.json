@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "method": "Motor oficial draw.io GraphViewer/mxGraph local; Chrome headless",
+  "source": "https://viewer.diagrams.net/js/viewer-static.min.js",
+  "remoteEditor": "Bloqueado HTTP 403; no se afirma apertura en editor remoto",
+  "loadedNativeXml": true,
+  "svgExported": true,
+  "pngExported": true,
+  "nativeGeometryEdit": true,
+  "geometryBefore": 320,
+  "geometryAfter": 360,
+  "edges": 84,
+  "cells": 257,
+  "originalFileNotReplaced": true,
+  "errors": []
+}

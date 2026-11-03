@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "pages": 1,
+  "entities": 27,
+  "originalEntitiesPreserved": 26,
+  "relations": 42,
+  "originalRelationsPreserved": 35,
+  "connections": 84,
+  "cardinalitiesChecked": 84,
+  "attributes": 0,
+  "ovals": 0,
+  "graphConnected": true,
+  "collinearOverlappingSegments": [],
+  "protectedFiles": 170,
+  "changedProtectedFiles": [],
+  "originalV22Sha256": "0b5c04466dce7cc2dba1a9f1d484f2de5038b72cfb126d9f94139c52ef1c95f7",
+  "nativeRenderPassed": true,
+  "nativeEditPassed": true,
+  "branch": "backend/arquitectura-go-mongodb",
+  "changesOnlyInV23": true,
+  "databasesAccessed": false
+}
