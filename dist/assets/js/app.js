@@ -22,26 +22,26 @@ let disposeShell;
 let allowed = modules;
 
 function brand(full=false) {
-  return full?`<span class="official-brand brand-on-light" role="img" aria-label="El Bravo del JAC · Taller automotriz"><img class="brand-horizontal" src="./assets/images/diseno19/fondo-claro.svg" alt="Logotipo oficial: escudo automotriz y El Bravo del JAC" width="1150" height="450"></span>`:`<span class="atelier-brand official-brand" role="img" aria-label="El Bravo del JAC · Taller automotriz"><img class="brand-emblem" src="./assets/images/diseno19/emblema.svg" alt="" width="410" height="430"><span class="brand-wordmark">EL BRAVO DEL JAC<small>TALLER AUTOMOTRIZ</small></span></span>`;
+  return full?`<span class="official-brand brand-on-light" role="img" aria-label="El Bravo del JAC · Taller automotriz"><img class="brand-horizontal" src="./assets/images/diseno19/fondo-claro.svg" alt="Logotipo oficial: escudo automotriz y El Bravo del JAC" width="1150" height="450"></span>`:`<span class="atelier-brand official-brand" role="img" aria-label="El Bravo del JAC · Taller automotriz"><img class="brand-emblem" src="./assets/images/diseno19/emblema.svg" alt="" width="410" height="430"><span class="brand-wordmark">EL BRAVO <span class="brand-accent">DEL JAC</span><small>TALLER AUTOMOTRIZ</small></span></span>`;
 }
 function renderLogin() {
   root.setAttribute('aria-busy','false');root.dataset.route='#/login';
   const remembered = getRememberedUser();
   document.title = 'Iniciar sesión · El Bravo del JAC';
-  root.innerHTML = `<main class="login-page" id="main-content"><div class="login-glow" aria-hidden="true"></div>
+  root.innerHTML = `<main class="login-page login-carbon" id="main-content"><div class="login-glow" aria-hidden="true"></div><section class="login-identity" aria-label="El Bravo del JAC · Taller automotriz">${brand()}</section>
     <section class="login-card" aria-labelledby="login-title">
-      <div class="login-brand">${brand(true)}</div>
-      <div class="login-heading"><span class="eyebrow">GESTIÓN DEL TALLER</span><h1 id="login-title">Iniciar sesión</h1><p>Acceso exclusivo para trabajadores del taller</p></div>
+
+      <div class="login-heading"><h1 id="login-title">Bienvenido</h1></div>
       <form id="login-form">
-        <label class="field-label" for="username">Correo o usuario</label><div class="input-wrap">${icon('user')}<input id="username" name="username" autocomplete="username" placeholder="Ingrese su usuario" value="${escapeHtml(remembered)}" required maxlength="${realMode?150:120}" autocapitalize="none" spellcheck="false"></div>
+        <label class="field-label" for="username">Correo o usuario</label><div class="input-wrap">${icon('user')}<input id="username" name="username" autocomplete="username" placeholder="Ingresa tu correo o usuario" value="${escapeHtml(remembered)}" required maxlength="${realMode?150:120}" autocapitalize="none" spellcheck="false"></div>
         <label class="field-label" for="password">Contraseña</label><div class="input-wrap">${icon('lock')}<input id="password" name="password" type="password" autocomplete="current-password" placeholder="Ingrese su contraseña" required maxlength="${realMode?72:128}"><button type="button" class="password-toggle" id="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false">${icon('eye')}</button></div>
-        <label class="remember"><input type="checkbox" name="remember" ${remembered ? 'checked' : ''}> Recordarme</label>
+        <input type="checkbox" name="remember" ${remembered ? 'checked' : ''} hidden aria-hidden="true">
         <p id="login-error" class="form-error" role="alert" hidden></p>
-        <button class="primary-button login-submit" type="submit">Iniciar sesión ${icon('arrow')}</button>
+        <button class="primary-button login-submit" type="submit">Iniciar sesión</button>
       </form>
       <div class="demo-access">${icon('info')}<div><strong>${realMode?'Acceso al taller':'Acceso de demostración'}</strong>${realMode?'<p>Modo real · Usa tu cuenta del taller. Los cambios se guardan en el servidor. <a href="/demo/">Abrir demostración separada</a></p>':`<p>Usuario: <code>${demoCredentials.username}</code> <span>·</span> Contraseña: <code>${demoCredentials.password}</code></p><p>Auxiliar: <code>kevin</code> · <code>Auxiliar2026!</code></p>`}</div></div>
-      <p class="login-hint">El menú del sistema se muestra después de iniciar sesión.</p>
-    </section><footer class="login-footer">EL BRAVO DEL JAC <span>·</span> Proyecto universitario <span>·</span> Etapa 1</footer>
+
+    </section><footer class="login-footer">EL BRAVO DEL JAC <span>·</span> Taller automotriz</footer>
   </main>`;
   document.getElementById('password-toggle').addEventListener('click', event => {
     const input = document.getElementById('password'), button = event.currentTarget;
@@ -57,13 +57,13 @@ function renderLogin() {
       const session = await login({username:form.elements.username.value,password:form.elements.password.value,remember:form.elements.remember.checked});
       go(homePath(session.role));
     } catch (reason) {
-      error.textContent = reason.message; error.hidden = false; button.disabled = false; button.innerHTML = `Iniciar sesión ${icon('arrow')}`;
+      error.textContent = reason.message; error.hidden = false; button.disabled = false; button.textContent = 'Iniciar sesión';
     }
   });
 }
 function shell(session, module) {
   const date = new Intl.DateTimeFormat('es-PE', {day:'numeric',month:'long',year:'numeric',timeZone:'America/Lima'}).format(new Date());
-  root.innerHTML = `<div class="app-shell">
+  root.innerHTML = `<div class="app-shell management-chrome ${module.id === 'inicio' ? 'dashboard-surface' : ''}">
     <header class="topbar"><div class="topbar-brand"><button class="icon-button menu-button" id="menu-toggle" aria-label="Abrir o contraer menú" aria-expanded="false" aria-controls="sidebar">${icon('menu')}</button><a class="brand-link" href="#/inicio" aria-label="Inicio de El Bravo del JAC">${brand()}</a></div>
       <div class="module-search"><label class="sr-only" for="module-search">Buscar módulo</label>${icon('search')}<input id="module-search" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" placeholder="Buscar módulo…" autocomplete="off" aria-controls="search-results" aria-expanded="false"><kbd>/</kbd><div id="search-results" class="search-results" role="listbox" aria-label="Módulos encontrados" hidden></div></div>
       <span class="topbar-demo"><span></span>${realMode?'Modo real':'Demostración'}</span><div class="profile-wrap"><button class="profile-button" id="profile-toggle" aria-label="Opciones de ${escapeHtml(session.name)}" aria-expanded="false" aria-controls="profile-menu"><span class="profile-avatar">${escapeHtml(session.name.trim().charAt(0).toUpperCase())}</span><span>${escapeHtml(session.name)}</span>${icon('down')}</button><div class="profile-menu" id="profile-menu" hidden><span>${escapeHtml(session.role)}</span><button id="export-demo" ${realMode?'hidden':''}>${icon('quote')} Descargar datos demo</button><button id="reset-demo" ${realMode?'hidden':''}>${icon('info')} Reiniciar datos demo</button><button id="logout">${icon('logout')} Cerrar sesión</button></div></div>
