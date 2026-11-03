@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"encoding/json"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 	"net/http"
 	"time"
@@ -208,9 +209,6 @@ func statsRange(r *http.Request, dashboard bool) (time.Time, time.Time, error) {
 			return start, end, err
 		}
 	}
-	if dashboard {
-		return start, end, nil
-	}
 	from, until := r.URL.Query().Get("desde"), r.URL.Query().Get("hasta")
 	if from != "" || until != "" {
 		if from == "" || until == "" {
@@ -238,6 +236,30 @@ func (s *server) statistics(dashboard bool) func(http.ResponseWriter, *http.Requ
 			return
 		}
 		out, err := s.store.Statistics(r.Context(), dashboard, start, end)
+		if err == nil && dashboard {
+			raw, e := json.Marshal(out)
+			if e != nil {
+				s.failure(w, e)
+				return
+			}
+			var fields map[string]json.RawMessage
+			if e = json.Unmarshal(raw, &fields); e != nil {
+				s.failure(w, e)
+				return
+			}
+			if fields == nil {
+				fields = map[string]json.RawMessage{}
+			}
+			allowed := u.Can("reportes.ver")
+			if !allowed {
+				for _, key := range []string{"monthlyIncome", "monthlyIncomeCents", "income"} {
+					delete(fields, key)
+				}
+			}
+			visible, _ := json.Marshal(allowed)
+			fields["financialVisible"] = visible
+			out = fields
+		}
 		s.result(w, 200, out, err)
 	}
 }

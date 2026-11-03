@@ -59,8 +59,8 @@ func TestQuotationPDF(t *testing.T) {
 					t.Fatal("Missing", value)
 				}
 			}
-			if bytes.Contains(pdf, []byte("/Subtype /Image")) {
-				t.Fatal("Quote must not use automotive sheet background")
+			if !bytes.Contains(pdf, []byte("/Width 410 /Height 430")) {
+				t.Fatal("Quote must embed only the official shield viewport, not the automotive sheet")
 			}
 			if status == "Aprobada" && !strings.Contains(text, "versi\xf3n 8") {
 				t.Fatal("Approved version must remain distinct from current revision")
@@ -124,11 +124,11 @@ func TestQuotationLegacyApproval(t *testing.T) {
 }
 
 func TestQuotationInstitutionalLogo(t *testing.T) {
-	web, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "dist", "assets", "images", "bravo-borgona.svg"))
+	web, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "dist", "assets", "images", "diseno19", "original.png"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	embedded, err := assets.ReadFile("assets/bravo-borgona.svg")
+	embedded, err := assets.ReadFile("assets/diseno19-original.png")
 	if err != nil {
 		t.Fatal(err)
 	}

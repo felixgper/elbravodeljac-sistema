@@ -43,7 +43,8 @@ export function saveReception(input,by){if(realMode)return real.saveReception(in
 export function saveDiagnosis(input,by){if(realMode)return real.saveDiagnosis(input,by);return transaction(s=>{
  const reception=requireRecord(s.receptions,input.receptionId,'una recepción guardada');if(reception.attentionType==='Directo')throw Error('Servicio directo sin diagnóstico.');
  const old=s.diagnoses.find(d=>d.receptionId===reception.id);if(old&&!input.id)throw Error('La recepción ya tiene un diagnóstico guardado.');if(old&&(old.status||'Finalizado')==='Finalizado')throw Error('El diagnóstico finalizado no se sobrescribe.');
- const data={receptionId:reception.id,findings:input.status==='Borrador'?String(input.findings||''):text(input.findings,'los hallazgos',4000),evaluation:input.evaluation||'',recommendations:input.recommendations||'',notes:input.notes||'',status:input.status||'Finalizado',technicianId:reception.technicianId||by,version:(old?.version||0)+1,finishedAt:input.status==='Borrador'?null:nowISO(),createdBy:by};
+ if(input.technicalDiagnosis!==undefined){input={...input,findings:input.technicalDiagnosis,evaluation:''};}
+ const data={receptionId:reception.id,history:[...(old?.history||[]),...(old?[{previous:{...old,history:undefined}}]:[])],findings:input.status==='Borrador'?String(input.findings||''):text(input.findings,'el diagnóstico técnico',8200),evaluation:input.evaluation||'',recommendations:input.recommendations||'',notes:input.notes||'',status:input.status||'Finalizado',technicianId:reception.technicianId||by,version:(old?.version||0)+1,finishedAt:input.status==='Borrador'?null:nowISO(),createdBy:by};
  if(old){Object.assign(old,data);return old;}const record={id:nextCode(s.diagnoses,'DX',s),createdAt:nowISO(),...data};s.diagnoses.push(record);return record;
  });}
 

@@ -15,10 +15,10 @@ export function permissionChecker(role,matrix=rolePermissions()){
   const own=matrix[role]||{};
   return (module,action='ver')=>Boolean(own[module]?.includes(action));
 }
-export function allowedModules(role){const can=permissionChecker(role);return modules.filter(m=>can(m.id,'ver'));}
+export function allowedModules(role){const can=permissionChecker(role);return modules.filter(m=>can(m.id,'ver')||(m.id==='inicio'&&can('reportes','ver')));}
 // Primera pantalla a la que puede entrar el rol (Inicio si la tiene).
 export function homePath(role){
-  const can=permissionChecker(role),list=modules.filter(m=>can(m.id,'ver')),first=list.find(m=>m.id==='inicio')||list[0];
+  const can=permissionChecker(role),list=modules.filter(m=>can(m.id,'ver')||(m.id==='inicio'&&can('reportes','ver'))),first=list.find(m=>m.id==='inicio')||list[0];
   if(!first)return 'sin-acceso';
   return first.id==='auxilio'&&!can('auxilio','crear')?'auxilio/tareas':first.id;
 }

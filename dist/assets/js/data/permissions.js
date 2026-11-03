@@ -17,7 +17,7 @@ export const PERMISSION_MODULES = [
   {id: 'pagos', label: 'Pagos y entrega', icon: 'payment', actions: [['ver', 'Ver pagos'], ['registrar', 'Registrar pagos'], ['entregar', 'Confirmar entrega'], ['rectificar','Revertir pagos con motivo']]},
   {id: 'mecanicos', label: 'Mecánicos', icon: 'wrench', actions: [['ver', 'Ver mecánicos']]},
   {id: 'proveedores', label: 'Proveedores', icon: 'supplier', actions: [['ver', 'Ver proveedores'], ['crear', 'Crear proveedores'], ['editar', 'Editar proveedores'], ['eliminar', 'Eliminar proveedores']]},
-  {id: 'reportes', label: 'Reportes', icon: 'chart', actions: [['ver', 'Ver reportes']]},
+  {id: 'reportes', label: 'Análisis en Inicio', icon: 'chart', actions: [['ver', 'Ver reportes']]},
   {id: 'usuarios', label: 'Usuarios y roles', icon: 'shield', actions: [['ver', 'Ver usuarios'], ['crear', 'Crear usuarios'], ['editar', 'Editar usuarios'], ['eliminar', 'Eliminar usuarios'], ['roles', 'Gestionar roles y permisos']]},
 ];
 

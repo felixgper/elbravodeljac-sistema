@@ -102,7 +102,7 @@ export async function saveVehicle(input,id) {
   return (await request('/vehiculos'+(id?'/'+id:''),{method:id?'PATCH':'POST',body})).data;
 }
 export async function saveReception(input){return (await request('/recepciones',{method:'POST',body:pick(input,['clientId','vehicleId','mileage','symptoms','attentionType','technicianId'])})).data;}
-export async function saveDiagnosis(input){return (await request('/diagnosticos'+(input.id?'/'+input.id:''),{method:input.id?'PUT':'POST',body:pick(input,['receptionId','findings','technicianId','evaluation','recommendations','notes','status','version'])})).data;}
+export async function saveDiagnosis(input){return (await request('/diagnosticos'+(input.id?'/'+input.id:''),{method:input.id?'PUT':'POST',body:pick(input,['receptionId','technicalDiagnosis','findings','technicianId','evaluation','recommendations','notes','status','version'])})).data;}
 export async function saveQuote(input,id){
   const items=input.items.map(i=>({...pick(i,['concept','type','quantity','unitPrice','partKind','discount','serviceId','sparePartId']),origin:i.type==='Servicio'?'':i.origin}));
   return quote((await request('/cotizaciones'+(id?'/'+id:''),{method:id?'PUT':'POST',body:{diagnosisId:input.diagnosisId||'',receptionId:input.receptionId||'',status:input.status,items,version:input.version||0,parentQuoteId:input.parentQuoteId||'',...(input.status==='Aprobada'?{approval:{name:input.approvalName,method:input.approvalMethod}}:{})}})).data);
@@ -142,12 +142,12 @@ function roleID(name){const r=realStore().roles.find(r=>r.name===name);if(!r)thr
 export const saveRolePermissions=(role,permissions)=>request('/roles/'+roleID(role)+'/permisos',{method:'PUT',body:{permissions}});
 export const resetRolePermissions=role=>request('/roles/'+roleID(role)+'/permisos/restablecer',{method:'POST',body:{}});
 export const vehicleHistory=id=>request('/vehiculos/'+id+'/historial');
-export async function getDashboard(period='Mes'){
- const d=(await request('/dashboard?period='+encodeURIComponent(period))).data;
+export async function getDashboard(period='Mes',range){
+ const d=(await request('/dashboard?'+new URLSearchParams({period,...(range?{desde:range.start.toISOString(),hasta:range.end.toISOString()}:{})}))).data;
  const formatDay=value=>new Intl.DateTimeFormat('es-PE',{day:'2-digit',timeZone:'America/Lima'}).format(new Date(value+'T12:00:00-05:00'));
- const income=d.income.map(m=>({...m,month:m.month.length===10?formatDay(m.month):formatMonth(m.month,true),cents:safeInteger(m.cents)}));
+ const income=(d.income||[]).map(m=>({...m,month:m.month.length===10?formatDay(m.month):formatMonth(m.month,true),cents:safeInteger(m.cents)}));
  const fmt=value=>new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeZone:'America/Lima'}).format(new Date(value));
- return {...d,monthlyIncomeCents:safeInteger(d.monthlyIncomeCents),income,period:period+' · '+fmt(d.from)+'–'+fmt(Date.parse(d.until)-1),currentMonth:formatMonth(d.currentMonth)};
+ return {...d,monthlyIncomeCents:d.financialVisible===false?null:safeInteger(d.monthlyIncomeCents),income,period:period+' · '+fmt(d.from)+'–'+fmt(Date.parse(d.until)-1),currentMonth:formatMonth(d.currentMonth)};
 }
 export async function getReport(period,range){const args=new URLSearchParams({period,...(range?{desde:range.start.toISOString(),hasta:range.end.toISOString()}:{})});const r=(await request('/reportes?'+args)).data;return {...r,income:safeInteger(r.incomeCents),months:r.months.map(m=>({...m,label:m.label.length===10?new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'2-digit',timeZone:'America/Lima'}).format(new Date(m.label+'T12:00:00-05:00')):formatMonth(m.label),cents:safeInteger(m.cents)}))};}
 

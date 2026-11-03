@@ -8,11 +8,12 @@ marca, fotografía, logotipos, clientes, teléfonos ni datos de Autoservis Marce
 
 ## Formato implementado
 
-- A4, márgenes de 34 puntos, borgoña/blanco/gris y logo institucional vectorial.
-  La copia SVG para Go es idéntica al recurso web y una prueba comprueba esa
-  igualdad. No se descarga una imagen ni se requiere un conversor externo al
-  generar el PDF. La reproducción vectorial admite los comandos del SVG actual;
-  un cambio futuro del recurso deberá verificarse con estas pruebas.
+- A4, márgenes de 34 puntos, borgoña/blanco/gris y emblema oficial Diseño 19.
+  Desde esta actualización se incrusta una vista del escudo del PNG original,
+  conservando sus píxeles y proporciones. La copia para Go es idéntica al PNG
+  web y una prueba comprueba esa igualdad. No necesita conversores ni descargas.
+  Es una imagen raster con fondo carbón, no un logo vectorizado ni transparente.
+  Los PDF históricos almacenados y la plantilla de ficha técnica no se alteran.
 - Datos del taller desde la vista existente; teléfono solo si el registro
   configurado expone `phone`. Actualmente la vista no lo configura: no se inventa
   ni se copia el teléfono del documento de referencia. Datos del cliente,
@@ -95,10 +96,10 @@ referencia no se convirtieron en constantes del sistema.
   texto conservando espacios/párrafos.
 - `backend/internal/platform/technicalsheet/quote_layout.go`: maquetación,
   tabla, agrupación, alineación monetaria, paginación, estado, total y pie.
-- `backend/internal/platform/technicalsheet/quote_logo.go`: dibujo vectorial del
-  SVG institucional embebido.
-- `backend/internal/platform/technicalsheet/assets/bravo-borgona.svg`: mismo
-  recurso institucional que usa la web.
+- `backend/internal/platform/technicalsheet/quote_logo.go`: incrustación del
+  emblema raster oficial.
+- `backend/internal/platform/technicalsheet/assets/diseno19-original.png`: misma
+  imagen original que conserva la web; el SVG anterior se mantiene de respaldo.
 - `backend/internal/platform/technicalsheet/quote_test.go`: pruebas de diseño.
 - `backend/integration/audit_corrections_test.go`: cotización ficticia persistida
   y descargas de los tres estados.

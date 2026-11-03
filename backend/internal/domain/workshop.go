@@ -43,14 +43,15 @@ func (v *ReceptionInput) Validate() error {
 }
 
 type DiagnosisInput struct {
-	Status          string `json:"status"`
-	Evaluation      string `json:"evaluation"`
-	Recommendations string `json:"recommendations"`
-	Notes           string `json:"notes"`
-	Version         int64  `json:"version"`
-	TechnicianID    string `json:"technicianId"`
-	ReceptionID     string `json:"receptionId"`
-	Findings        string `json:"findings"`
+	TechnicalDiagnosis *string `json:"technicalDiagnosis"`
+	Status             string  `json:"status"`
+	Evaluation         string  `json:"evaluation"`
+	Recommendations    string  `json:"recommendations"`
+	Notes              string  `json:"notes"`
+	Version            int64   `json:"version"`
+	TechnicianID       string  `json:"technicianId"`
+	ReceptionID        string  `json:"receptionId"`
+	Findings           string  `json:"findings"`
 }
 
 func (v DiagnosisInput) Validate() error {
@@ -67,6 +68,20 @@ func (v DiagnosisInput) Validate() error {
 	}
 	if v.Version < 0 {
 		return Invalid("version", "Versión inválida.")
+	}
+	if v.TechnicalDiagnosis != nil {
+		if v.Findings != "" || v.Evaluation != "" {
+			return Invalid("technicalDiagnosis", "Envía el diagnóstico unificado o los campos anteriores, no ambos.")
+		}
+		if err := text("technicalDiagnosis", *v.TechnicalDiagnosis, 8200, v.Status == "Finalizado"); err != nil {
+			return err
+		}
+		for _, item := range []struct{ k, v string }{{"recommendations", v.Recommendations}, {"notes", v.Notes}} {
+			if err := text(item.k, item.v, 4000, v.Status == "Finalizado" && item.k == "recommendations"); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 	for _, value := range []struct{ k, v string }{{"findings", v.Findings}, {"evaluation", v.Evaluation}, {"recommendations", v.Recommendations}, {"notes", v.Notes}} {
 		if err := text(value.k, value.v, 4000, v.Status == "Finalizado" && value.k != "notes"); err != nil {

@@ -23,7 +23,7 @@ const screens=JSON.parse(fs.readFileSync('docs/balsamiq-v14.1.json','utf8'));
 assert.equal(screens.length,23);
 const dashboard=screens.find(s=>s.name==='02 - Dashboard');
 const sourceNav=dashboard.controls.filter(c=>c.typeID==='Label'&&Number(c.x)<220).map(c=>c.properties.text.trim().replace(/^>\s*/,'')).filter(t=>t!=='TALLER AUTOMOTRIZ');
-assert.deepEqual(modules.map(m=>m.label),sourceNav,'El menú debe conservar las opciones del Balsamiq');
+assert.deepEqual(modules.map(m=>m.label),sourceNav.filter(label=>label!=='Reportes'),'El menú conserva los módulos operativos; Reportes está integrado en Inicio');
 const mapped=['01 - Inicio de sesión','02 - Dashboard',...modules.flatMap(m=>m.screens??[])];
 assert.deepEqual([...new Set(mapped)].sort(),screens.map(s=>s.name).sort(),'Las 23 pantallas deben estar contempladas');
 const texts=dashboard.controls.map(c=>c.properties?.text);
@@ -37,4 +37,4 @@ for(const folder of ['dist/assets/js','dist/assets/js/components','dist/assets/j
   const source=fs.readFileSync(`${folder}/${name}`,'utf8');assert(!source.includes('fetch(')||name==='api-service.js','HTTP centralizado: cookies y CSRF en api-service');
  }
 }
-console.log('Correcto: acceso demo, sesión, recordatorio, aislamiento de datos, totales y correspondencia con las 23 pantallas y 13 opciones del Balsamiq.');
+console.log('Correcto: acceso demo, sesión, recordatorio, aislamiento de datos, totales y correspondencia con las 23 pantallas y 12 opciones del Balsamiq.');

@@ -357,7 +357,7 @@ func buildPDF(pages ...[]byte) ([]byte, error) {
 	return buildDocument(true, pages...)
 }
 
-// Only the automotive sheet uses the original two-page image template.
+// Automotive sheets retain their approved template; quotations embed only the official raster emblem.
 func buildDocument(template bool, pages ...[]byte) ([]byte, error) {
 	objects := [][]byte{[]byte("<< /Type /Catalog /Pages 2 0 R >>"), []byte("PAGES_PLACEHOLDER"), []byte("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")}
 	kids := ""
@@ -373,7 +373,15 @@ func buildDocument(template bool, pages ...[]byte) ([]byte, error) {
 		w.Write(content)
 		w.Close()
 		objects = append(objects, stream(fmt.Sprintf("/Filter /FlateDecode /Length %d", z.Len()), z.Bytes()))
-		if !template || i >= 2 {
+		if !template {
+			logo, err := quoteLogoObject()
+			if err != nil {
+				return nil, err
+			}
+			objects = append(objects, logo)
+			continue
+		}
+		if i >= 2 {
 			objects = append(objects, []byte("<< >>"))
 			continue
 		}

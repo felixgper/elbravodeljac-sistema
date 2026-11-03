@@ -73,6 +73,10 @@ func (s *Store) SaveDiagnosis(ctx context.Context, id string, v domain.Diagnosis
 	if v.Status == "" {
 		v.Status = "Borrador"
 	}
+	if v.TechnicalDiagnosis != nil {
+		v.Findings = *v.TechnicalDiagnosis
+		v.Evaluation = ""
+	}
 	tx, err := s.Pool.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -113,13 +117,15 @@ func (s *Store) SaveDiagnosis(ctx context.Context, id string, v domain.Diagnosis
 		err = tx.QueryRow(ctx, `INSERT INTO diagnosticos(id_recepcion,id_tecnico,resumen,evaluacion,recomendaciones,observaciones,estado,version,actualizado_en,finalizado_en,historial) VALUES($1,$2,$3,$4,$5,$6,$7::text,1,clock_timestamp(),CASE WHEN $7::text='Finalizado' THEN clock_timestamp() END,jsonb_build_array($8::jsonb||jsonb_build_object('at',clock_timestamp()))) RETURNING id_diagnostico::text`, v.ReceptionID, technician, v.Findings, v.Evaluation, v.Recommendations, v.Notes, v.Status, event).Scan(&id)
 	} else {
 		var version int64
-		var state string
-		if err = tx.QueryRow(ctx, `SELECT version,estado FROM diagnosticos WHERE id_diagnostico=$1 FOR UPDATE`, id).Scan(&version, &state); err != nil {
+		var state, previousFindings, previousEvaluation, previousRecommendations, previousNotes string
+		if err = tx.QueryRow(ctx, `SELECT version,estado,resumen,evaluacion,recomendaciones,observaciones FROM diagnosticos WHERE id_diagnostico=$1 FOR UPDATE`, id).Scan(&version, &state, &previousFindings, &previousEvaluation, &previousRecommendations, &previousNotes); err != nil {
 			return nil, translate(err)
 		}
 		if state == "Finalizado" || version != v.Version {
 			return nil, domain.ErrConflict
 		}
+		// Preserve distinct historical texts before any compatible/unified edit.
+		event, _ = json.Marshal(map[string]any{"by": u.ID, "action": v.Status, "findings": v.Findings, "evaluation": v.Evaluation, "recommendations": v.Recommendations, "notes": v.Notes, "previous": map[string]any{"version": version, "status": state, "findings": previousFindings, "evaluation": previousEvaluation, "recommendations": previousRecommendations, "notes": previousNotes}})
 		_, err = tx.Exec(ctx, `UPDATE diagnosticos SET resumen=$2,evaluacion=$3,recomendaciones=$4,observaciones=$5,estado=$6::text,version=version+1,actualizado_en=clock_timestamp(),finalizado_en=CASE WHEN $6::text='Finalizado' THEN clock_timestamp() END,historial=historial||jsonb_build_array($7::jsonb||jsonb_build_object('at',clock_timestamp())) WHERE id_diagnostico=$1`, id, v.Findings, v.Evaluation, v.Recommendations, v.Notes, v.Status, event)
 	}
 	if err != nil {

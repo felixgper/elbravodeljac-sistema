@@ -1,12 +1,11 @@
-import {mountDiagnosisDashboard,refreshVisibleDiagnosisInboxes} from './components/diagnosis-inbox.js';
+import {renderIntegratedDashboard} from './views/dashboard.js';
+import {refreshVisibleDiagnosisInboxes} from './components/diagnosis-inbox.js';
 import {realMode} from './services/api-service.js';
 import {loadModule} from './services/real-workshop.js';
 import {clearRealStore} from './services/real-state.js';
 import { icon } from './components/icons.js';
 import { modules } from './components/navigation.js';
-import { donutChart, horizontalBars } from './components/charts.js';
 import { refreshSession, getSession, getRememberedUser, login, logout, demoCredentials } from './services/auth-service.js';
-import { getDashboard, getActiveOrders } from './services/dashboard-service.js';
 import { renderClients, renderVehicles } from './views/clients-vehicles.js';
 import { renderReceptions, renderDiagnoses, renderQuotes, renderOrders, renderRescues } from './views/operations.js';
 import { renderPayments } from './views/payments.js';
@@ -22,8 +21,8 @@ let renderId = 0;
 let disposeShell;
 let allowed = modules;
 
-function brand() {
-  return `<span class="atelier-brand" role="img" aria-label="El Bravo del JAC · Taller automotriz"><img class="brand-bull" src="./assets/images/bravo-borgona.svg" alt="" width="72" height="62"><span class="brand-wordmark">EL BRAVO DEL JAC<small>TALLER AUTOMOTRIZ</small></span></span>`;
+function brand(full=false) {
+  return full?`<span class="official-brand brand-on-light" role="img" aria-label="El Bravo del JAC · Taller automotriz"><img class="brand-horizontal" src="./assets/images/diseno19/fondo-claro.svg" alt="Logotipo oficial: escudo automotriz y El Bravo del JAC" width="1150" height="450"></span>`:`<span class="atelier-brand official-brand" role="img" aria-label="El Bravo del JAC · Taller automotriz"><img class="brand-emblem" src="./assets/images/diseno19/emblema.svg" alt="" width="410" height="430"><span class="brand-wordmark">EL BRAVO DEL JAC<small>TALLER AUTOMOTRIZ</small></span></span>`;
 }
 function renderLogin() {
   root.setAttribute('aria-busy','false');root.dataset.route='#/login';
@@ -31,7 +30,7 @@ function renderLogin() {
   document.title = 'Iniciar sesión · El Bravo del JAC';
   root.innerHTML = `<main class="login-page" id="main-content"><div class="login-glow" aria-hidden="true"></div>
     <section class="login-card" aria-labelledby="login-title">
-      <div class="login-brand">${brand()}</div>
+      <div class="login-brand">${brand(true)}</div>
       <div class="login-heading"><span class="eyebrow">GESTIÓN DEL TALLER</span><h1 id="login-title">Iniciar sesión</h1><p>Acceso exclusivo para trabajadores del taller</p></div>
       <form id="login-form">
         <label class="field-label" for="username">Correo o usuario</label><div class="input-wrap">${icon('user')}<input id="username" name="username" autocomplete="username" placeholder="Ingrese su usuario" value="${escapeHtml(remembered)}" required maxlength="${realMode?150:120}" autocapitalize="none" spellcheck="false"></div>
@@ -112,7 +111,7 @@ function bindShell() {
   document.getElementById('logout').addEventListener('click', async () => { try {await logout(); location.hash = '#/login';}catch(error){notify(error.message);} });
   search.addEventListener('input', () => {
     const query = search.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    const matches = allowed.filter(m => m.label.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(query));
+    const matches = allowed.filter(m => (m.label+' '+(m.keywords||'')).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(query));
     results.innerHTML = matches.length ? matches.map(m => `<a role="option" href="#/${m.id}">${icon(m.icon)}<span>${m.label}</span>${!m.ready ? '<small>Próxima etapa</small>' : ''}</a>`).join('') : '<p role="option" aria-disabled="true">No se encontraron módulos.</p>';
     results.hidden = !query; search.setAttribute('aria-expanded',String(Boolean(query)));
   });
@@ -131,28 +130,8 @@ function bindShell() {
     if (!event.target.closest('.module-search')) { results.hidden = true; search.setAttribute('aria-expanded','false'); }
   };
 }
-async function renderDashboard(currentRender,period='Mes') {
-  const content = document.getElementById('page-content');
-  content.innerHTML = '<div class="loading-state" role="status">Cargando resumen…</div>';
-  try {
-    const data = await getDashboard(period); if (currentRender !== renderId) return;
-    const cards = [
-      {label:'Ingresos del período',value:currency(data.monthlyIncomeCents),icon:'wallet',class:'copper',note:data.period},
-      {label:'Órdenes activas',value:getActiveOrders(data),icon:'wrench',class:'copper',note:'Pendientes, reparación y pruebas'},
-      {label:'Servicios finalizados',value:data.completedServices,icon:'check',class:'green',note:'Cantidades confirmadas'},
-      {label:'Auxilios del período',value:data.rescuesToday,icon:'rescue',class:'blue',note:realMode?'Solicitudes registradas':'Solicitudes de demostración'},
-    ];
-    content.innerHTML = `<div class="dashboard-note"><span class="live-dot"></span>Dashboard general <span class="note-divider">/</span><span>${realMode?'Datos del servidor':'Datos de este navegador'} · ${escapeHtml(data.period)}</span><div role="group" aria-label="Período del dashboard">${['Semana','Mes','Año'].map(p=>`<button type="button" class="${p===period?'primary':'secondary'}-button" data-period="${p}" aria-pressed="${p===period}">${p}</button>`).join('')}</div></div>
-      <section class="kpi-grid" aria-label="Resumen de actividad">${cards.map(card => `<article class="kpi-card"><span class="kpi-icon ${card.class}">${icon(card.icon)}</span><div><strong class="kpi-value">${card.value}</strong><h2>${card.label}</h2><p>${card.note}</p></div></article>`).join('')}</section>
-      <div class="main-charts"><section class="panel income-panel"><div class="panel-heading"><div><h2>Actividad del taller</h2><p>Resumen operativo del período</p></div>${icon('wrench')}</div><div class="report-total"><span>Recepciones registradas</span><strong>${escapeHtml(data.counts?.receptions??getStore().receptions.length)}</strong></div><div class="report-total"><span>Diagnósticos registrados</span><strong>${escapeHtml(data.counts?.diagnoses??getStore().diagnoses.length)}</strong></div><div class="report-total"><span>Entregas registradas</span><strong>${escapeHtml(data.counts?.deliveries??(getStore().deliveries||[]).length)}</strong></div><p>Las bandejas de diagnóstico muestran las evaluaciones pendientes y las listas para cotizar según tus permisos.</p>${permissionChecker(getSession().role)('reportes','ver')?'<a class="secondary-button" href="#/reportes">Ver análisis e ingresos en Reportes</a>':''}</section>
-      <section class="panel states-panel"><div class="panel-heading"><div><h2>Estados del servicio</h2><p>Órdenes activas y cierres del período</p></div>${icon('orders')}</div>${donutChart(data.states)}</section></div>
-      <section class="panel separated"><div class="panel-heading"><div><h2>Trabajo por mecánico</h2><p>Carga de órdenes activas registrada</p></div></div>${horizontalBars(data.mechanics,'mechanics')}</section>
-      <section class="workshop-banner" aria-label="El Bravo del JAC, servicio especializado en vehículos JAC"><div class="banner-crop"><img src="./assets/images/referencia-cobre-carbon.png" alt="Camioneta JAC y mecánico del taller. Diagnóstico, mantenimiento, repuestos y auxilio mecánico." loading="lazy"></div></section>`;
-    content.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>go('inicio?period='+encodeURIComponent(b.dataset.period)));
-    await mountDiagnosisDashboard(content);
-  } catch {
-    if (currentRender === renderId) content.innerHTML = '<section class="panel error-state" role="alert"><h2>No se pudo cargar el resumen</h2><p>Vuelve a Inicio para intentarlo nuevamente.</p><a class="primary-button" href="#/inicio">Volver a Inicio</a></section>';
-  }
+async function renderDashboard(currentRender,period='Mes',params) {
+ await renderIntegratedDashboard({root:document.getElementById('page-content'),session:getSession(),period,reference:params?.get('reference'),tab:params?.get('tab'),isCurrent:()=>currentRender===renderId});
 }
 // Módulos cuyos formularios guardan datos: sin permiso, el formulario queda en solo lectura.
 const formGates = {recepciones:['crear'], diagnosticos:['crear'], cotizaciones:['crear','editar'], auxilio:['crear']};
@@ -168,19 +147,20 @@ async function render() {
   disposeShell?.();
   const currentRender = ++renderId;
   root.onkeydown = null; root.onclick = null;
-  const route = location.hash.replace(/^#\//,'') || 'login';
+  let route = location.hash.replace(/^#\//,'') || 'login';
   const [pathname, query = ''] = route.split('?');
   const path = pathname.split('/');
   const params = new URLSearchParams(query);
+  if(path[0]==='reportes'){path[0]='inicio';params.set('tab','analisis');route='inicio?'+params;history.replaceState(null,'','#/'+route);}
   let session;
   try {session=await refreshSession();}catch(error){if(currentRender===renderId)root.innerHTML='<section class="panel error-state" role="alert"><h2>No se pudo comprobar la sesión</h2><p>'+escapeHtml(error.message)+'</p><a href="">Reintentar</a></section>';return;}
   if(currentRender!==renderId)return;
   if (!session) { if (route !== 'login') { history.replaceState(null,'','#/login'); } renderLogin(); return; }
   if (route === 'login') { history.replaceState(null,'','#/inicio'); }
   const can = permissionChecker(session.role);
-  allowed = modules.filter(m => can(m.id, 'ver'));
+  allowed = modules.filter(m => can(m.id,'ver')||(m.id==='inicio'&&can('reportes','ver')));
   let module = modules.find(m => m.id === path[0]);
-  const denied = Boolean(module) && !can(module.id, 'ver');
+  const denied = Boolean(module) && !(can(module.id,'ver')||(module.id==='inicio'&&can('reportes','ver')));
   if (!module) { module = allowed[0] || modules[0]; if (allowed[0]) history.replaceState(null,'',`#/${homePath(session.role)}`); }
   if (module.id === 'auxilio' && !path[1] && !denied && !can('auxilio', 'crear')) { history.replaceState(null,'','#/auxilio/tareas'); path[1] = 'tareas'; }
   document.title = `${module.id === 'inicio' ? 'Dashboard' : module.label} · El Bravo del JAC`;
@@ -190,7 +170,7 @@ async function render() {
       const target = homePath(session.role);
       document.getElementById('page-content').innerHTML = `<section class="panel error-state no-access" role="alert"><span class="no-access-icon">${icon('lock')}</span><h2>No tienes permiso para entrar aquí</h2><p>${allowed.length ? 'Tu rol no incluye este módulo. Si lo necesitas, pide a un administrador que revise tus permisos.' : 'Tu rol no tiene módulos habilitados. Pide a un administrador que revise tus permisos.'}</p>${allowed.length ? `<a class="primary-button" href="#/${target}">Ir a mi pantalla de inicio</a>` : ''}</section>`;
     }
-    else if (module.id === 'inicio') await renderDashboard(currentRender,params.get('period')||'Mes');
+    else if (module.id === 'inicio') await renderDashboard(currentRender,params.get('period')||'Mes',params);
     else {
       const views={clientes:renderClients,vehiculos:renderVehicles,recepciones:renderReceptions,diagnosticos:renderDiagnoses,cotizaciones:renderQuotes,ordenes:renderOrders,auxilio:renderRescues,pagos:renderPayments,mecanicos:renderMechanics,proveedores:renderSuppliers,usuarios:renderUsers,reportes:renderReports};
       if(realMode){document.getElementById('page-content').innerHTML='<div class="loading-state" role="status">Cargando datos del servidor…</div>';if(!await loadModule(module.id,params,path)||currentRender!==renderId)return;}
