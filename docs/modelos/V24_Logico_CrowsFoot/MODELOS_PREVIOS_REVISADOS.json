@@ -1,0 +1,36 @@
+[
+  {
+    "path": "docs/modelos/V23_Chen_Corregido/El_Bravo_del_JAC_V23_Chen_Corregido.drawio",
+    "sha256": "76090e4ca721d72cca1b2366abb0a55adfc285d207bdc548d0b9c700d766e5db",
+    "cells": 257
+  },
+  {
+    "path": "docs/modelos/V23_Chen_Corregido/AUDITORIA_RELACIONES.csv",
+    "sha256": "7c5c2587adcad5f15280bd1c4df06bec815e544f81e3ad1b7a1a92af6f993500",
+    "rows": 42
+  },
+  {
+    "path": "docs/modelos/V23_Chen_Corregido/DECISIONES_PENDIENTES.md",
+    "sha256": "a94a5dd3d6fde1f9fab9e5bef7eac55b5e8269eb5fc7e8a75e5c9245ecaa9775"
+  },
+  {
+    "path": "docs/modelos/V23_Chen_Corregido/DIFERENCIAS_IMPLEMENTACION.md",
+    "sha256": "8dca0a27e1216dd4396409f197908a5c0f7a510231c26bcc942bf5e125abff26"
+  },
+  {
+    "path": "docs/modelos/V23_Chen_Corregido/RELACIONES_V23.json",
+    "sha256": "000e27122561907d9900336c64ed49bd658ef79faf5f182af071d653b9b4eae8",
+    "relations": 42
+  },
+  {
+    "path": "docs/modelos/V24_Chen_Resumido_Exposicion/El_Bravo_del_JAC_V24_Chen_Resumido.drawio",
+    "sha256": "9248f6a8078dea7be7c9b1b3d3e979e073e477fc101cecc648b3320e9c0eb36d",
+    "cells": 95
+  },
+  {
+    "ref": "docs/propuesta-modelo-v20",
+    "path": "docs/modelos/V20/El_Bravo_del_JAC_V20_Logico_Crows_Foot.drawio",
+    "sha256": "bb321f14e569b72beb8aa1391c2e024b50b426409755482bc3a7b10aabc03696",
+    "cells": 723
+  }
+]
