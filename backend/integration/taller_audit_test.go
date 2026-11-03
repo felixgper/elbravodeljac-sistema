@@ -25,7 +25,7 @@ import (
 )
 
 // Real browser, three independent sessions, canonical roles and employee links.
-func TestTallerThreeLinkedAccounts(t *testing.T) {
+func TestTallerFourLinkedAccounts(t *testing.T) {
 	if os.Getenv("FRONTEND_AUDIT") != "1" {
 		t.Skip("Requiere navegador y cluster QA")
 	}
@@ -78,11 +78,13 @@ func TestTallerThreeLinkedAccounts(t *testing.T) {
 		h.exec(t, `INSERT INTO usuario_roles(id_usuario,id_rol) SELECT $1,id_rol FROM roles WHERE nombre_rol=$2`, user, role)
 		return user, employee
 	}
+	manager, _ := seed("taller_gerente", "Gerente", "Gerencia", true)
+	h.exec(t, `INSERT INTO clientes(nombre,tipo_documento,numero_documento,telefono,direccion) SELECT 'Carga QA '||$1||' '||g,'Pasaporte','LOAD'||$1||g,'+51987654321','QA aislado' FROM generate_series(1,1200) g`, h.suffix)
 	admin, adminEmployee := seed("taller_admin", "Administrador", "Administración", true)
 	first, firstEmployee := seed("taller_m1", "Mecánico", "Mecánico", true)
 	second, secondEmployee := seed("taller_m2", "Mecánico", "Mecánico", true)
 	inactive, inactiveEmployee := seed("taller_inactivo", "Mecánico", "Mecánico", false)
-	fixture := map[string]string{"url": origin, "suffix": h.suffix, "password": h.password, "username": "taller_admin_" + h.suffix, "workerUsername": "taller_m1_" + h.suffix, "otherUsername": "taller_m2_" + h.suffix, "adminId": admin, "adminEmployee": adminEmployee, "mechanicId": first, "mechanicEmployee": firstEmployee, "otherId": second, "otherEmployee": secondEmployee, "inactiveId": inactive, "inactiveEmployee": inactiveEmployee}
+	fixture := map[string]string{"managerUsername": "taller_gerente_" + h.suffix, "managerId": manager, "url": origin, "suffix": h.suffix, "password": h.password, "username": "taller_admin_" + h.suffix, "workerUsername": "taller_m1_" + h.suffix, "otherUsername": "taller_m2_" + h.suffix, "adminId": admin, "adminEmployee": adminEmployee, "mechanicId": first, "mechanicEmployee": firstEmployee, "otherId": second, "otherEmployee": secondEmployee, "inactiveId": inactive, "inactiveEmployee": inactiveEmployee}
 	input, _ := json.Marshal(fixture)
 	cmd := exec.CommandContext(ctx, "node", filepath.Join("..", "..", "checks", "taller-browser.mjs"))
 	cmd.Stdin = bytes.NewReader(input)

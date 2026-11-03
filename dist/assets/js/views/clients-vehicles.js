@@ -8,7 +8,7 @@ import {updateRealStore} from '../services/real-state.js';
 import {vehicleHistory} from '../services/real-workshop.js';
 import {realMode,realSession} from '../services/api-service.js';
 import {getStore,saveClient,saveVehicle,deleteClient,deleteVehicle,getContext} from '../services/workshop-service.js';
-import {e,date,stamp,field,textarea,select,checkbox,placeholder,selectOptions,link,button,submit,form,hint,pageHeader,searchableList,bindForm,go,notify,showModal,table,badge,rowActions,confirmDelete,personCell,phoneFormat,docBadge} from '../components/ui.js';
+import {e,date,stamp,field,textarea,select,checkbox,placeholder,selectOptions,link,button,submit,form,hint,pageHeader,searchableList,bindForm,readDraft,bindDraft,clearDraft,go,notify,showModal,table,badge,rowActions,confirmDelete,personCell,phoneFormat,docBadge} from '../components/ui.js';
 import {icon} from '../components/icons.js';
 import {permissionChecker} from '../services/permissions.js';
 const clientLabel=c=>`${c.name} · ${c.documentType} ${c.documentNumber}`;
@@ -17,7 +17,7 @@ export async function renderClients({root,path,params,session}){
  const s=getStore(),can=permissionChecker(session.role);
  if(path[1]==='nuevo'||path[1]==='editar'){
   if(!can('clientes',path[1]==='editar'?'editar':'crear'))throw new Error('Tu rol no tiene permiso para esta acción.');
-  const id=path[1]==='editar'?path[2]:null,c=id?s.clients.find(c=>c.id===id):{};if(!c)throw new Error('No se encontró el cliente.');
+  const id=path[1]==='editar'?path[2]:null,c=id?s.clients.find(c=>c.id===id):readDraft('cliente-nuevo');if(!c)throw new Error('No se encontró el cliente.');
   root.innerHTML=pageHeader(id?'Editar cliente':'Nuevo cliente','Complete los datos y seleccione el documento correspondiente.')+form('DATOS DEL CLIENTE',
    field('Nombre completo o razón social','name',c.name||'','text','required maxlength="150" autocomplete="organization"')+
    select('Tipo de documento','documentType',documentOptions(c.documentType||''),c.documentType||'DNI','required')+
@@ -27,7 +27,8 @@ export async function renderClients({root,path,params,session}){
    field('Dirección','address',c.address||'','text','required maxlength="250" autocomplete="street-address"'),
    submit(id?'Guardar cambios':'Guardar cliente')+link('Volver a clientes','clientes'));
   const type=root.querySelector('[name="documentType"]');const updateLabel=()=>{const input=root.querySelector('[name="name"]');root.querySelector(`label[for="${input.id}"]`).textContent=type.value==='RUC'?'Razón social':'Nombre completo';const number=root.querySelector('[name="documentNumber"]');number.inputMode=['DNI','RUC'].includes(type.value)?'numeric':'text';};type.onchange=updateLabel;updateLabel();
-  bindForm('edit-form',async data=>{const saved=await saveClient(data,id);notify(id?'Cliente actualizado.':'Cliente registrado.');go(params.get('volver')==='recepciones'?`recepciones?cliente=${saved.id}`:'clientes');});return;
+  if(!id)bindDraft('edit-form','cliente-nuevo');
+  bindForm('edit-form',async data=>{const saved=await saveClient(data,id);if(!id)clearDraft('cliente-nuevo');notify(id?'Cliente actualizado.':'Cliente registrado.');go(params.get('volver')==='recepciones'?`recepciones?cliente=${saved.id}`:'clientes');});return;
  }
  const vehiclesFor=c=>c.vehicles||s.vehicles.filter(v=>v.clientId===c.id);
  const overview=`<div class="directory-stats" aria-label="Resumen del directorio"><div>${icon('users')}<strong>${String(s.clients.length).padStart(2,'0')}</strong><span>clientes</span></div><div>${icon('car')}<strong>${String(s.vehicles.length).padStart(2,'0')}</strong><span>${realMode?'vehículos en esta página':'vehículos'}</span></div></div>`;

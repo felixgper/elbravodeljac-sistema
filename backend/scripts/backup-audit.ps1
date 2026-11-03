@@ -1,12 +1,13 @@
 # Read development; restore ONLY into a freshly named database in the QA cluster.
-param([ValidatePattern('^elbravodeljac-taller-[0-9]+-test$')][string]$TestProject='elbravodeljac-taller-20261102-test')
+param([ValidatePattern('^elbravodeljac-taller-[0-9]+-test$')][string]$TestProject='elbravodeljac-taller-20261102-test',
+ [ValidatePattern('^compose\.auditoria(?:-taller|-[0-9]{8})\.yaml$')][string]$TestOverride='compose.auditoria-taller.yaml')
 $ErrorActionPreference='Stop'
 $repo=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 Push-Location $repo
 try{
  $projects=& docker compose ls -a --format json | ConvertFrom-Json
  if($LASTEXITCODE -ne 0){throw 'No se puede comprobar la propiedad de los proyectos'}
- foreach($owned in @(@{name='elbravodeljac-fase-e-dev';files=@('compose.dev.yaml')},@{name=$TestProject;files=@('compose.test.yaml','compose.auditoria-taller.yaml')})){
+ foreach($owned in @(@{name='elbravodeljac-fase-e-dev';files=@('compose.dev.yaml')},@{name=$TestProject;files=@('compose.test.yaml',$TestOverride)})){
   $entry=@($projects|Where-Object {$_.Name -eq $owned.name})
   if($entry.Count -ne 1){throw 'Falta un proyecto autorizado; no se crean servicios desde este respaldo'}
   $actual=@($entry[0].ConfigFiles -split ','|ForEach-Object {[IO.Path]::GetFullPath($_)}|Sort-Object)
@@ -17,7 +18,7 @@ try{
  $folder=Join-Path $repo "backend/.cache/respaldo-auditoria-$stamp"
  New-Item -ItemType Directory -Path $folder -ErrorAction Stop|Out-Null
  $dev=@('compose','--env-file','.env.fase-e.local','-p','elbravodeljac-fase-e-dev','-f','compose.dev.yaml')
- $qa=@('compose','--env-file','.env.audit-tests.local','-p',$TestProject,'-f','compose.test.yaml','-f','compose.auditoria-taller.yaml')
+ $qa=@('compose','--env-file','.env.audit-tests.local','-p',$TestProject,'-f','compose.test.yaml','-f',$TestOverride)
  $restorePG='jac_restore_'+$stamp;$restoreMongo='elbravodeljac_restore_'+$stamp
  function Read-PG([string[]]$argsCompose,[string]$service,[string]$database,[string]$sql){
   $output=$sql|& docker @argsCompose exec -T $service psql -X -U postgres -d $database -At -v ON_ERROR_STOP=1
@@ -63,7 +64,7 @@ try{
  foreach($constraint in $before.constraints){$constraint.definition=Canonical-Constraint $constraint.definition}
  foreach($constraint in $restored.constraints){$constraint.definition=Canonical-Constraint $constraint.definition}
  foreach($key in @('tables','constraints','indexes')){if(($before.$key|ConvertTo-Json -Depth 14 -Compress) -ne ($restored.$key|ConvertTo-Json -Depth 14 -Compress)){throw "Restauración PG diferente: $key"}}
- $mongoInventory='const crypto=require("crypto");const d=db.getSiblingDB(DATABASE);print(JSON.stringify(d.getCollectionNames().sort().map(n=>({name:n,rows:d.getCollection(n).countDocuments({}),hash:crypto.createHash("sha256").update(EJSON.stringify(d.getCollection(n).find({}).sort({_id:1}).toArray())).digest("hex"),indexes:d.getCollection(n).getIndexes(),options:d.getCollectionInfos({name:n})[0].options}))));'
+ $mongoInventory='const crypto=require("crypto");const d=db.getSiblingDB(DATABASE);print(JSON.stringify(d.getCollectionNames().sort().map(n=>({name:n,rows:d.getCollection(n).countDocuments({}),hash:crypto.createHash("sha256").update(EJSON.stringify(d.getCollection(n).find({}).sort({_id:1}).toArray())).digest("hex"),indexes:d.getCollection(n).getIndexes().sort((a,b)=>a.name.localeCompare(b.name)),options:d.getCollectionInfos({name:n})[0].options}))));'
  $sourceScript='const a=db.getSiblingDB("admin").auth(process.env.MONGO_INITDB_ROOT_USERNAME,process.env.MONGO_INITDB_ROOT_PASSWORD);if(!a.ok)throw Error("auth");'+$mongoInventory.Replace('DATABASE','"elbravodeljac_tecnico_dev"')
  $sourceMongo=& docker @dev exec -T mongo-dev mongosh --quiet --eval $sourceScript
  if($LASTEXITCODE -ne 0){throw 'Falló inventario Mongo origen'}

@@ -16,11 +16,11 @@ concede permisos ni reemplaza los roles N de acceso.
 
 - JSON UTF-8. IDs SQL como strings decimales; campos JSON camelCase del formulario. Rutas {id} usan ID SQL, nunca codigo_ot.
 - Dinero, km y cantidades: strings decimales exactos; respuesta con dos decimales. total/subtotal/saldo son calculados por servidor.
-- Éxito futuro: 200 lectura/edición; 201 alta con Location; 204 eliminación/cierre de sesión. Detalle {data: objeto}; listas {data: [], meta: {page, pageSize, total}}.
+- Respuestas: 200 lectura/edición; 201 alta con Location; 204 eliminación/cierre de sesión. Detalle {data: objeto}; listas {data: [], meta: {page, pageSize, total}}.
 - Listas: page=1, pageSize=20 (máximo 100), q y filtros documentados por módulo; orden estable por ID. Fechas desde inclusiva/hasta exclusiva, RFC3339 UTC.
 - Errores: {error: {code, message, fields?}}; 400 JSON inválido, 401 sin sesión, 403 sin permiso, 404 recurso inexistente, 409 conflicto/referencias/reintento incompatible, 422 validación, 503 persistencia no disponible. Sin SQL ni secretos.
 - Toda ruta de negocio requiere sesión y permisos; login es la excepción. CSRF en escrituras con cookie. Permisos y alcance del objeto se verifican en Go.
-- Pagos, entregas y creación de OT: acordar y persistir Idempotency-Key antes de habilitar reintentos automáticos. El SQL actual no tiene almacenamiento de claves; restricción única de OT/entrega no reemplaza deduplicación de pagos.
+- Pagos: enviar `requestId` obligatorio y estable en los reintentos. La migración 006 incorpora `pagos.request_id` y su índice único por orden; un reintento con el mismo contenido recupera el pago, y un contenido incompatible devuelve 409. La unicidad de orden/cotización y entrega/orden no implica idempotencia genérica para las demás altas; no reintentarlas automáticamente sin comprobar su resultado.
 - Catálogos nuevos: alta explícita con permiso de editar cotizaciones, sin crear módulos visuales. No crear por inferencia silenciosa.
 
 ## Catálogo
