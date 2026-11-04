@@ -4,4 +4,5 @@ COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 COPY backend/ ./
 COPY dist/ /workspace/dist/
+COPY database/postgresql/esquema_actual.sql /workspace/database/postgresql/esquema_actual.sql
 CMD ["go", "test", "./...", "-count=1", "-v"]

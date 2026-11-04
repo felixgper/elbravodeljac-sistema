@@ -7,6 +7,7 @@ import (
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/httpapi"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/postgres"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 	"net/http/httptest"
@@ -27,11 +28,43 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 	}
 	cfg.ConnConfig.RuntimeParams["timezone"] = "UTC"
 	ctx := context.Background()
+	cluster, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cluster.Close()
+	// Identity invariants must not depend on accounts left by other suites.
+	// This database lives only in the explicitly selected disposable test cluster.
+	name := "jac_phase_c_" + strings.ToLower(rand.Text()[:10])
+	if _, err = cluster.Exec(ctx, "CREATE DATABASE "+pgx.Identifier{name}.Sanitize()); err != nil {
+		t.Fatal(err)
+	}
+	cfg = cfg.Copy()
+	cfg.ConnConfig.Database = name
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer pool.Close()
+	schema, err := os.ReadFile("../../database/postgresql/esquema_actual.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := []string{}
+	for _, line := range strings.Split(string(schema), "\n") {
+		if !strings.HasPrefix(line, "\\") {
+			lines = append(lines, line)
+		}
+	}
+	if _, err = pool.Exec(ctx, strings.Join(lines, "\n")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = pool.Exec(ctx, "SET search_path TO public"); err != nil {
+		t.Fatal(err)
+	}
+	if err = (&postgres.Store{Pool: pool}).Migrate(ctx); err != nil {
+		t.Fatal(err)
+	}
 	key := make([]byte, 32)
 	if _, err = rand.Read(key); err != nil {
 		t.Fatal(err)
@@ -192,24 +225,64 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 		h.call(t, limited, "GET", "/dashboard", nil, 403)
 	})
 	t.Run("último acceso administrativo transacción y concurrencia", func(t *testing.T) {
-		// Remove the second admin first: a non-admin permission manager cannot remove the last.
-		h.call(t, admin, "PATCH", "/usuarios/"+secondID, map[string]bool{"active": false}, 200)
+		adminCount := func() string {
+			return h.scalar(t, `SELECT count(*)::text FROM (SELECT u.id_usuario FROM usuarios u JOIN usuario_roles ur USING(id_usuario) JOIN rol_permisos rp USING(id_rol) JOIN permisos p USING(id_permiso) WHERE u.activo AND p.codigo IN ('usuarios.ver','usuarios.roles','usuarios.editar') GROUP BY u.id_usuario HAVING count(DISTINCT p.codigo)=3) a`)
+		}
+		if n := adminCount(); n != "2" {
+			t.Fatal("fixture must start with exactly two administrators", n)
+		}
+		// With two administrators, a permitted actor can clear another role.
 		h.call(t, limited, "PUT", "/roles/"+adminRole+"/permisos", map[string]any{"permissions": map[string][]string{}}, 200)
-		// Other test managers exist in this persistent cluster; clearing this
-		// custom role is legitimate. Last Gerente is tested in an isolated database.
+		if n := adminCount(); n != "1" {
+			t.Fatal("second administrator must retain access", n)
+		}
+		// A permission manager cannot grant permissions they do not possess.
 		h.call(t, limited, "PUT", "/roles/"+adminRole+"/permisos", map[string]any{"permissions": domain.PermissionPolicy().Defaults["Gerente"]}, 403)
-		h.exec(t, `INSERT INTO rol_permisos(id_rol,id_permiso) SELECT $1,id_permiso FROM permisos ON CONFLICT DO NOTHING`, adminRole)
+		h.call(t, second, "PUT", "/roles/"+adminRole+"/permisos", map[string]any{"permissions": domain.PermissionPolicy().Defaults["Gerente"]}, 200)
+		h.call(t, admin, "PATCH", "/usuarios/"+secondID, map[string]bool{"active": false}, 200)
+		before := h.scalar(t, `SELECT md5(string_agg(id_permiso::text,',' ORDER BY id_permiso)) FROM rol_permisos WHERE id_rol=$1`, adminRole)
+		h.call(t, limited, "PUT", "/roles/"+adminRole+"/permisos", map[string]any{"permissions": map[string][]string{}}, 422)
+		if after := h.scalar(t, `SELECT md5(string_agg(id_permiso::text,',' ORDER BY id_permiso)) FROM rol_permisos WHERE id_rol=$1`, adminRole); after != before || adminCount() != "1" {
+			t.Fatal("last administrator permissions must roll back")
+		}
+		// This operator may edit/delete accounts but lacks usuarios.ver, so is
+		// not a substitute for a valid full administrative access.
+		_, operator := h.user(t, "coperator", "COperator_"+h.suffix, []string{"usuarios.editar", "usuarios.eliminar", "usuarios.roles"})
+		h.call(t, operator, "PATCH", "/usuarios/"+adminID, map[string]bool{"active": false}, 422)
 		h.call(t, admin, "PATCH", "/usuarios/"+secondID, map[string]bool{"active": true}, 200)
-		// Re-authenticate second: deactivation invalidated the former JWT.
-		res := h.send(workshopSession{}, "POST", "/auth/login", map[string]string{"username": "csecond_" + h.suffix, "password": h.password})
-		if res.status != 200 {
-			t.Fatalf("second login %d %s", res.status, res.raw)
+		h.call(t, operator, "PATCH", "/usuarios/"+adminID, map[string]bool{"active": false}, 200)
+		// The second account has no operational FK references: rejection here
+		// exercises preservation of access, rather than an unrelated FK error.
+		h.call(t, operator, "DELETE", "/usuarios/"+secondID, nil, 422)
+		h.call(t, operator, "PATCH", "/usuarios/"+secondID, map[string]bool{"active": false}, 422)
+		secondRole := h.scalar(t, `SELECT id_rol::text FROM usuario_roles WHERE id_usuario=$1`, secondID)
+		h.call(t, operator, "PATCH", "/usuarios/"+secondID, map[string]string{"removeRoleId": secondRole}, 422)
+		if n := adminCount(); n != "1" {
+			t.Fatal("last account and membership must survive rejected writes", n)
 		}
-		var p struct {
-			CSRF string `json:"csrfToken"`
+		// Reauthentication is a separate scenario: give it its own HTTP login
+		// window, with the same store/key and the production limiter unchanged.
+		freshHandler, err := httpapi.New(&postgres.Store{Pool: pool}, httpapi.Options{Origin: "http://localhost:8080", Key: key})
+		if err != nil {
+			t.Fatal(err)
 		}
-		decodeTest(t, res.raw, &p)
-		second = workshopSession{res.cookies[0], p.CSRF}
+		h.api = httptest.NewServer(freshHandler)
+		defer h.api.Close()
+		login := func(username string) workshopSession {
+			res := h.send(workshopSession{}, "POST", "/auth/login", map[string]string{"username": username + "_" + h.suffix, "password": h.password})
+			if res.err != nil || res.status != 200 {
+				t.Fatalf("fixture login %d %v", res.status, res.err)
+			}
+			var p struct {
+				CSRF string `json:"csrfToken"`
+			}
+			decodeTest(t, res.raw, &p)
+			return workshopSession{res.cookies[0], p.CSRF}
+		}
+		// Reactivation does not revive the revoked JWT: obtain fresh sessions.
+		second = login("csecond")
+		h.call(t, second, "PATCH", "/usuarios/"+adminID, map[string]bool{"active": true}, 200)
+		admin = login("cmanager")
 		var wg sync.WaitGroup
 		results := make(chan workshopResponse, 2)
 		wg.Add(2)
@@ -223,6 +296,7 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 		}()
 		wg.Wait()
 		close(results)
+		succeeded := 0
 		for result := range results {
 			if result.err != nil {
 				t.Fatal(result.err)
@@ -230,9 +304,15 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 			if result.status != 200 && result.status != 401 && result.status != 403 {
 				t.Fatalf("concurrent admins %d %s", result.status, result.raw)
 			}
+			if result.status == 200 {
+				succeeded++
+			}
 		}
 		if active := h.scalar(t, `SELECT count(*)::text FROM usuarios WHERE id_usuario IN ($1,$2) AND activo`, adminID, secondID); active != "1" {
 			t.Fatal("administrative race", active)
+		}
+		if succeeded != 1 || adminCount() != "1" {
+			t.Fatal("concurrent changes must preserve exactly one administrative access", succeeded)
 		}
 	})
 	if tables := h.scalar(t, `SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`); tables != "28" {
