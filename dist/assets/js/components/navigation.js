@@ -1,5 +1,5 @@
 export const modules = [
-  { id: 'inicio', label: 'Inicio', icon: 'home', ready: true },
+  { id: 'inicio', label: 'Inicio', keywords: 'dashboard reportes analisis ingresos', icon: 'home', ready: true, screens: ['14 - Reportes'] },
   { id: 'clientes', label: 'Clientes', icon: 'users', screens: ['03 - Clientes', '04 - Nuevo cliente'] },
   { id: 'vehiculos', label: 'Vehículos', icon: 'car', screens: ['05 - Vehículos', '06 - Nuevo vehículo', '06B - Actualizar vehículo'] },
   { id: 'recepciones', label: 'Recepciones', icon: 'reception', screens: ['07 - Nueva recepción'] },
@@ -10,6 +10,5 @@ export const modules = [
   { id: 'pagos', label: 'Pagos y entrega', icon: 'payment', screens: ['13 - Pagos y entrega', '13A - Nuevo contacto (ventana emergente)'] },
   { id: 'mecanicos', label: 'Mecánicos', icon: 'wrench', screens: ['13B - Mecánicos'] },
   { id: 'proveedores', label: 'Proveedores', icon: 'supplier', screens: ['13C - Proveedores'] },
-  { id: 'reportes', label: 'Reportes', icon: 'chart', screens: ['14 - Reportes'] },
   { id: 'usuarios', label: 'Usuarios y roles', icon: 'shield', screens: ['15 - Usuarios y roles', '15A - Agregar / editar usuario'] },
 ].map(module => ({...module, ready: true}));

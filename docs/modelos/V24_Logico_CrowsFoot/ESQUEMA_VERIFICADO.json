@@ -1,0 +1,2855 @@
+{
+  "tables": {
+    "asignaciones_ot": {
+      "columns": [
+        {
+          "name": "id_asignacion",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_orden",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_usuario",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "rol_en_trabajo",
+          "type": "VARCHAR(30)",
+          "not_null": true,
+          "definition": "character varying(30) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha_asignacion",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "activo",
+          "type": "BOOLEAN",
+          "not_null": true,
+          "definition": "boolean DEFAULT true NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_asignacion"
+      ],
+      "unique": [],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "auxilios": {
+      "columns": [
+        {
+          "name": "id_auxilio",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_vehiculo",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_cliente_solicitante",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_usuario_registro",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_tecnico",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_unidad_auxilio",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_recepcion",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "ubicacion",
+          "type": "TEXT",
+          "not_null": true,
+          "definition": "text NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "tipo_incidente",
+          "type": "VARCHAR(60)",
+          "not_null": false,
+          "definition": "character varying(60)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "descripcion",
+          "type": "TEXT",
+          "not_null": false,
+          "definition": "text",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "estado",
+          "type": "VARCHAR(30)",
+          "not_null": true,
+          "definition": "character varying(30) DEFAULT 'pendiente'::character varying NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_auxilio"
+      ],
+      "unique": [],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "avances_ot": {
+      "columns": [
+        {
+          "name": "id_avance",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_orden",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_usuario",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "observacion",
+          "type": "TEXT",
+          "not_null": true,
+          "definition": "text NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_avance"
+      ],
+      "unique": [],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "clientes": {
+      "columns": [
+        {
+          "name": "id_cliente",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "tipo_documento",
+          "type": "VARCHAR(20)",
+          "not_null": true,
+          "definition": "character varying(20) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "numero_documento",
+          "type": "VARCHAR(20)",
+          "not_null": true,
+          "definition": "character varying(20) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "nombre",
+          "type": "VARCHAR(150)",
+          "not_null": true,
+          "definition": "character varying(150) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "telefono",
+          "type": "VARCHAR(20)",
+          "not_null": false,
+          "definition": "character varying(20)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "direccion",
+          "type": "TEXT",
+          "not_null": false,
+          "definition": "text",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "correo",
+          "type": "VARCHAR(150)",
+          "not_null": false,
+          "definition": "character varying(150)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_tipo_documento",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint REFERENCES tipos_documento(id_tipo_documento) ON DELETE RESTRICT",
+          "origin": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql"
+        }
+      ],
+      "pk": [
+        "id_cliente"
+      ],
+      "unique": [
+        {
+          "name": "uq_cliente_documento",
+          "columns": [
+            "tipo_documento",
+            "numero_documento"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "uq_clientes_tipo_catalogo_numero",
+          "columns": [
+            "id_tipo_documento",
+            "numero_documento"
+          ],
+          "predicate": "",
+          "origin": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql"
+        }
+      ],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "contactos_cliente": {
+      "columns": [
+        {
+          "name": "id_contacto",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_cliente",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "nombre",
+          "type": "VARCHAR(150)",
+          "not_null": true,
+          "definition": "character varying(150) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "tipo_documento",
+          "type": "VARCHAR(20)",
+          "not_null": true,
+          "definition": "character varying(20) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "numero_documento",
+          "type": "VARCHAR(20)",
+          "not_null": true,
+          "definition": "character varying(20) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "telefono",
+          "type": "VARCHAR(20)",
+          "not_null": false,
+          "definition": "character varying(20)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "relacion",
+          "type": "VARCHAR(50)",
+          "not_null": false,
+          "definition": "character varying(50)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "activo",
+          "type": "BOOLEAN",
+          "not_null": true,
+          "definition": "boolean DEFAULT true NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_tipo_documento",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint REFERENCES tipos_documento(id_tipo_documento) ON DELETE RESTRICT",
+          "origin": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql"
+        }
+      ],
+      "pk": [
+        "id_contacto"
+      ],
+      "unique": [],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "cotizaciones": {
+      "columns": [
+        {
+          "name": "id_cotizacion",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_diagnostico",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "estado",
+          "type": "VARCHAR(20)",
+          "not_null": true,
+          "definition": "character varying(20) DEFAULT 'pendiente'::character varying NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "total",
+          "type": "NUMERIC(12,2)",
+          "not_null": true,
+          "definition": "numeric(12,2) DEFAULT 0 NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha_emision",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "aprobada_en",
+          "type": "TIMESTAMPTZ",
+          "not_null": false,
+          "definition": "timestamp with time zone",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_recepcion",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint REFERENCES recepciones(id_recepcion)",
+          "origin": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql"
+        },
+        {
+          "name": "version",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL DEFAULT 0",
+          "origin": "backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql"
+        },
+        {
+          "name": "contenido_hash",
+          "type": "TEXT",
+          "not_null": false,
+          "definition": "text",
+          "origin": "backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql"
+        },
+        {
+          "name": "aprobacion",
+          "type": "JSONB",
+          "not_null": false,
+          "definition": "jsonb",
+          "origin": "backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql"
+        },
+        {
+          "name": "historial_revision",
+          "type": "JSONB",
+          "not_null": true,
+          "definition": "jsonb NOT NULL DEFAULT '[]'",
+          "origin": "backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql"
+        },
+        {
+          "name": "id_cotizacion_base",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint REFERENCES cotizaciones(id_cotizacion)",
+          "origin": "backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql"
+        }
+      ],
+      "pk": [
+        "id_cotizacion"
+      ],
+      "unique": [],
+      "checks": [
+        "CONSTRAINT ck_cotizaciones_total CHECK ((total >= (0)::numeric))"
+      ],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "detalle_cotizacion": {
+      "columns": [
+        {
+          "name": "id_detalle",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_cotizacion",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_servicio",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_repuesto",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "descripcion",
+          "type": "TEXT",
+          "not_null": false,
+          "definition": "text",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "cantidad",
+          "type": "NUMERIC(10,2)",
+          "not_null": true,
+          "definition": "numeric(10,2) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "precio_unitario",
+          "type": "NUMERIC(12,2)",
+          "not_null": true,
+          "definition": "numeric(12,2) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "subtotal",
+          "type": "NUMERIC(12,2)",
+          "not_null": true,
+          "definition": "numeric(12,2) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "origen_repuesto",
+          "type": "VARCHAR(12)",
+          "not_null": false,
+          "definition": "character varying(12)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "tipo_concepto",
+          "type": "VARCHAR(10)",
+          "not_null": false,
+          "definition": "varchar(10)",
+          "origin": "backend/internal/platform/postgres/migrations/001_revision_funcional.sql"
+        },
+        {
+          "name": "tipo_repuesto",
+          "type": "VARCHAR(12)",
+          "not_null": false,
+          "definition": "varchar(12)",
+          "origin": "backend/internal/platform/postgres/migrations/001_revision_funcional.sql"
+        },
+        {
+          "name": "descuento_unitario",
+          "type": "NUMERIC(12,2)",
+          "not_null": true,
+          "definition": "numeric(12,2) NOT NULL DEFAULT 0",
+          "origin": "backend/internal/platform/postgres/migrations/001_revision_funcional.sql"
+        }
+      ],
+      "pk": [
+        "id_detalle"
+      ],
+      "unique": [],
+      "checks": [
+        "CONSTRAINT ck_detalle_cantidad CHECK ((cantidad > (0)::numeric))",
+        "CONSTRAINT ck_detalle_origen CHECK (((origen_repuesto IS NULL) OR ((origen_repuesto)::text = ANY ((ARRAY['TALLER'::character varying, 'CLIENTE'::character varying])::text[]))))",
+        "CONSTRAINT ck_detalle_precio CHECK ((precio_unitario >= (0)::numeric))",
+        "CONSTRAINT ck_detalle_subtotal CHECK ((subtotal >= (0)::numeric))",
+        {
+          "name": "ck_detalle_referencia",
+          "sql": "\n (id_servicio IS NOT NULL AND id_repuesto IS NULL AND (tipo_concepto IS NULL OR tipo_concepto='Servicio')) OR\n (id_repuesto IS NOT NULL AND id_servicio IS NULL AND (tipo_concepto IS NULL OR tipo_concepto='Repuesto')) OR\n (id_servicio IS NULL AND id_repuesto IS NULL AND tipo_concepto IS NOT NULL AND tipo_concepto IN ('Servicio','Repuesto') AND descripcion IS NOT NULL AND btrim(descripcion)<>'')\n)",
+          "origin": "backend/internal/platform/postgres/migrations/001_revision_funcional.sql"
+        }
+      ],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "diagnosticos": {
+      "columns": [
+        {
+          "name": "id_diagnostico",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_recepcion",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_tecnico",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "resumen",
+          "type": "TEXT",
+          "not_null": true,
+          "definition": "text NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "estado",
+          "type": "VARCHAR(15)",
+          "not_null": true,
+          "definition": "varchar(15) NOT NULL DEFAULT 'Finalizado' CHECK(estado IN ('Borrador','Finalizado'))",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql",
+          "effectiveDefault": "'Borrador'"
+        },
+        {
+          "name": "evaluacion",
+          "type": "TEXT",
+          "not_null": true,
+          "definition": "text NOT NULL DEFAULT ''",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        },
+        {
+          "name": "recomendaciones",
+          "type": "TEXT",
+          "not_null": true,
+          "definition": "text NOT NULL DEFAULT ''",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        },
+        {
+          "name": "observaciones",
+          "type": "TEXT",
+          "not_null": true,
+          "definition": "text NOT NULL DEFAULT ''",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        },
+        {
+          "name": "version",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL DEFAULT 0",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        },
+        {
+          "name": "finalizado_en",
+          "type": "TIMESTAMPTZ",
+          "not_null": false,
+          "definition": "timestamptz",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        },
+        {
+          "name": "actualizado_en",
+          "type": "TIMESTAMPTZ",
+          "not_null": false,
+          "definition": "timestamptz",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        },
+        {
+          "name": "historial",
+          "type": "JSONB",
+          "not_null": true,
+          "definition": "jsonb NOT NULL DEFAULT '[]'",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        }
+      ],
+      "pk": [
+        "id_diagnostico"
+      ],
+      "unique": [
+        {
+          "name": "uq_diagnosticos_id_recepcion",
+          "columns": [
+            "id_recepcion"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "entregas": {
+      "columns": [
+        {
+          "name": "id_entrega",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_orden",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_usuario_entrega",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_contacto_receptor",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha_entrega",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "tipo_receptor",
+          "type": "VARCHAR(30)",
+          "not_null": true,
+          "definition": "character varying(30) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "nombre_receptor_snap",
+          "type": "VARCHAR(150)",
+          "not_null": false,
+          "definition": "character varying(150)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "tipo_doc_receptor_snap",
+          "type": "VARCHAR(20)",
+          "not_null": false,
+          "definition": "character varying(20)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "documento_receptor_snap",
+          "type": "VARCHAR(30)",
+          "not_null": false,
+          "definition": "character varying(30)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "telefono_receptor_snap",
+          "type": "VARCHAR(20)",
+          "not_null": false,
+          "definition": "character varying(20)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "autorizacion_verificada",
+          "type": "BOOLEAN",
+          "not_null": true,
+          "definition": "boolean DEFAULT false NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "medio_verificacion",
+          "type": "VARCHAR(80)",
+          "not_null": false,
+          "definition": "character varying(80)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha_verificacion",
+          "type": "TIMESTAMPTZ",
+          "not_null": false,
+          "definition": "timestamp with time zone",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_usuario_verificador",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "ficha_snapshot",
+          "type": "JSONB",
+          "not_null": false,
+          "definition": "jsonb",
+          "origin": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql"
+        },
+        {
+          "name": "ficha_pdf",
+          "type": "BYTEA",
+          "not_null": false,
+          "definition": "bytea",
+          "origin": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql"
+        },
+        {
+          "name": "receptor_real",
+          "type": "JSONB",
+          "not_null": false,
+          "definition": "jsonb",
+          "origin": "backend/internal/platform/postgres/migrations/006_pagos_entrega.sql"
+        },
+        {
+          "name": "conformidad",
+          "type": "JSONB",
+          "not_null": false,
+          "definition": "jsonb",
+          "origin": "backend/internal/platform/postgres/migrations/006_pagos_entrega.sql"
+        }
+      ],
+      "pk": [
+        "id_entrega"
+      ],
+      "unique": [
+        {
+          "name": "uq_entregas_id_orden",
+          "columns": [
+            "id_orden"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "historial_estados_ot": {
+      "columns": [
+        {
+          "name": "id_historial",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_orden",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_usuario",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "estado_anterior",
+          "type": "VARCHAR(30)",
+          "not_null": false,
+          "definition": "character varying(30)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "estado_nuevo",
+          "type": "VARCHAR(30)",
+          "not_null": true,
+          "definition": "character varying(30) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_historial"
+      ],
+      "unique": [],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "historial_propietarios": {
+      "columns": [
+        {
+          "name": "id_historial",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_vehiculo",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_cliente",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha_inicio",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha_fin",
+          "type": "TIMESTAMPTZ",
+          "not_null": false,
+          "definition": "timestamp with time zone",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_usuario_registro",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "verificado",
+          "type": "BOOLEAN",
+          "not_null": true,
+          "definition": "boolean DEFAULT false NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "observacion",
+          "type": "TEXT",
+          "not_null": false,
+          "definition": "text",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_historial"
+      ],
+      "unique": [
+        {
+          "name": "uq_historial_propietario_vigente",
+          "columns": [
+            "id_vehiculo"
+          ],
+          "predicate": "WHERE (fecha_fin IS NULL)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "checks": [
+        "CONSTRAINT chk_fechas_propietario CHECK (((fecha_fin IS NULL) OR (fecha_fin >= fecha_inicio)))",
+        "CONSTRAINT ck_historial_fechas CHECK (((fecha_fin IS NULL) OR (fecha_fin >= fecha_inicio)))"
+      ],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "ordenes_trabajo": {
+      "columns": [
+        {
+          "name": "id_orden",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_cotizacion",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "codigo_ot",
+          "type": "VARCHAR(24)",
+          "not_null": true,
+          "definition": "character varying(24) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "estado",
+          "type": "VARCHAR(30)",
+          "not_null": true,
+          "definition": "character varying(30) DEFAULT 'creada'::character varying NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_usuario_creacion",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha_creacion",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha_inicio",
+          "type": "TIMESTAMPTZ",
+          "not_null": false,
+          "definition": "timestamp with time zone",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha_fin",
+          "type": "TIMESTAMPTZ",
+          "not_null": false,
+          "definition": "timestamp with time zone",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "control_tecnico",
+          "type": "JSONB",
+          "not_null": true,
+          "definition": "jsonb NOT NULL DEFAULT '{}'",
+          "origin": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql"
+        },
+        {
+          "name": "control_version",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL DEFAULT 0",
+          "origin": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql"
+        },
+        {
+          "name": "control_autor",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint REFERENCES usuarios(id_usuario)",
+          "origin": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql"
+        },
+        {
+          "name": "control_fecha",
+          "type": "TIMESTAMPTZ",
+          "not_null": false,
+          "definition": "timestamptz",
+          "origin": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql"
+        },
+        {
+          "name": "flujo_version",
+          "type": "INTEGER",
+          "not_null": true,
+          "definition": "integer NOT NULL DEFAULT 0",
+          "origin": "backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql"
+        },
+        {
+          "name": "control_historial",
+          "type": "JSONB",
+          "not_null": true,
+          "definition": "jsonb NOT NULL DEFAULT '[]'",
+          "origin": "backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql"
+        }
+      ],
+      "pk": [
+        "id_orden"
+      ],
+      "unique": [
+        {
+          "name": "uq_ordenes_trabajo_codigo_ot",
+          "columns": [
+            "codigo_ot"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "uq_ordenes_trabajo_id_cotizacion",
+          "columns": [
+            "id_cotizacion"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "pagos": {
+      "columns": [
+        {
+          "name": "id_pago",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_orden",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "monto",
+          "type": "NUMERIC(12,2)",
+          "not_null": true,
+          "definition": "numeric(12,2) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "metodo_pago",
+          "type": "VARCHAR(30)",
+          "not_null": true,
+          "definition": "character varying(30) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha_pago",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "comprobante",
+          "type": "VARCHAR(50)",
+          "not_null": false,
+          "definition": "character varying(50)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_usuario_registro",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "request_id",
+          "type": "VARCHAR(100)",
+          "not_null": false,
+          "definition": "varchar(100)",
+          "origin": "backend/internal/platform/postgres/migrations/006_pagos_entrega.sql"
+        },
+        {
+          "name": "revertido_en",
+          "type": "TIMESTAMPTZ",
+          "not_null": false,
+          "definition": "timestamptz",
+          "origin": "backend/internal/platform/postgres/migrations/006_pagos_entrega.sql"
+        },
+        {
+          "name": "rectificacion",
+          "type": "JSONB",
+          "not_null": false,
+          "definition": "jsonb",
+          "origin": "backend/internal/platform/postgres/migrations/006_pagos_entrega.sql"
+        }
+      ],
+      "pk": [
+        "id_pago"
+      ],
+      "unique": [
+        {
+          "name": "ix_pago_request",
+          "columns": [
+            "id_orden",
+            "request_id"
+          ],
+          "predicate": "WHERE request_id IS NOT NULL",
+          "origin": "backend/internal/platform/postgres/migrations/006_pagos_entrega.sql"
+        }
+      ],
+      "checks": [
+        "CONSTRAINT ck_pagos_monto CHECK ((monto > (0)::numeric))"
+      ],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "permisos": {
+      "columns": [
+        {
+          "name": "id_permiso",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "codigo",
+          "type": "VARCHAR(80)",
+          "not_null": true,
+          "definition": "character varying(80) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "descripcion",
+          "type": "VARCHAR(150)",
+          "not_null": false,
+          "definition": "character varying(150)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_permiso"
+      ],
+      "unique": [
+        {
+          "name": "permisos_codigo_key",
+          "columns": [
+            "codigo"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "proveedores": {
+      "columns": [
+        {
+          "name": "id_proveedor",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "nombre",
+          "type": "VARCHAR(150)",
+          "not_null": true,
+          "definition": "character varying(150) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "documento",
+          "type": "VARCHAR(20)",
+          "not_null": true,
+          "definition": "character varying(20) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "telefono",
+          "type": "VARCHAR(20)",
+          "not_null": false,
+          "definition": "character varying(20)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "contacto",
+          "type": "VARCHAR(120)",
+          "not_null": false,
+          "definition": "character varying(120)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_proveedor"
+      ],
+      "unique": [
+        {
+          "name": "uq_proveedores_documento",
+          "columns": [
+            "documento"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "pruebas_ot": {
+      "columns": [
+        {
+          "name": "id_prueba",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_orden",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_usuario",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "tipo_prueba",
+          "type": "VARCHAR(100)",
+          "not_null": true,
+          "definition": "character varying(100) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "resultado",
+          "type": "VARCHAR(20)",
+          "not_null": true,
+          "definition": "character varying(20) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "observaciones",
+          "type": "TEXT",
+          "not_null": false,
+          "definition": "text",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_prueba"
+      ],
+      "unique": [],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "recepciones": {
+      "columns": [
+        {
+          "name": "id_recepcion",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_vehiculo",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_cliente_atencion",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_recepcionista",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "fecha_ingreso",
+          "type": "TIMESTAMPTZ",
+          "not_null": true,
+          "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "km_ingreso",
+          "type": "NUMERIC(10,2)",
+          "not_null": false,
+          "definition": "numeric(10,2)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "sintomas",
+          "type": "TEXT",
+          "not_null": false,
+          "definition": "text",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "tipo_atencion",
+          "type": "VARCHAR(15)",
+          "not_null": true,
+          "definition": "varchar(15) NOT NULL DEFAULT 'Diagnostico' CHECK(tipo_atencion IN ('Directo','Diagnostico'))",
+          "origin": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql"
+        },
+        {
+          "name": "id_mecanico_diagnostico",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint REFERENCES usuarios(id_usuario)",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        },
+        {
+          "name": "diagnostico_asignado_por",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint REFERENCES usuarios(id_usuario)",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        },
+        {
+          "name": "diagnostico_asignado_en",
+          "type": "TIMESTAMPTZ",
+          "not_null": false,
+          "definition": "timestamptz",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        },
+        {
+          "name": "asignacion_version",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL DEFAULT 0",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        },
+        {
+          "name": "historial_asignaciones",
+          "type": "JSONB",
+          "not_null": true,
+          "definition": "jsonb NOT NULL DEFAULT '[]'",
+          "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql"
+        }
+      ],
+      "pk": [
+        "id_recepcion"
+      ],
+      "unique": [],
+      "checks": [
+        "CONSTRAINT ck_recepciones_km CHECK (((km_ingreso IS NULL) OR (km_ingreso >= (0)::numeric)))"
+      ],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "repuesto_proveedor": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_repuesto",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_proveedor",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "costo_referencia",
+          "type": "NUMERIC(12,2)",
+          "not_null": true,
+          "definition": "numeric(12,2) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        {
+          "name": "uq_repuesto_proveedor_id_repuesto_id_proveedor",
+          "columns": [
+            "id_repuesto",
+            "id_proveedor"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "checks": [
+        "CONSTRAINT ck_rp_costo CHECK ((costo_referencia >= (0)::numeric))"
+      ],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "repuestos": {
+      "columns": [
+        {
+          "name": "id_repuesto",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "nombre",
+          "type": "VARCHAR(120)",
+          "not_null": true,
+          "definition": "character varying(120) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "stock",
+          "type": "NUMERIC(12,2)",
+          "not_null": true,
+          "definition": "numeric(12,2) DEFAULT 0 NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "precio_referencia",
+          "type": "NUMERIC(12,2)",
+          "not_null": true,
+          "definition": "numeric(12,2) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "activo",
+          "type": "BOOLEAN",
+          "not_null": true,
+          "definition": "boolean DEFAULT true NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_repuesto"
+      ],
+      "unique": [],
+      "checks": [
+        "CONSTRAINT ck_repuestos_precio CHECK ((precio_referencia >= (0)::numeric))",
+        "CONSTRAINT ck_repuestos_stock CHECK ((stock >= (0)::numeric))"
+      ],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "rol_permisos": {
+      "columns": [
+        {
+          "name": "id_rol",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_permiso",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_rol",
+        "id_permiso"
+      ],
+      "unique": [],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "roles": {
+      "columns": [
+        {
+          "name": "id_rol",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "nombre_rol",
+          "type": "VARCHAR(60)",
+          "not_null": true,
+          "definition": "character varying(60) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "activo",
+          "type": "BOOLEAN",
+          "not_null": true,
+          "definition": "boolean NOT NULL DEFAULT true",
+          "origin": "backend/internal/platform/postgres/migrations/009_tres_roles.sql"
+        }
+      ],
+      "pk": [
+        "id_rol"
+      ],
+      "unique": [
+        {
+          "name": "roles_nombre_rol_key",
+          "columns": [
+            "nombre_rol"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "servicios": {
+      "columns": [
+        {
+          "name": "id_servicio",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "nombre",
+          "type": "VARCHAR(100)",
+          "not_null": true,
+          "definition": "character varying(100) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "precio_referencia",
+          "type": "NUMERIC(12,2)",
+          "not_null": true,
+          "definition": "numeric(12,2) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "activo",
+          "type": "BOOLEAN",
+          "not_null": true,
+          "definition": "boolean DEFAULT true NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_servicio"
+      ],
+      "unique": [
+        {
+          "name": "uq_servicios_nombre",
+          "columns": [
+            "nombre"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "checks": [
+        "CONSTRAINT ck_servicios_precio CHECK ((precio_referencia >= (0)::numeric))"
+      ],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "unidades_auxilio": {
+      "columns": [
+        {
+          "name": "id_unidad_auxilio",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "codigo",
+          "type": "VARCHAR(30)",
+          "not_null": true,
+          "definition": "character varying(30) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "descripcion",
+          "type": "VARCHAR(150)",
+          "not_null": false,
+          "definition": "character varying(150)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "activo",
+          "type": "BOOLEAN",
+          "not_null": true,
+          "definition": "boolean DEFAULT true NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_unidad_auxilio"
+      ],
+      "unique": [
+        {
+          "name": "uq_unidades_auxilio_codigo",
+          "columns": [
+            "codigo"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "usuario_roles": {
+      "columns": [
+        {
+          "name": "id_usuario",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_rol",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_usuario",
+        "id_rol"
+      ],
+      "unique": [],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "usuarios": {
+      "columns": [
+        {
+          "name": "id_usuario",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "nombre",
+          "type": "VARCHAR(150)",
+          "not_null": true,
+          "definition": "character varying(150) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "usuario",
+          "type": "VARCHAR(60)",
+          "not_null": true,
+          "definition": "character varying(60) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "correo",
+          "type": "VARCHAR(150)",
+          "not_null": false,
+          "definition": "character varying(150)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "password_hash",
+          "type": "TEXT",
+          "not_null": true,
+          "definition": "text NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "activo",
+          "type": "BOOLEAN",
+          "not_null": true,
+          "definition": "boolean DEFAULT true NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_empleado",
+          "type": "BIGINT",
+          "not_null": false,
+          "definition": "bigint REFERENCES public.empleados(id_empleado) ON DELETE RESTRICT",
+          "origin": "backend/internal/platform/postgres/migrations/007_empleados.sql"
+        }
+      ],
+      "pk": [
+        "id_usuario"
+      ],
+      "unique": [
+        {
+          "name": "usuarios_correo_key",
+          "columns": [
+            "correo"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "usuarios_usuario_key",
+          "columns": [
+            "usuario"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "uq_usuarios_empleado",
+          "columns": [
+            "id_empleado"
+          ],
+          "predicate": "",
+          "origin": "backend/internal/platform/postgres/migrations/007_empleados.sql"
+        }
+      ],
+      "checks": [],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "vehiculos": {
+      "columns": [
+        {
+          "name": "id_vehiculo",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "id_cliente",
+          "type": "BIGINT",
+          "not_null": true,
+          "definition": "bigint NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "placa",
+          "type": "VARCHAR(12)",
+          "not_null": true,
+          "definition": "character varying(12) NOT NULL",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "marca",
+          "type": "VARCHAR(40)",
+          "not_null": false,
+          "definition": "character varying(40)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "modelo",
+          "type": "VARCHAR(60)",
+          "not_null": false,
+          "definition": "character varying(60)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "anio",
+          "type": "SMALLINT",
+          "not_null": false,
+          "definition": "smallint",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "kilometraje_actual",
+          "type": "NUMERIC(10,2)",
+          "not_null": false,
+          "definition": "numeric(10,2)",
+          "origin": "database/postgresql/esquema_actual.sql"
+        },
+        {
+          "name": "observaciones",
+          "type": "TEXT",
+          "not_null": false,
+          "definition": "text",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "pk": [
+        "id_vehiculo"
+      ],
+      "unique": [
+        {
+          "name": "vehiculos_placa_key",
+          "columns": [
+            "placa"
+          ],
+          "predicate": "",
+          "origin": "database/postgresql/esquema_actual.sql"
+        }
+      ],
+      "checks": [
+        "CONSTRAINT ck_vehiculos_anio CHECK (((anio IS NULL) OR ((anio >= 1900) AND (anio <= 2100))))",
+        "CONSTRAINT ck_vehiculos_km CHECK (((kilometraje_actual IS NULL) OR (kilometraje_actual >= (0)::numeric)))"
+      ],
+      "origin": "database/postgresql/esquema_actual.sql"
+    },
+    "empleados": {
+      "columns": [
+        {
+          "name": "id_empleado",
+          "type": "BIGSERIAL",
+          "not_null": true,
+          "definition": "bigserial PRIMARY KEY",
+          "origin": "backend/internal/platform/postgres/migrations/007_empleados.sql"
+        },
+        {
+          "name": "nombre",
+          "type": "VARCHAR(150)",
+          "not_null": true,
+          "definition": "varchar(150) NOT NULL CHECK (btrim(nombre)<>'')",
+          "origin": "backend/internal/platform/postgres/migrations/007_empleados.sql"
+        },
+        {
+          "name": "tipo_empleado",
+          "type": "VARCHAR(40)",
+          "not_null": true,
+          "definition": "varchar(40) NOT NULL CHECK (btrim(tipo_empleado)<>'')",
+          "origin": "backend/internal/platform/postgres/migrations/007_empleados.sql"
+        },
+        {
+          "name": "activo",
+          "type": "BOOLEAN",
+          "not_null": true,
+          "definition": "boolean NOT NULL DEFAULT true",
+          "origin": "backend/internal/platform/postgres/migrations/007_empleados.sql"
+        }
+      ],
+      "pk": [
+        "id_empleado"
+      ],
+      "unique": [],
+      "checks": [],
+      "origin": "backend/internal/platform/postgres/migrations/007_empleados.sql"
+    },
+    "tipos_documento": {
+      "columns": [
+        {
+          "name": "id_tipo_documento",
+          "type": "BIGSERIAL",
+          "not_null": true,
+          "definition": "bigserial PRIMARY KEY",
+          "origin": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql"
+        },
+        {
+          "name": "codigo",
+          "type": "VARCHAR(20)",
+          "not_null": true,
+          "definition": "varchar(20) NOT NULL UNIQUE",
+          "origin": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql"
+        },
+        {
+          "name": "nombre",
+          "type": "VARCHAR(150)",
+          "not_null": true,
+          "definition": "varchar(150) NOT NULL",
+          "origin": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql"
+        },
+        {
+          "name": "activo",
+          "type": "BOOLEAN",
+          "not_null": true,
+          "definition": "boolean NOT NULL DEFAULT true",
+          "origin": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql"
+        }
+      ],
+      "pk": [
+        "id_tipo_documento"
+      ],
+      "unique": [
+        {
+          "name": "tipos_documento_codigo_key",
+          "columns": [
+            "codigo"
+          ],
+          "predicate": "",
+          "origin": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql"
+        }
+      ],
+      "checks": [],
+      "origin": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql"
+    }
+  },
+  "relationships": [
+    {
+      "name": "fk_asignaciones_ot_id_orden",
+      "child": "asignaciones_ot",
+      "column": "id_orden",
+      "parent": "ordenes_trabajo",
+      "parent_column": "id_orden",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.asignaciones_ot\n    ADD CONSTRAINT fk_asignaciones_ot_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
+      "generatedName": false,
+      "id": "F01",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_asignaciones_ot_id_usuario",
+      "child": "asignaciones_ot",
+      "column": "id_usuario",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.asignaciones_ot\n    ADD CONSTRAINT fk_asignaciones_ot_id_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F02",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_auxilios_id_cliente_solicitante",
+      "child": "auxilios",
+      "column": "id_cliente_solicitante",
+      "parent": "clientes",
+      "parent_column": "id_cliente",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_cliente_solicitante FOREIGN KEY (id_cliente_solicitante) REFERENCES public.clientes(id_cliente);",
+      "generatedName": false,
+      "id": "F03",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_auxilios_id_recepcion",
+      "child": "auxilios",
+      "column": "id_recepcion",
+      "parent": "recepciones",
+      "parent_column": "id_recepcion",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_recepcion FOREIGN KEY (id_recepcion) REFERENCES public.recepciones(id_recepcion);",
+      "generatedName": false,
+      "id": "F04",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_auxilios_id_tecnico",
+      "child": "auxilios",
+      "column": "id_tecnico",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_tecnico FOREIGN KEY (id_tecnico) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F05",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_auxilios_id_unidad_auxilio",
+      "child": "auxilios",
+      "column": "id_unidad_auxilio",
+      "parent": "unidades_auxilio",
+      "parent_column": "id_unidad_auxilio",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_unidad_auxilio FOREIGN KEY (id_unidad_auxilio) REFERENCES public.unidades_auxilio(id_unidad_auxilio);",
+      "generatedName": false,
+      "id": "F06",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_auxilios_id_usuario_registro",
+      "child": "auxilios",
+      "column": "id_usuario_registro",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_usuario_registro FOREIGN KEY (id_usuario_registro) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F07",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_auxilios_id_vehiculo",
+      "child": "auxilios",
+      "column": "id_vehiculo",
+      "parent": "vehiculos",
+      "parent_column": "id_vehiculo",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_vehiculo FOREIGN KEY (id_vehiculo) REFERENCES public.vehiculos(id_vehiculo);",
+      "generatedName": false,
+      "id": "F08",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_avances_ot_id_orden",
+      "child": "avances_ot",
+      "column": "id_orden",
+      "parent": "ordenes_trabajo",
+      "parent_column": "id_orden",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.avances_ot\n    ADD CONSTRAINT fk_avances_ot_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
+      "generatedName": false,
+      "id": "F09",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_avances_ot_id_usuario",
+      "child": "avances_ot",
+      "column": "id_usuario",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.avances_ot\n    ADD CONSTRAINT fk_avances_ot_id_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F10",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "clientes_id_tipo_documento_fkey",
+      "child": "clientes",
+      "column": "id_tipo_documento",
+      "parent": "tipos_documento",
+      "parent_column": "id_tipo_documento",
+      "origin": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql",
+      "definition": "bigint REFERENCES tipos_documento(id_tipo_documento) ON DELETE RESTRICT",
+      "generatedName": true,
+      "id": "F11",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "RESTRICT"
+    },
+    {
+      "name": "fk_contactos_cliente_id_cliente",
+      "child": "contactos_cliente",
+      "column": "id_cliente",
+      "parent": "clientes",
+      "parent_column": "id_cliente",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.contactos_cliente\n    ADD CONSTRAINT fk_contactos_cliente_id_cliente FOREIGN KEY (id_cliente) REFERENCES public.clientes(id_cliente);",
+      "generatedName": false,
+      "id": "F12",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "contactos_cliente_id_tipo_documento_fkey",
+      "child": "contactos_cliente",
+      "column": "id_tipo_documento",
+      "parent": "tipos_documento",
+      "parent_column": "id_tipo_documento",
+      "origin": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql",
+      "definition": "bigint REFERENCES tipos_documento(id_tipo_documento) ON DELETE RESTRICT",
+      "generatedName": true,
+      "id": "F13",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "RESTRICT"
+    },
+    {
+      "name": "cotizaciones_id_cotizacion_base_fkey",
+      "child": "cotizaciones",
+      "column": "id_cotizacion_base",
+      "parent": "cotizaciones",
+      "parent_column": "id_cotizacion",
+      "origin": "backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql",
+      "definition": "bigint REFERENCES cotizaciones(id_cotizacion)",
+      "generatedName": true,
+      "id": "F14",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_cotizaciones_id_diagnostico",
+      "child": "cotizaciones",
+      "column": "id_diagnostico",
+      "parent": "diagnosticos",
+      "parent_column": "id_diagnostico",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.cotizaciones\n    ADD CONSTRAINT fk_cotizaciones_id_diagnostico FOREIGN KEY (id_diagnostico) REFERENCES public.diagnosticos(id_diagnostico);",
+      "generatedName": false,
+      "id": "F15",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "cotizaciones_id_recepcion_fkey",
+      "child": "cotizaciones",
+      "column": "id_recepcion",
+      "parent": "recepciones",
+      "parent_column": "id_recepcion",
+      "origin": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql",
+      "definition": "bigint REFERENCES recepciones(id_recepcion)",
+      "generatedName": true,
+      "id": "F16",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_detalle_cotizacion_id_cotizacion",
+      "child": "detalle_cotizacion",
+      "column": "id_cotizacion",
+      "parent": "cotizaciones",
+      "parent_column": "id_cotizacion",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.detalle_cotizacion\n    ADD CONSTRAINT fk_detalle_cotizacion_id_cotizacion FOREIGN KEY (id_cotizacion) REFERENCES public.cotizaciones(id_cotizacion);",
+      "generatedName": false,
+      "id": "F17",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_detalle_cotizacion_id_repuesto",
+      "child": "detalle_cotizacion",
+      "column": "id_repuesto",
+      "parent": "repuestos",
+      "parent_column": "id_repuesto",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.detalle_cotizacion\n    ADD CONSTRAINT fk_detalle_cotizacion_id_repuesto FOREIGN KEY (id_repuesto) REFERENCES public.repuestos(id_repuesto);",
+      "generatedName": false,
+      "id": "F18",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_detalle_cotizacion_id_servicio",
+      "child": "detalle_cotizacion",
+      "column": "id_servicio",
+      "parent": "servicios",
+      "parent_column": "id_servicio",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.detalle_cotizacion\n    ADD CONSTRAINT fk_detalle_cotizacion_id_servicio FOREIGN KEY (id_servicio) REFERENCES public.servicios(id_servicio);",
+      "generatedName": false,
+      "id": "F19",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_diagnosticos_id_recepcion",
+      "child": "diagnosticos",
+      "column": "id_recepcion",
+      "parent": "recepciones",
+      "parent_column": "id_recepcion",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.diagnosticos\n    ADD CONSTRAINT fk_diagnosticos_id_recepcion FOREIGN KEY (id_recepcion) REFERENCES public.recepciones(id_recepcion);",
+      "generatedName": false,
+      "id": "F20",
+      "nullable": false,
+      "individuallyUnique": true,
+      "childMultiplicity": "0..1",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_diagnosticos_id_tecnico",
+      "child": "diagnosticos",
+      "column": "id_tecnico",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.diagnosticos\n    ADD CONSTRAINT fk_diagnosticos_id_tecnico FOREIGN KEY (id_tecnico) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F21",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_entregas_id_contacto_receptor",
+      "child": "entregas",
+      "column": "id_contacto_receptor",
+      "parent": "contactos_cliente",
+      "parent_column": "id_contacto",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.entregas\n    ADD CONSTRAINT fk_entregas_id_contacto_receptor FOREIGN KEY (id_contacto_receptor) REFERENCES public.contactos_cliente(id_contacto);",
+      "generatedName": false,
+      "id": "F22",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_entregas_id_orden",
+      "child": "entregas",
+      "column": "id_orden",
+      "parent": "ordenes_trabajo",
+      "parent_column": "id_orden",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.entregas\n    ADD CONSTRAINT fk_entregas_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
+      "generatedName": false,
+      "id": "F23",
+      "nullable": false,
+      "individuallyUnique": true,
+      "childMultiplicity": "0..1",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_entregas_id_usuario_entrega",
+      "child": "entregas",
+      "column": "id_usuario_entrega",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.entregas\n    ADD CONSTRAINT fk_entregas_id_usuario_entrega FOREIGN KEY (id_usuario_entrega) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F24",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_entregas_id_usuario_verificador",
+      "child": "entregas",
+      "column": "id_usuario_verificador",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.entregas\n    ADD CONSTRAINT fk_entregas_id_usuario_verificador FOREIGN KEY (id_usuario_verificador) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F25",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_historial_estados_ot_id_orden",
+      "child": "historial_estados_ot",
+      "column": "id_orden",
+      "parent": "ordenes_trabajo",
+      "parent_column": "id_orden",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.historial_estados_ot\n    ADD CONSTRAINT fk_historial_estados_ot_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
+      "generatedName": false,
+      "id": "F26",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_historial_estados_ot_id_usuario",
+      "child": "historial_estados_ot",
+      "column": "id_usuario",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.historial_estados_ot\n    ADD CONSTRAINT fk_historial_estados_ot_id_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F27",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_historial_cliente",
+      "child": "historial_propietarios",
+      "column": "id_cliente",
+      "parent": "clientes",
+      "parent_column": "id_cliente",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.historial_propietarios\n    ADD CONSTRAINT fk_historial_cliente FOREIGN KEY (id_cliente) REFERENCES public.clientes(id_cliente);",
+      "generatedName": false,
+      "id": "F28",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_historial_usuario",
+      "child": "historial_propietarios",
+      "column": "id_usuario_registro",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.historial_propietarios\n    ADD CONSTRAINT fk_historial_usuario FOREIGN KEY (id_usuario_registro) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F29",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_historial_vehiculo",
+      "child": "historial_propietarios",
+      "column": "id_vehiculo",
+      "parent": "vehiculos",
+      "parent_column": "id_vehiculo",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.historial_propietarios\n    ADD CONSTRAINT fk_historial_vehiculo FOREIGN KEY (id_vehiculo) REFERENCES public.vehiculos(id_vehiculo);",
+      "generatedName": false,
+      "id": "F30",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "ordenes_trabajo_control_autor_fkey",
+      "child": "ordenes_trabajo",
+      "column": "control_autor",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql",
+      "definition": "bigint REFERENCES usuarios(id_usuario)",
+      "generatedName": true,
+      "id": "F31",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_ordenes_trabajo_id_cotizacion",
+      "child": "ordenes_trabajo",
+      "column": "id_cotizacion",
+      "parent": "cotizaciones",
+      "parent_column": "id_cotizacion",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.ordenes_trabajo\n    ADD CONSTRAINT fk_ordenes_trabajo_id_cotizacion FOREIGN KEY (id_cotizacion) REFERENCES public.cotizaciones(id_cotizacion);",
+      "generatedName": false,
+      "id": "F32",
+      "nullable": false,
+      "individuallyUnique": true,
+      "childMultiplicity": "0..1",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_ordenes_trabajo_id_usuario_creacion",
+      "child": "ordenes_trabajo",
+      "column": "id_usuario_creacion",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.ordenes_trabajo\n    ADD CONSTRAINT fk_ordenes_trabajo_id_usuario_creacion FOREIGN KEY (id_usuario_creacion) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F33",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_pagos_id_orden",
+      "child": "pagos",
+      "column": "id_orden",
+      "parent": "ordenes_trabajo",
+      "parent_column": "id_orden",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.pagos\n    ADD CONSTRAINT fk_pagos_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
+      "generatedName": false,
+      "id": "F34",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_pagos_id_usuario_registro",
+      "child": "pagos",
+      "column": "id_usuario_registro",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.pagos\n    ADD CONSTRAINT fk_pagos_id_usuario_registro FOREIGN KEY (id_usuario_registro) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F35",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_pruebas_ot_id_orden",
+      "child": "pruebas_ot",
+      "column": "id_orden",
+      "parent": "ordenes_trabajo",
+      "parent_column": "id_orden",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.pruebas_ot\n    ADD CONSTRAINT fk_pruebas_ot_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
+      "generatedName": false,
+      "id": "F36",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_pruebas_ot_id_usuario",
+      "child": "pruebas_ot",
+      "column": "id_usuario",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.pruebas_ot\n    ADD CONSTRAINT fk_pruebas_ot_id_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F37",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "recepciones_diagnostico_asignado_por_fkey",
+      "child": "recepciones",
+      "column": "diagnostico_asignado_por",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql",
+      "definition": "bigint REFERENCES usuarios(id_usuario)",
+      "generatedName": true,
+      "id": "F38",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_recepciones_id_cliente_atencion",
+      "child": "recepciones",
+      "column": "id_cliente_atencion",
+      "parent": "clientes",
+      "parent_column": "id_cliente",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.recepciones\n    ADD CONSTRAINT fk_recepciones_id_cliente_atencion FOREIGN KEY (id_cliente_atencion) REFERENCES public.clientes(id_cliente);",
+      "generatedName": false,
+      "id": "F39",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "recepciones_id_mecanico_diagnostico_fkey",
+      "child": "recepciones",
+      "column": "id_mecanico_diagnostico",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql",
+      "definition": "bigint REFERENCES usuarios(id_usuario)",
+      "generatedName": true,
+      "id": "F40",
+      "nullable": true,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "0..1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_recepciones_id_recepcionista",
+      "child": "recepciones",
+      "column": "id_recepcionista",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.recepciones\n    ADD CONSTRAINT fk_recepciones_id_recepcionista FOREIGN KEY (id_recepcionista) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F41",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_recepciones_id_vehiculo",
+      "child": "recepciones",
+      "column": "id_vehiculo",
+      "parent": "vehiculos",
+      "parent_column": "id_vehiculo",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.recepciones\n    ADD CONSTRAINT fk_recepciones_id_vehiculo FOREIGN KEY (id_vehiculo) REFERENCES public.vehiculos(id_vehiculo);",
+      "generatedName": false,
+      "id": "F42",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_repuesto_proveedor_id_proveedor",
+      "child": "repuesto_proveedor",
+      "column": "id_proveedor",
+      "parent": "proveedores",
+      "parent_column": "id_proveedor",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.repuesto_proveedor\n    ADD CONSTRAINT fk_repuesto_proveedor_id_proveedor FOREIGN KEY (id_proveedor) REFERENCES public.proveedores(id_proveedor);",
+      "generatedName": false,
+      "id": "F43",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_repuesto_proveedor_id_repuesto",
+      "child": "repuesto_proveedor",
+      "column": "id_repuesto",
+      "parent": "repuestos",
+      "parent_column": "id_repuesto",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.repuesto_proveedor\n    ADD CONSTRAINT fk_repuesto_proveedor_id_repuesto FOREIGN KEY (id_repuesto) REFERENCES public.repuestos(id_repuesto);",
+      "generatedName": false,
+      "id": "F44",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_rol_permisos_permiso",
+      "child": "rol_permisos",
+      "column": "id_permiso",
+      "parent": "permisos",
+      "parent_column": "id_permiso",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.rol_permisos\n    ADD CONSTRAINT fk_rol_permisos_permiso FOREIGN KEY (id_permiso) REFERENCES public.permisos(id_permiso);",
+      "generatedName": false,
+      "id": "F45",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_rol_permisos_rol",
+      "child": "rol_permisos",
+      "column": "id_rol",
+      "parent": "roles",
+      "parent_column": "id_rol",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.rol_permisos\n    ADD CONSTRAINT fk_rol_permisos_rol FOREIGN KEY (id_rol) REFERENCES public.roles(id_rol);",
+      "generatedName": false,
+      "id": "F46",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_usuario_roles_rol",
+      "child": "usuario_roles",
+      "column": "id_rol",
+      "parent": "roles",
+      "parent_column": "id_rol",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.usuario_roles\n    ADD CONSTRAINT fk_usuario_roles_rol FOREIGN KEY (id_rol) REFERENCES public.roles(id_rol);",
+      "generatedName": false,
+      "id": "F47",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "fk_usuario_roles_usuario",
+      "child": "usuario_roles",
+      "column": "id_usuario",
+      "parent": "usuarios",
+      "parent_column": "id_usuario",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.usuario_roles\n    ADD CONSTRAINT fk_usuario_roles_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id_usuario);",
+      "generatedName": false,
+      "id": "F48",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    },
+    {
+      "name": "usuarios_id_empleado_fkey",
+      "child": "usuarios",
+      "column": "id_empleado",
+      "parent": "empleados",
+      "parent_column": "id_empleado",
+      "origin": "backend/internal/platform/postgres/migrations/007_empleados.sql",
+      "definition": "bigint REFERENCES public.empleados(id_empleado) ON DELETE RESTRICT",
+      "generatedName": true,
+      "id": "F49",
+      "nullable": true,
+      "individuallyUnique": true,
+      "childMultiplicity": "0..1",
+      "parentMultiplicity": "0..1",
+      "onDelete": "RESTRICT"
+    },
+    {
+      "name": "fk_vehiculos_cliente",
+      "child": "vehiculos",
+      "column": "id_cliente",
+      "parent": "clientes",
+      "parent_column": "id_cliente",
+      "origin": "database/postgresql/esquema_actual.sql",
+      "definition": "ALTER TABLE ONLY public.vehiculos\n    ADD CONSTRAINT fk_vehiculos_cliente FOREIGN KEY (id_cliente) REFERENCES public.clientes(id_cliente);",
+      "generatedName": false,
+      "id": "F50",
+      "nullable": false,
+      "individuallyUnique": false,
+      "childMultiplicity": "0..N",
+      "parentMultiplicity": "1",
+      "onDelete": "NO ACTION"
+    }
+  ],
+  "sources": [
+    {
+      "path": "database/postgresql/esquema_actual.sql",
+      "sha256": "5c4b2b3221c1af2411882d62747332272137ffb1978a1713658579bfdab0de5d"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/001_revision_funcional.sql",
+      "sha256": "dbbb8d4fff31c1d007a3e753d96cdfbac1d910868410f39d8096204b720c67d4"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/002_marcas_vehiculos.sql",
+      "sha256": "7d7ac507ebfa6aa269f7cb9df1712e112f615ef082797e0b521c06199e73a6c2"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql",
+      "sha256": "d84536afbe15dbf9ffc972771aeb45aac2450651b0de58e0b044bed3d22332e9"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql",
+      "sha256": "b0f7aa472d589d3c1079945f45f84058365e0054567a433add93c72b6b3765d4"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql",
+      "sha256": "f6f2fea272fbb1b9443ed1a171664e5437e5866b38eff054c17a1f61b94a31b5"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/006_pagos_entrega.sql",
+      "sha256": "755db3fe2bc0df974168971c87dc639628d3fa76e009583affaa7a4774d69aa5"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/007_empleados.sql",
+      "sha256": "3803c70d8d8fb77cc75263ece7b4d5de80d342e0d40c6744c4e1c39d43b77832"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql",
+      "sha256": "d3aef2cf3f28c0144d796bbcaef5c8d8e954a5f4fd2951649ff683b4e0b33169"
+    },
+    {
+      "path": "backend/internal/platform/postgres/migrations/009_tres_roles.sql",
+      "sha256": "5e74fcaac3525cea358081d8be7754c18e7429d3356b399916fb01d503796ffb"
+    }
+  ],
+  "evolution": [
+    {
+      "source": "database/postgresql/esquema_actual.sql",
+      "tables": 26,
+      "columns": 160,
+      "foreignKeys": 42
+    },
+    {
+      "source": "backend/internal/platform/postgres/migrations/001_revision_funcional.sql",
+      "tables": 26,
+      "columns": 163,
+      "foreignKeys": 42
+    },
+    {
+      "source": "backend/internal/platform/postgres/migrations/002_marcas_vehiculos.sql",
+      "tables": 26,
+      "columns": 163,
+      "foreignKeys": 42
+    },
+    {
+      "source": "backend/internal/platform/postgres/migrations/003_atencion_ficha.sql",
+      "tables": 26,
+      "columns": 171,
+      "foreignKeys": 44
+    },
+    {
+      "source": "backend/internal/platform/postgres/migrations/004_flujo_diagnosticos.sql",
+      "tables": 26,
+      "columns": 184,
+      "foreignKeys": 46
+    },
+    {
+      "source": "backend/internal/platform/postgres/migrations/005_auditoria_flujo.sql",
+      "tables": 26,
+      "columns": 191,
+      "foreignKeys": 47
+    },
+    {
+      "source": "backend/internal/platform/postgres/migrations/006_pagos_entrega.sql",
+      "tables": 26,
+      "columns": 196,
+      "foreignKeys": 47
+    },
+    {
+      "source": "backend/internal/platform/postgres/migrations/007_empleados.sql",
+      "tables": 27,
+      "columns": 201,
+      "foreignKeys": 48
+    },
+    {
+      "source": "backend/internal/platform/postgres/migrations/008_tipos_documento.sql",
+      "tables": 28,
+      "columns": 207,
+      "foreignKeys": 50
+    },
+    {
+      "source": "backend/internal/platform/postgres/migrations/009_tres_roles.sql",
+      "tables": 28,
+      "columns": 208,
+      "foreignKeys": 50
+    }
+  ],
+  "counts": {
+    "tables": 28,
+    "columns": 208,
+    "foreignKeys": 50
+  },
+  "scope": "SQL base más migraciones versionadas; no certifica despliegue de una instancia viva"
+}

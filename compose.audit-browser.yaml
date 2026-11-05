@@ -1,0 +1,9 @@
+# Only for tests: new isolated Compose project, no existing volumes or databases.
+services:
+  postgres-test:
+    ports: ["127.0.0.1:25432:5432"]
+  mongo-test:
+    ports: ["127.0.0.1:27029:27017"]
+networks:
+  test-only:
+    internal: false

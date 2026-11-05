@@ -1,8 +1,46 @@
-# El Bravo del JAC · Frontend completo v1.0
+# El Bravo del JAC · Frontend y backend Go · Fase E
+
+[Catálogo documental y tres roles: migraciones, conservación y pruebas](docs/backend/CATALOGO_DOCUMENTOS_TRES_ROLES.md).
+Rama de revisión `feature/catalogo-documentos-tres-roles`: 28 tablas / 50 FK,
+roles nuevos Gerente, Administrador y Mecánico; auxiliares históricos conservados.
+El entorno aislado existente se abre en `http://localhost:8080/` con las
+credenciales locales de `backend/.cache/acceso-desarrollo.txt`. Reiniciar Go
+requiere volver a iniciar sesión.
+
+[Empleados y cargo laboral: gestión, vinculación segura y pruebas](docs/backend/EMPLEADOS.md).
+
+[Correcciones de auditoría: aprobación, ejecución, anticipos, entrega y reportes](docs/backend/CORRECCIONES_AUDITORIA_FUNCIONAL.md). Prueba aislada en Windows: `./backend/scripts/test-audit.ps1`.
+
+[Cotizaciones: nueva vacía, búsqueda remota y consulta protegida](docs/backend/CORRECCION_COTIZACIONES.md).
+
+[Asignación de mecánicos y diagnósticos: implementación y pruebas](docs/backend/FLUJO_DIAGNOSTICOS_ASIGNADOS.md): bandejas por trabajador, borradores, finalización y cotización; migración 004 y prueba con dos cuentas.
+
+[Atenciones directas/técnicas, gráfico de ingresos y ficha original de dos páginas](docs/backend/ATENCIONES_REPORTES_FICHA.md): implementación, migración 003, permisos y pruebas.
+
+[Revisión funcional implementada y probada — 27/10/2026](docs/backend/REVISION_12_OBSERVACIONES.md): búsqueda remota, cotizaciones manuales/descuentos, trabajadores, auxilio y períodos. Incluye migración segura para desarrollo/pruebas y un campo pendiente de identificar.
 
 Sistema web universitario de gestión del taller automotriz, realizado en **HTML, CSS y JavaScript**. Conserva la referencia funcional **Balsamiq V14.1 reparado** (23 pantallas y ventanas, notas internas V14.1.1) y adopta el estilo **Borgoña contemporáneo**: navegación color vino, superficies claras y títulos sans serif.
 
-Las **13 opciones del menú están operativas con datos de demostración**. Se puede recorrer el proceso desde el registro de cliente hasta el pago y entrega. Esta entrega es el frontend completo del prototipo; la autenticación y los datos funcionan localmente y todavía no se conectan a Go, PostgreSQL ni MongoDB.
+Las **13 opciones del menú consumen las APIs Go** conservando el diseño aprobado.
+Go sirve el modo real en `/` y la demostración separada en `/demo/`. La sesión usa
+cookies HttpOnly y CSRF; PostgreSQL mantiene los datos transaccionales y MongoDB
+los resultados de escáner/evidencias. No se mezclan registros demo con persistidos.
+
+**Modo real en Windows con Docker Desktop:** desde la raíz ejecutar
+`./backend/scripts/start-dev.ps1` y abrir **http://localhost:8080/**.
+Usuario inicial: `admin_pruebas`; contraseña aleatoria en el archivo local
+`backend/.cache/acceso-desarrollo.txt`, excluido de Git. El script mantiene un
+entorno separado y crea la cuenta con bcrypt solo si la nueva base no tiene usuarios.
+
+[Ejecución Docker y Chrome realmente verificada](docs/backend/VERIFICACION_DOCKER.md):
+recorrido completo, permisos, MongoDB y persistencia tras reiniciar los contenedores.
+Contratos y límites de las pantallas en [el informe de Fase E](docs/backend/FASE_E.md).
+
+La interfaz aprobada todavía no incluye controles para cargar archivos técnicos:
+el servicio JavaScript de MongoDB ya está implementado y probado; esos controles
+quedan pendientes de acordar. Especialidad de proveedores no se agrega al modelo.
+
+Los pasos de Python que siguen abren **solo la demostración**.
 
 ## Abrir el proyecto
 
@@ -43,7 +81,7 @@ También puedes servir `dist/index.html` con Live Server de VS Code. No abras el
 | Pagos y entrega | Registrar pagos; consultar saldo; identificar receptor; registrar contactos en una ventana; confirmar entrega |
 | Mecánicos | Consultar personal técnico y sus órdenes activas; ver asignaciones |
 | Proveedores | Buscar y registrar/editar proveedores en la misma ventana |
-| Reportes | Filtrar este mes o los últimos seis meses; consultar servicios e ingresos |
+| Reportes | Filtrar Semana, Mes o Año; consultar servicios e ingresos |
 | Usuarios y roles | Crear y editar usuarios; activar/desactivar; asignar roles; iniciar sesión con usuarios de ejemplo creados |
 
 La vista **Mis tareas** muestra las órdenes activas asignadas a Kevin o al auxiliar que inició sesión. Permite registrar avances y cambiar el estado operativo; la finalización con pruebas se realiza desde Actualizar orden.
@@ -104,16 +142,38 @@ Con Node.js instalado:
 node checks/verify.mjs
 node checks/workflow.mjs
 node checks/edge-cases.mjs
+node checks/real-api.mjs
+# O todas las pruebas sin npm: node checks/run.mjs
 ```
 
 Las pruebas usan almacenamiento en memoria y no alteran los datos de tu navegador.
 
-## Integración posterior
+## Integración real
 
-Go implementará las APIs REST, las reglas y permisos definitivos. PostgreSQL almacenará las operaciones relacionales y transaccionales; MongoDB los documentos flexibles y evidencias técnicas de diagnóstico. Los servicios JavaScript delimitan dónde sustituir la simulación local. Los nombres de campos y contratos definitivos se alinearán con el diccionario SQL antes de conectar el backend.
+La integración está implementada en `api-service.js`, `real-workshop.js` y `technical-service.js`. Go publica el frontend en el mismo origen y aplica permisos en cada operación. Consulta [FASE_E.md](docs/backend/FASE_E.md) para ejecutar y probar la aplicación completa.
 
 El Balsamiq no incluye un control de carga de evidencias en la pantalla de diagnóstico. Se conservó su formulario; la interfaz de archivos técnicos se acordará al conectar MongoDB, sin añadir un módulo por iniciativa propia.
 
 ## Diseño Borgoña contemporáneo
 
-La capa visual se define en `dist/assets/css/atelier.css`. Clientes muestra las placas vinculadas a cada persona y permite buscar también por placa. Sus contadores se calculan desde los registros locales. Se mantienen las operaciones de los 13 módulos y sus permisos. Títulos y texto usan DM Sans con fuentes del sistema como alternativa. El logo vectorial reutilizable está en `dist/assets/images/bravo-borgona.svg`.
+La capa visual se define en `dist/assets/css/atelier.css`. Clientes muestra las placas vinculadas a cada persona y permite buscar también por placa. Sus contadores se calculan desde los datos del modo seleccionado. Se mantienen las operaciones de los 13 módulos y sus permisos. Títulos y texto usan DM Sans con fuentes del sistema como alternativa. El logo vectorial reutilizable está en `dist/assets/images/bravo-borgona.svg`.
+
+
+## Cotizaciones PDF e informes
+
+En modo real, **Cotizaciones → Cotizaciones guardadas → PDF**, junto a **Abrir**,
+descarga la versión guardada con su estado y aprobación registrada. Se permite
+consultar una cotización pendiente para enviarla al cliente. Se requiere
+`cotizaciones.ver`. Abrir conserva su edición/consulta existente. Este documento
+es independiente de la ficha técnica de Pagos y entrega.
+
+Inicio presenta indicadores operativos, estados, carga de mecánicos y bandejas de
+diagnósticos; Reportes conserva el análisis de servicios e ingresos con tabla y
+gráfico, incorpora fecha de referencia y comparación con el período anterior.
+[Detalle, archivos y pruebas](docs/backend/COTIZACIONES_PDF_REPORTES.md).
+
+Pruebas reproducibles en Windows: `node checks/run.mjs` y
+`.\backend\scripts\test-audit.ps1` (Docker Desktop, Go, Node, Chrome y Playwright).
+Solo se usan las bases aisladas `elbravodeljac_test` y
+`elbravodeljac_tecnico_test`. Desde `backend/`: `go test ./...` y `go vet ./...`;
+sin variables de integración, Go omite esas pruebas explícitamente.

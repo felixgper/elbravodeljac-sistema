@@ -1,0 +1,20 @@
+# Dedicated QA cluster. Never references development volumes or port 5432.
+services:
+  postgres-test:
+    tmpfs: !reset []
+    volumes:
+      - auditoria-pg:/var/lib/postgresql
+    ports: !override ["127.0.0.1:25434:5432"]
+  mongo-test:
+    tmpfs: !reset []
+    volumes:
+      - auditoria-mongo:/data/db
+      - auditoria-mongo-config:/data/configdb
+    ports: !override ["127.0.0.1:27031:27017"]
+volumes:
+  auditoria-pg:
+  auditoria-mongo:
+  auditoria-mongo-config:
+networks:
+  test-only:
+    internal: false

@@ -11,10 +11,10 @@ export function createSeed(now = new Date()) {
   const plates = ['ABC-123','DEF-456','GHI-789','JKL-234','MNO-567','PQR-890','STU-345','VWX-678','YZA-901','BCD-234','EFG-567','HIJ-890'];
   const vehicles = plates.map((plate,i)=>({id:`v${i+1}`,clientId:clients[i%clients.length].id,plate,brand:'JAC',model:models[i%6],year:2020+i%5,mileage:(25300+i*1790).toFixed(2),notes:'Vehículo de demostración',transfers:[]}));
   const users = [
-    ['u-admin','Admin','admin','admin@demo.local','Administrador'],['u-jimmy','Jimmy','jimmy','jimmy@demo.local','Propietario'],
-    ['u-carlos','Carlos','carlos','carlos@demo.local','Supervisor'],['u-pedro','Pedro','pedro','pedro@demo.local','Mecánico'],
+    ['u-admin','Admin','admin','admin@demo.local','Gerente'],['u-jimmy','Jimmy','jimmy','jimmy@demo.local','Gerente'],
+    ['u-carlos','Carlos','carlos','carlos@demo.local','Mecánico'],['u-pedro','Pedro','pedro','pedro@demo.local','Mecánico'],
     ['u-luis','Luis','luis','luis@demo.local','Mecánico'],['u-maria','María','maria','maria@demo.local','Mecánico'],
-    ['u-kevin','Kevin','kevin','kevin@demo.local','Auxiliar'],['u-office','Administración','administracion','oficina@demo.local','Administrativo'],
+    ['u-kevin','Kevin','kevin','kevin@demo.local','Mecánico'],['u-office','Administración','administracion','oficina@demo.local','Administrador'],
   ].map(([id,name,username,email,role])=>({id,name,username,email,role,active:true,passwordDigest:null,createdAt:dateAt(-5)}));
   const receptions=[],diagnoses=[],quotes=[],orders=[],payments=[];
   const states=['Pendiente','Pendiente',...Array(5).fill('En reparación'),...Array(3).fill('En pruebas'),...Array(24).fill('Finalizada'),'Cancelada'];

@@ -170,3 +170,29 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .role-item.active{box-shadow:0 0 0 3px #741b2810}
 .perm-check input:focus-visible{outline-color:#a95865}
 @media(max-width:900px){.data-table th:last-child{background:#f7f8fb}.data-table td:last-child{background:#fff}.data-table tbody tr:hover td:last-child{background:#fbedf0}}
+
+/* Searchable relationship fields: same input style and form layout. */
+.remote-picker{position:relative;width:100%}
+.remote-picker>input{width:100%}
+.remote-results{position:absolute;z-index:30;left:0;right:0;top:100%;max-height:280px;overflow:auto;background:#fff;border:1px solid #e5d8da;border-radius:8px;box-shadow:0 8px 20px #350c1718}
+.remote-results>button{display:block;width:100%;padding:10px 12px;text-align:left;background:#fff;border:0;cursor:pointer;color:inherit;font:inherit}
+.remote-results>button:hover,.remote-results>button[aria-selected=true]{background:#f8edf0}
+.remote-results p,.picker-pages{padding:10px 12px;margin:0}
+.picker-pages{display:flex;justify-content:space-between;gap:8px}
+
+/* Diseño 19: original raster conservado sobre una placa carbón, sin falsos recortes transparentes. */
+:root{--copper:#a31133;--copper-hover:#800d28;--charcoal:#151719;--ink:#25282c;--muted:#666d73}
+.official-brand .brand-emblem{display:block;width:72px;height:auto;aspect-ratio:410/430;object-fit:contain;background:#131415;border-radius:7px}
+.sidebar .official-brand{padding:12px 10px;gap:8px}.official-brand .brand-wordmark{font-family:'DM Sans','Segoe UI',sans-serif;font-size:17px;letter-spacing:.015em}
+.official-brand .brand-wordmark small{font-size:8px;letter-spacing:.17em}
+.brand-on-light{display:block;background:#131415;border:1px solid #c3c8cc;border-radius:10px;overflow:hidden;max-width:360px;margin:auto}
+.brand-horizontal{width:100%;height:auto;aspect-ratio:1150/450;display:block;object-fit:contain}
+.login-brand{padding:24px 8px}.sidebar-brand{min-height:180px}.sidebar{background:#390d1b}
+.sidebar-compact .brand-emblem{width:44px}.sidebar-compact .official-brand{padding:5px 0}.sidebar-compact .brand-wordmark{display:none}
+.dashboard-tabs button{cursor:pointer;font:inherit;background:transparent;border:0;border-bottom:2px solid transparent;padding:13px 20px;color:var(--muted)}
+.dashboard-tabs button.active{border-color:var(--copper);color:var(--copper);font-weight:700}.dashboard-tabs button:disabled{cursor:not-allowed;opacity:.6}
+.dashboard-tabs .icon{width:14px;height:14px}.dashboard-tabs{margin-bottom:18px}.diagnosis-text{white-space:pre-wrap;overflow-wrap:anywhere}
+.diagnosis-history summary{cursor:pointer;font-weight:600}.diagnosis-history section{padding:12px 0;border-bottom:1px solid var(--line)}
+[role=tabpanel][hidden]{display:none!important}#dashboard-filter{margin-bottom:22px}#dashboard-analysis .report-columns{margin-top:0}
+@media(max-width:600px){.login-brand{padding:20px 0}.brand-on-light{max-width:100%}.dashboard-tabs button{flex:1;padding:12px}.dashboard-tabs{display:flex}#dashboard-filter .form-actions{width:100%}}
+@media(max-width:900px){.topbar-brand .official-brand .brand-emblem{width:35px;flex-shrink:0}.topbar-brand .official-brand .brand-wordmark{font-size:16px}.topbar-brand .official-brand .brand-wordmark small{font-size:6px}.sidebar-compact .sidebar .brand-wordmark{display:block}}

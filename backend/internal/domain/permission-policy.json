@@ -1,0 +1,222 @@
+{
+  "modules": {
+    "inicio": [
+      "ver"
+    ],
+    "clientes": [
+      "ver",
+      "crear",
+      "editar",
+      "eliminar"
+    ],
+    "vehiculos": [
+      "ver",
+      "crear",
+      "editar",
+      "eliminar"
+    ],
+    "recepciones": [
+      "ver",
+      "crear"
+    ],
+    "diagnosticos": [
+      "ver",
+      "crear",
+      "asignar",
+      "supervisar"
+    ],
+    "cotizaciones": [
+      "ver",
+      "crear",
+      "editar"
+    ],
+    "ordenes": [
+      "ver",
+      "crear",
+      "editar",
+      "eliminar",
+      "asignar"
+    ],
+    "auxilio": [
+      "ver",
+      "crear"
+    ],
+    "pagos": [
+      "ver",
+      "registrar",
+      "entregar",
+      "rectificar"
+    ],
+    "mecanicos": [
+      "ver"
+    ],
+    "proveedores": [
+      "ver",
+      "crear",
+      "editar",
+      "eliminar"
+    ],
+    "reportes": [
+      "ver"
+    ],
+    "usuarios": [
+      "ver",
+      "crear",
+      "editar",
+      "eliminar",
+      "roles"
+    ]
+  },
+  "defaults": {
+    "Gerente": {
+      "inicio": [
+        "ver"
+      ],
+      "clientes": [
+        "ver",
+        "crear",
+        "editar",
+        "eliminar"
+      ],
+      "vehiculos": [
+        "ver",
+        "crear",
+        "editar",
+        "eliminar"
+      ],
+      "recepciones": [
+        "ver",
+        "crear"
+      ],
+      "diagnosticos": [
+        "ver",
+        "crear",
+        "asignar",
+        "supervisar"
+      ],
+      "cotizaciones": [
+        "ver",
+        "crear",
+        "editar"
+      ],
+      "ordenes": [
+        "ver",
+        "crear",
+        "editar",
+        "eliminar",
+        "asignar"
+      ],
+      "auxilio": [
+        "ver",
+        "crear"
+      ],
+      "pagos": [
+        "ver",
+        "registrar",
+        "entregar",
+        "rectificar"
+      ],
+      "mecanicos": [
+        "ver"
+      ],
+      "proveedores": [
+        "ver",
+        "crear",
+        "editar",
+        "eliminar"
+      ],
+      "reportes": [
+        "ver"
+      ],
+      "usuarios": [
+        "ver",
+        "crear",
+        "editar",
+        "eliminar",
+        "roles"
+      ]
+    },
+    "Administrador": {
+      "inicio": [
+        "ver"
+      ],
+      "clientes": [
+        "ver",
+        "crear",
+        "editar",
+        "eliminar"
+      ],
+      "vehiculos": [
+        "ver",
+        "crear",
+        "editar",
+        "eliminar"
+      ],
+      "recepciones": [
+        "ver",
+        "crear"
+      ],
+      "diagnosticos": [
+        "ver",
+        "crear",
+        "asignar",
+        "supervisar"
+      ],
+      "cotizaciones": [
+        "ver",
+        "crear",
+        "editar"
+      ],
+      "ordenes": [
+        "ver",
+        "crear",
+        "editar",
+        "eliminar",
+        "asignar"
+      ],
+      "auxilio": [
+        "ver",
+        "crear"
+      ],
+      "pagos": [
+        "ver",
+        "registrar",
+        "entregar"
+      ],
+      "mecanicos": [
+        "ver"
+      ],
+      "proveedores": [
+        "ver",
+        "crear",
+        "editar",
+        "eliminar"
+      ],
+      "reportes": [
+        "ver"
+      ]
+    },
+    "Mecánico": {
+      "inicio": [
+        "ver"
+      ],
+      "vehiculos": [
+        "ver"
+      ],
+      "recepciones": [
+        "ver"
+      ],
+      "diagnosticos": [
+        "ver",
+        "crear"
+      ],
+      "ordenes": [
+        "ver",
+        "editar"
+      ],
+      "auxilio": [
+        "ver"
+      ]
+    }
+  }
+}

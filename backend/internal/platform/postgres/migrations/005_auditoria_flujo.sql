@@ -1,0 +1,11 @@
+BEGIN;
+SELECT pg_advisory_xact_lock(hashtextextended('jac:migrations:v1',0));
+ALTER TABLE cotizaciones ADD COLUMN IF NOT EXISTS version bigint NOT NULL DEFAULT 0;
+ALTER TABLE cotizaciones ADD COLUMN IF NOT EXISTS contenido_hash text;
+ALTER TABLE cotizaciones ADD COLUMN IF NOT EXISTS aprobacion jsonb;
+ALTER TABLE cotizaciones ADD COLUMN IF NOT EXISTS historial_revision jsonb NOT NULL DEFAULT '[]';
+ALTER TABLE cotizaciones ADD COLUMN IF NOT EXISTS id_cotizacion_base bigint REFERENCES cotizaciones(id_cotizacion);
+ALTER TABLE ordenes_trabajo ADD COLUMN IF NOT EXISTS flujo_version integer NOT NULL DEFAULT 0;
+ALTER TABLE ordenes_trabajo ADD COLUMN IF NOT EXISTS control_historial jsonb NOT NULL DEFAULT '[]';
+UPDATE ordenes_trabajo SET flujo_version=1 WHERE flujo_version=0 AND estado NOT IN ('finalizada','cancelada');
+COMMIT;

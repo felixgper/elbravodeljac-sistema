@@ -1,0 +1,554 @@
+{
+  "groups": [
+    {
+      "id": "fugas",
+      "label": "Fugas de fluidos",
+      "items": [
+        {
+          "id": "fugas_0",
+          "label": "Aceite de motor",
+          "x": 159,
+          "y": 124.0
+        },
+        {
+          "id": "fugas_1",
+          "label": "Aceite de caja",
+          "x": 159,
+          "y": 139.9
+        },
+        {
+          "id": "fugas_2",
+          "label": "Refrigerante",
+          "x": 159,
+          "y": 155.8
+        },
+        {
+          "id": "fugas_3",
+          "label": "Líquido de frenos",
+          "x": 159,
+          "y": 171.7
+        },
+        {
+          "id": "fugas_4",
+          "label": "Dirección hidráulica",
+          "x": 159,
+          "y": 187.6
+        },
+        {
+          "id": "fugas_5",
+          "label": "Aceite piñón VVT",
+          "x": 159,
+          "y": 203.5
+        },
+        {
+          "id": "fugas_6",
+          "label": "Aceite del cárter",
+          "x": 159,
+          "y": 219.4
+        },
+        {
+          "id": "fugas_7",
+          "label": "Aceite de corona",
+          "x": 159,
+          "y": 235.3
+        }
+      ]
+    },
+    {
+      "id": "liquidos",
+      "label": "Revisión de líquidos",
+      "items": [
+        {
+          "id": "liquidos_0",
+          "label": "Aceite",
+          "x": 341,
+          "y": 124.0
+        },
+        {
+          "id": "liquidos_1",
+          "label": "Hidrolina",
+          "x": 341,
+          "y": 139.9
+        },
+        {
+          "id": "liquidos_2",
+          "label": "Parabrisas",
+          "x": 341,
+          "y": 155.8
+        },
+        {
+          "id": "liquidos_3",
+          "label": "Frenos",
+          "x": 341,
+          "y": 171.7
+        },
+        {
+          "id": "liquidos_4",
+          "label": "Refrigerante",
+          "x": 341,
+          "y": 187.6
+        },
+        {
+          "id": "liquidos_5",
+          "label": "Diferencial",
+          "x": 341,
+          "y": 203.5
+        }
+      ]
+    },
+    {
+      "id": "neumaticos",
+      "label": "Neumáticos",
+      "items": [
+        {
+          "id": "neumaticos_0",
+          "label": "Presión de aire",
+          "x": 523,
+          "y": 124.0
+        },
+        {
+          "id": "neumaticos_1",
+          "label": "Profundidad de dibujo",
+          "x": 523,
+          "y": 139.9
+        },
+        {
+          "id": "neumaticos_2",
+          "label": "Llanta de repuesto",
+          "x": 523,
+          "y": 155.8
+        },
+        {
+          "id": "neumaticos_3",
+          "label": "Desgaste del. piloto",
+          "x": 523,
+          "y": 171.7
+        },
+        {
+          "id": "neumaticos_4",
+          "label": "Desgaste del. copiloto",
+          "x": 523,
+          "y": 187.6
+        },
+        {
+          "id": "neumaticos_5",
+          "label": "Desgaste tras. piloto",
+          "x": 523,
+          "y": 203.5
+        },
+        {
+          "id": "neumaticos_6",
+          "label": "Desgaste tras. copiloto",
+          "x": 523,
+          "y": 219.4
+        }
+      ]
+    }
+  ],
+  "maintenance": [
+    {
+      "id": "aceite",
+      "label": "Aceite",
+      "options": [
+        {
+          "id": "0",
+          "label": "5W-30",
+          "x": 110,
+          "y": 312
+        },
+        {
+          "id": "1",
+          "label": "10W-30",
+          "x": 153,
+          "y": 312
+        },
+        {
+          "id": "2",
+          "label": "15W-30",
+          "x": 198,
+          "y": 312
+        },
+        {
+          "id": "3",
+          "label": "15W-40",
+          "x": 243,
+          "y": 312
+        },
+        {
+          "id": "4",
+          "label": "20W-50",
+          "x": 110,
+          "y": 325
+        }
+      ]
+    },
+    {
+      "id": "marca_aceite",
+      "label": "Marca de aceite",
+      "options": [
+        {
+          "id": "0",
+          "label": "Liqui Moly",
+          "x": 110,
+          "y": 344
+        },
+        {
+          "id": "1",
+          "label": "Castrol",
+          "x": 165,
+          "y": 344
+        },
+        {
+          "id": "2",
+          "label": "Shell",
+          "x": 209,
+          "y": 344
+        },
+        {
+          "id": "3",
+          "label": "Mobil",
+          "x": 246,
+          "y": 344
+        },
+        {
+          "id": "4",
+          "label": "Hyundai",
+          "x": 110,
+          "y": 357
+        }
+      ]
+    },
+    {
+      "id": "filtro_aceite",
+      "label": "Filtro de aceite",
+      "options": [
+        {
+          "id": "0",
+          "label": "3001",
+          "x": 110,
+          "y": 376
+        },
+        {
+          "id": "1",
+          "label": "3007",
+          "x": 146,
+          "y": 376
+        },
+        {
+          "id": "2",
+          "label": "682",
+          "x": 183,
+          "y": 376
+        },
+        {
+          "id": "3",
+          "label": "916",
+          "x": 215,
+          "y": 376
+        },
+        {
+          "id": "4",
+          "label": "10001",
+          "x": 246,
+          "y": 376
+        },
+        {
+          "id": "5",
+          "label": "Otro",
+          "x": 110,
+          "y": 389
+        }
+      ]
+    },
+    {
+      "id": "filtro_aire",
+      "label": "Filtro de aire",
+      "options": [
+        {
+          "id": "0",
+          "label": "Original",
+          "x": 110,
+          "y": 408
+        },
+        {
+          "id": "1",
+          "label": "Alternativo",
+          "x": 157,
+          "y": 408
+        }
+      ]
+    },
+    {
+      "id": "filtro_ac",
+      "label": "Filtro A/C",
+      "options": [
+        {
+          "id": "0",
+          "label": "Original",
+          "x": 110,
+          "y": 428
+        },
+        {
+          "id": "1",
+          "label": "Alternativo",
+          "x": 157,
+          "y": 428
+        }
+      ]
+    },
+    {
+      "id": "bujias",
+      "label": "Bujías",
+      "options": [
+        {
+          "id": "0",
+          "label": "Original",
+          "x": 110,
+          "y": 447
+        },
+        {
+          "id": "1",
+          "label": "Alternativa",
+          "x": 157,
+          "y": 447
+        },
+        {
+          "id": "2",
+          "label": "JAC",
+          "x": 214,
+          "y": 447
+        },
+        {
+          "id": "3",
+          "label": "NGK",
+          "x": 248,
+          "y": 447
+        },
+        {
+          "id": "4",
+          "label": "Bosch",
+          "x": 110,
+          "y": 460
+        }
+      ]
+    },
+    {
+      "id": "refrigerante",
+      "label": "Refrigerante",
+      "options": [
+        {
+          "id": "0",
+          "label": "Peak",
+          "x": 110,
+          "y": 479
+        },
+        {
+          "id": "1",
+          "label": "Prestone",
+          "x": 147,
+          "y": 479
+        },
+        {
+          "id": "2",
+          "label": "3BSI",
+          "x": 198,
+          "y": 479
+        },
+        {
+          "id": "3",
+          "label": "Vistony",
+          "x": 234,
+          "y": 479
+        }
+      ]
+    },
+    {
+      "id": "reten",
+      "label": "Retén",
+      "options": [
+        {
+          "id": "0",
+          "label": "Cigüeñal",
+          "x": 375,
+          "y": 312
+        },
+        {
+          "id": "1",
+          "label": "Válvulas",
+          "x": 425,
+          "y": 312
+        },
+        {
+          "id": "2",
+          "label": "Eje de levas",
+          "x": 472,
+          "y": 312
+        },
+        {
+          "id": "3",
+          "label": "Tapa de balancines",
+          "x": 375,
+          "y": 325
+        }
+      ]
+    },
+    {
+      "id": "mangueras",
+      "label": "Mangueras",
+      "options": [
+        {
+          "id": "0",
+          "label": "Estándar",
+          "x": 375,
+          "y": 364
+        },
+        {
+          "id": "1",
+          "label": "Siliconada",
+          "x": 426,
+          "y": 364
+        }
+      ]
+    },
+    {
+      "id": "pastillas",
+      "label": "Pastillas de freno",
+      "options": [
+        {
+          "id": "0",
+          "label": "Cerámica",
+          "x": 375,
+          "y": 389
+        },
+        {
+          "id": "1",
+          "label": "Semi cerámica",
+          "x": 428,
+          "y": 389
+        }
+      ]
+    },
+    {
+      "id": "faja_accesorios",
+      "label": "Faja de accesorios",
+      "options": [
+        {
+          "id": "0",
+          "label": "Original",
+          "x": 375,
+          "y": 419
+        },
+        {
+          "id": "1",
+          "label": "Alternativo",
+          "x": 422,
+          "y": 419
+        }
+      ]
+    },
+    {
+      "id": "faja_distribucion",
+      "label": "Faja de distribución",
+      "options": [
+        {
+          "id": "0",
+          "label": "Original",
+          "x": 375,
+          "y": 449
+        },
+        {
+          "id": "1",
+          "label": "Alternativo",
+          "x": 422,
+          "y": 449
+        }
+      ]
+    }
+  ],
+  "otherServices": [
+    {
+      "id": "0_0",
+      "label": "Reservorio refrigerante M4",
+      "x": 46,
+      "y": 543.0
+    },
+    {
+      "id": "0_1",
+      "label": "Cable de embrague",
+      "x": 221,
+      "y": 543.0
+    },
+    {
+      "id": "0_2",
+      "label": "Templadores",
+      "x": 396,
+      "y": 543.0
+    },
+    {
+      "id": "1_0",
+      "label": "Empaque tapa de balancines",
+      "x": 46,
+      "y": 557.7
+    },
+    {
+      "id": "1_1",
+      "label": "Empaque de culata",
+      "x": 221,
+      "y": 557.7
+    },
+    {
+      "id": "1_2",
+      "label": "Cable de bobinas",
+      "x": 396,
+      "y": 557.7
+    },
+    {
+      "id": "2_0",
+      "label": "Compresión de motor",
+      "x": 46,
+      "y": 572.4
+    },
+    {
+      "id": "2_1",
+      "label": "Limpieza de sensores",
+      "x": 221,
+      "y": 572.4
+    },
+    {
+      "id": "2_2",
+      "label": "Limpieza de obturador",
+      "x": 396,
+      "y": 572.4
+    },
+    {
+      "id": "3_0",
+      "label": "Vulcanizado soporte de caja",
+      "x": 46,
+      "y": 587.1
+    },
+    {
+      "id": "3_1",
+      "label": "Vulcanizado soporte de motor",
+      "x": 221,
+      "y": 587.1
+    },
+    {
+      "id": "3_2",
+      "label": "Calibración de válvulas",
+      "x": 396,
+      "y": 587.1
+    },
+    {
+      "id": "4_0",
+      "label": "Kit de embrague",
+      "x": 46,
+      "y": 601.8
+    },
+    {
+      "id": "4_1",
+      "label": "Servicio de bajada de caja",
+      "x": 221,
+      "y": 601.8
+    }
+  ]
+}

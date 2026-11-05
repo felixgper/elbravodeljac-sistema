@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "tables": 28,
+  "columns": 208,
+  "primaryKeys": 28,
+  "foreignKeys": 50,
+  "baseForeignKeys": 42,
+  "migrationForeignKeys": 8,
+  "missingForeignKeys": [],
+  "duplicateForeignKeys": [],
+  "incorrectEndpoints": [],
+  "incorrectCardinalities": [],
+  "selfReference": [
+    "cotizaciones.id_cotizacion_base"
+  ],
+  "cyclesBetweenDistinctTables": false,
+  "bridgesValidated": true,
+  "employeeUserNullableUnique": true,
+  "typesDocumentPresent": true,
+  "tableOverlaps": [],
+  "connectorsThroughTables": [],
+  "collinearOverlappingSegments": [],
+  "textOverflow": [],
+  "orthogonal": true,
+  "crossings": 121,
+  "drawioPages": 1,
+  "nativeOpenRender": true,
+  "nativeEdit": true,
+  "pdfPages": 1,
+  "pdfFormat": "A0 horizontal",
+  "pngDimensions": [
+    7993,
+    5400
+  ],
+  "protectedFiles": 254,
+  "changedProtectedFiles": [],
+  "branch": "backend/arquitectura-go-mongodb",
+  "changesOnlyNewDocumentaryFolder": true,
+  "databasesAccessed": false,
+  "applicationTestsRun": false
+}
