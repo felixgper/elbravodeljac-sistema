@@ -39,6 +39,7 @@ func TestAuditBrowserIsolated(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
+	token := requireFreshBrowserRun(t, pool)
 	mg, err := mongoadapter.Open(uri, name)
 	if err != nil {
 		t.Fatal(err)
@@ -60,7 +61,7 @@ func TestAuditBrowserIsolated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := httptest.NewUnstartedServer(handler)
+	api := httptest.NewUnstartedServer(browserIsolationHandler(handler, token))
 	api.Listener = ln
 	api.Start()
 	defer api.Close()
@@ -77,7 +78,7 @@ func TestAuditBrowserIsolated(t *testing.T) {
 	h.exec(t, `INSERT INTO roles(nombre_rol) VALUES('Administrador') ON CONFLICT DO NOTHING`)
 	h.exec(t, `INSERT INTO rol_permisos(id_rol,id_permiso) SELECT r.id_rol,p.id_permiso FROM roles r CROSS JOIN permisos p WHERE r.nombre_rol='Administrador' AND p.codigo='ordenes.ver' ON CONFLICT DO NOTHING`)
 	mechanic, _ := h.user(t, "auditworker", "Mecánico", []string{"inicio.ver", "recepciones.ver", "diagnosticos.ver", "diagnosticos.crear", "ordenes.ver", "ordenes.editar", "vehiculos.ver"})
-	fixture := map[string]string{"url": origin, "username": "auditbrowser_" + h.suffix, "password": h.password, "workerUsername": "auditworker_" + h.suffix, "mechanicId": mechanic, "suffix": h.suffix}
+	fixture := map[string]string{"isolationToken": token, "url": origin, "username": "auditbrowser_" + h.suffix, "password": h.password, "workerUsername": "auditworker_" + h.suffix, "mechanicId": mechanic, "suffix": h.suffix}
 	input, _ := json.Marshal(fixture)
 	cmd := exec.CommandContext(ctx, "node", filepath.Join("..", "..", "checks", "audit-browser.mjs"))
 	cmd.Stdin = bytes.NewReader(input)

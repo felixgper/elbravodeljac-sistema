@@ -1,3 +1,5 @@
+import {readIsolatedFixture} from './isolated-fixture.mjs';
+const isolated=await readIsolatedFixture();
 import {setDefaultResultOrder} from 'node:dns';
 import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
@@ -6,7 +8,9 @@ setDefaultResultOrder('ipv4first');
 const require=createRequire(import.meta.url),{chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const root=new URL('../',import.meta.url),reportPath=new URL('backend/.cache/live-docker/resultado.json',root);
 const report=JSON.parse(await readFile(reportPath,'utf8'));
-const settings=Object.fromEntries((await readFile(new URL('.env.fase-e.local',root),'utf8')).trim().split(/\r?\n/).map(line=>{const i=line.indexOf('=');return [line.slice(0,i),line.slice(i+1)];}));
+assert.equal(report.url,isolated.url,'El informe pertenece a otro servidor');
+assert.equal(report.testRunId,isolated.testRunId,'El informe pertenece a otro QA');
+const settings={DEV_ADMIN_USERNAME:isolated.username,DEV_ADMIN_PASSWORD:isolated.password};
 const browser=await chromium.launch({headless:true,executablePath:process.env.BRAVO_BROWSER||'C:/Program Files/Google/Chrome/Application/chrome.exe'});
 try{
  const context=await browser.newContext(),page=await context.newPage();
@@ -22,7 +26,7 @@ try{
  },report);
  assert.equal(persisted.client.id,report.clientId);assert.equal(persisted.order.code,report.orderCode);assert.equal(persisted.order.state,'Finalizada');assert.equal(persisted.payments.paid,'120.00');assert.equal(persisted.payments.balance,'0.00');assert.equal(persisted.delivery.id,report.deliveryId);
  assert(persisted.scans.includes(report.scanId));assert(persisted.evidence.includes(report.evidenceId));assert.equal(persisted.fileStatus,200);assert(persisted.fileBytes>0);
- report.persistedAfterContainerRestart=true;report.persistenceCheckedAt=new Date().toISOString();await writeFile(reportPath,JSON.stringify(report,null,2));
- console.log('Lectura posterior al reinicio de Go, PostgreSQL y MongoDB: cliente, OT, pago, entrega, escáner y archivo GridFS conservados. APROBADO.');
+ report.persistedAcrossBrowserSessions=true;report.persistenceCheckedAt=new Date().toISOString();await writeFile(reportPath,JSON.stringify(report,null,2));
+ console.log('Lectura en nueva sesión de navegador del mismo QA: cliente, OT, pago, entrega, escáner y archivo GridFS conservados. APROBADO.');
 }catch(error){await writeFile(new URL('backend/.cache/live-docker/fallo-persistencia.txt',root),String(error.stack||error));throw Error('Falló la consulta de persistencia; revisar el archivo local de diagnóstico (sin imprimir credenciales).');}
 finally{await browser.close();}

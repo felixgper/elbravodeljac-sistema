@@ -1,3 +1,5 @@
+import {readIsolatedFixture} from './isolated-fixture.mjs';
+const f=await readIsolatedFixture();
 function unifiedFields(values){if(values.findings===undefined&&values.evaluation===undefined)return values;const {findings,evaluation,...rest}=values;return {...rest,technicalDiagnosis:[findings,evaluation].filter(Boolean).join('\n\n')};}
 import assert from 'node:assert/strict';
 import {setDefaultResultOrder} from 'node:dns';
@@ -7,7 +9,7 @@ import {createRequire} from 'node:module';
 import {randomBytes} from 'node:crypto';
 setDefaultResultOrder('ipv4first');
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
-let fixtureInput='';for await(const chunk of process.stdin)fixtureInput+=chunk;const f=JSON.parse(fixtureInput);
+
 const root=new URL('../',import.meta.url),dir=new URL('backend/.cache/audit-browser/',root);await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.BRAVO_BROWSER||'C:/Program Files/Google/Chrome/Application/chrome.exe'});
 const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();

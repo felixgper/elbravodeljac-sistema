@@ -38,6 +38,7 @@ func TestCleanRestoredCopy(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
+	token := requireFreshBrowserRun(t, pool)
 	tables := []string{"clientes", "contactos_cliente", "vehiculos", "historial_propietarios", "recepciones", "diagnosticos", "cotizaciones", "detalle_cotizacion", "ordenes_trabajo", "asignaciones_ot", "avances_ot", "pruebas_ot", "historial_estados_ot", "pagos", "entregas", "auxilios"}
 	for _, table := range tables {
 		var n int
@@ -68,7 +69,7 @@ func TestCleanRestoredCopy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	server := httptest.NewUnstartedServer(handler)
+	server := httptest.NewUnstartedServer(browserIsolationHandler(handler, token))
 	server.Listener = ln
 	server.Start()
 	defer server.Close()
@@ -90,7 +91,7 @@ func TestCleanRestoredCopy(t *testing.T) {
 	if username == "" || password == "" {
 		t.Fatal("Formato de acceso privado inválido")
 	}
-	fixture := map[string]string{"url": origin, "username": username, "password": password, "newPassword": rand.Text(), "suffix": rand.Text()[:8], "database": cfg.ConnConfig.Database}
+	fixture := map[string]string{"isolationToken": token, "url": origin, "username": username, "password": password, "newPassword": rand.Text(), "suffix": rand.Text()[:8], "database": cfg.ConnConfig.Database}
 	raw, _ := json.Marshal(fixture)
 	cmd := exec.CommandContext(ctx, "node", filepath.Join("..", "..", "checks", "clean-copy-browser.mjs"))
 	cmd.Stdin = bytes.NewReader(raw)

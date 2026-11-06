@@ -1,10 +1,12 @@
+import {readIsolatedFixture} from './isolated-fixture.mjs';
+const f=await readIsolatedFixture();
 function unifiedFields(values){if(values.findings===undefined&&values.evaluation===undefined)return values;const {findings,evaluation,...rest}=values;return {...rest,technicalDiagnosis:[findings,evaluation].filter(Boolean).join('\n\n')};}
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
-let raw='';for await(const chunk of process.stdin)raw+=chunk;const f=JSON.parse(raw);
+
 const dir=new URL('../backend/.cache/taller-audit/',import.meta.url);await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.BRAVO_BROWSER||'C:/Program Files/Google/Chrome/Application/chrome.exe'});
 const errors=[],serverErrors=[],contexts=[];const result={date:new Date().toISOString(),checks:[],passed:false};

@@ -24,8 +24,8 @@ func TestCarbonDesignBrowser(t *testing.T) {
 		t.Skip("Requiere Chrome y PostgreSQL exclusivo de diseño")
 	}
 	cfg, err := pgxpool.ParseConfig(os.Getenv("INTEGRATION_DATABASE_URL"))
-	if err != nil || cfg.ConnConfig.Database != "elbravodeljac_test" || cfg.ConnConfig.Host != "127.0.0.1" || cfg.ConnConfig.Port != 25440 {
-		t.Fatal("Solo cluster QA nuevo del puerto 25440")
+	if err != nil || cfg.ConnConfig.Database != "elbravodeljac_test" || cfg.ConnConfig.Host != "127.0.0.1" || (cfg.ConnConfig.Port == 5432 || cfg.ConnConfig.Port == 5433) {
+		t.Fatal("Solo cluster QA nuevo en loopback y puerto no habitual")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -34,6 +34,7 @@ func TestCarbonDesignBrowser(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
+	token := requireFreshBrowserRun(t, pool)
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
@@ -43,7 +44,7 @@ func TestCarbonDesignBrowser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := httptest.NewUnstartedServer(handler)
+	api := httptest.NewUnstartedServer(browserIsolationHandler(handler, token))
 	api.Listener = ln
 	api.Start()
 	defer api.Close()
@@ -52,7 +53,7 @@ func TestCarbonDesignBrowser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fixture := map[string]string{"url": origin, "password": h.password, "suffix": h.suffix}
+	fixture := map[string]string{"isolationToken": token, "url": origin, "password": h.password, "suffix": h.suffix}
 	for _, a := range []struct{ key, role, job string }{{"admin", "Administrador", "Administración"}, {"manager", "Gerente", "Gerencia"}, {"mechanic", "Mecánico", "Mecánico"}} {
 		name := a.role + " QA " + h.suffix
 		username := a.key + "_" + h.suffix

@@ -45,6 +45,7 @@ func TestTallerFourLinkedAccounts(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
+	token := requireFreshBrowserRun(t, pool)
 	mg, err := mgstore.Open(os.Getenv("INTEGRATION_MONGODB_URI"), "elbravodeljac_tecnico_test")
 	if err != nil {
 		t.Fatal(err)
@@ -62,7 +63,7 @@ func TestTallerFourLinkedAccounts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := httptest.NewUnstartedServer(handler)
+	api := httptest.NewUnstartedServer(browserIsolationHandler(handler, token))
 	api.Listener = ln
 	api.Start()
 	defer api.Close()
@@ -84,7 +85,7 @@ func TestTallerFourLinkedAccounts(t *testing.T) {
 	first, firstEmployee := seed("taller_m1", "Mecánico", "Mecánico", true)
 	second, secondEmployee := seed("taller_m2", "Mecánico", "Mecánico", true)
 	inactive, inactiveEmployee := seed("taller_inactivo", "Mecánico", "Mecánico", false)
-	fixture := map[string]string{"managerUsername": "taller_gerente_" + h.suffix, "managerId": manager, "url": origin, "suffix": h.suffix, "password": h.password, "username": "taller_admin_" + h.suffix, "workerUsername": "taller_m1_" + h.suffix, "otherUsername": "taller_m2_" + h.suffix, "adminId": admin, "adminEmployee": adminEmployee, "mechanicId": first, "mechanicEmployee": firstEmployee, "otherId": second, "otherEmployee": secondEmployee, "inactiveId": inactive, "inactiveEmployee": inactiveEmployee}
+	fixture := map[string]string{"isolationToken": token, "managerUsername": "taller_gerente_" + h.suffix, "managerId": manager, "url": origin, "suffix": h.suffix, "password": h.password, "username": "taller_admin_" + h.suffix, "workerUsername": "taller_m1_" + h.suffix, "otherUsername": "taller_m2_" + h.suffix, "adminId": admin, "adminEmployee": adminEmployee, "mechanicId": first, "mechanicEmployee": firstEmployee, "otherId": second, "otherEmployee": secondEmployee, "inactiveId": inactive, "inactiveEmployee": inactiveEmployee}
 	input, _ := json.Marshal(fixture)
 	cmd := exec.CommandContext(ctx, "node", filepath.Join("..", "..", "checks", "taller-browser.mjs"))
 	cmd.Stdin = bytes.NewReader(input)
