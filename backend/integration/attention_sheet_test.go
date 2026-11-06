@@ -8,10 +8,12 @@ import (
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/httpapi"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/postgres"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 )
 
@@ -100,21 +102,52 @@ func TestAttentionInspectionAndOriginalSheet(t *testing.T) {
 				t.Fatalf("PDF failed status=%d pages=%d", pdf.status, documentPageCount(pdf.raw))
 			}
 
-			// Mimic an older archived PDF while retaining the immutable attention snapshot.
+			// A valid PDF with an extra comment distinguishes the archive from a rerender.
 			archived := h.scalar(t, `SELECT encode(ficha_pdf,'hex') FROM entregas WHERE id_orden=$1`, order)
 			frozen := h.scalar(t, `SELECT ficha_snapshot::text FROM entregas WHERE id_orden=$1`, order)
 			if attention == "Diagnostico" && h.scalar(t, `SELECT coalesce(ficha_snapshot->>'diagnosis','') FROM entregas WHERE id_orden=$1`, order) == "" {
 				t.Fatal("Diagnosis absent from frozen sheet snapshot")
 			}
-			h.exec(t, `UPDATE entregas SET ficha_pdf=decode('255044462d312e34206c656761646f','hex') WHERE id_orden=$1`, order)
-			refreshed := h.send(manager, "GET", "/ordenes/"+order+"/ficha-tecnica.pdf", nil)
-			if refreshed.status != 200 || !bytes.Equal(pdf.raw, refreshed.raw) {
-				t.Fatal("Frozen snapshot not used for visual update")
+			trace := &sheetDownloadTrace{}
+			tracedConfig := pool.Config()
+			tracedConfig.ConnConfig.Tracer = trace
+			tracedPool, err := pgxpool.NewWithConfig(ctx, tracedConfig)
+			if err != nil {
+				t.Fatal(err)
 			}
-			if h.scalar(t, `SELECT encode(ficha_pdf,'hex') FROM entregas WHERE id_orden=$1`, order) != "255044462d312e34206c656761646f" || h.scalar(t, `SELECT ficha_snapshot::text FROM entregas WHERE id_orden=$1`, order) != frozen {
-				t.Fatal("Download mutated historical archive")
+			store.Pool = tracedPool
+			defer func() { store.Pool = pool; tracedPool.Close() }()
+			legacyPDF := append(append([]byte(nil), pdf.raw...), []byte("\n% archived fictitious fixture: preserve these exact bytes\n")...)
+			for _, snapshot := range []*string{&frozen, nil, pointerToSheetSnapshot("[]")} {
+				h.exec(t, `UPDATE entregas SET ficha_pdf=$2,ficha_snapshot=$3::jsonb WHERE id_orden=$1`, order, legacyPDF, snapshot)
+				before := h.scalar(t, `SELECT jsonb_build_object('snapshot',ficha_snapshot,'pdf',encode(ficha_pdf,'hex'),'xmin',xmin::text)::text FROM entregas WHERE id_orden=$1`, order)
+				trace.updates.Store(0)
+				trace.queries.Store(0)
+				for retry := 0; retry < 2; retry++ {
+					response := h.send(manager, "GET", "/ordenes/"+order+"/ficha-tecnica.pdf", nil)
+					if response.status != 200 || !bytes.Equal(legacyPDF, response.raw) {
+						t.Fatal("Archived PDF was regenerated or changed", response.status)
+					}
+				}
+				if trace.queries.Load() == 0 || trace.updates.Load() != 0 || h.scalar(t, `SELECT jsonb_build_object('snapshot',ficha_snapshot,'pdf',encode(ficha_pdf,'hex'),'xmin',xmin::text)::text FROM entregas WHERE id_orden=$1`, order) != before {
+					t.Fatal("Archived download issued UPDATE or mutated the stored document/snapshot")
+				}
 			}
-			h.exec(t, `UPDATE entregas SET ficha_pdf=decode($2,'hex') WHERE id_orden=$1`, order, archived)
+			// No archive: retain both frozen-snapshot and older no-snapshot fallbacks.
+			for _, snapshot := range []*string{&frozen, nil} {
+				h.exec(t, `UPDATE entregas SET ficha_pdf=NULL,ficha_snapshot=$2::jsonb WHERE id_orden=$1`, order, snapshot)
+				trace.updates.Store(0)
+				generated := h.send(manager, "GET", "/ordenes/"+order+"/ficha-tecnica.pdf", nil)
+				if generated.status != 200 || !bytes.HasPrefix(generated.raw, []byte("%PDF-1.7")) || trace.updates.Load() != 1 {
+					t.Fatal("Legacy missing PDF was not generated and frozen once", generated.status, trace.updates.Load())
+				}
+				trace.updates.Store(0)
+				cached := h.send(manager, "GET", "/ordenes/"+order+"/ficha-tecnica.pdf", nil)
+				if cached.status != 200 || !bytes.Equal(generated.raw, cached.raw) || trace.updates.Load() != 0 {
+					t.Fatal("Compatible legacy download was not cached immutably")
+				}
+			}
+			h.exec(t, `UPDATE entregas SET ficha_pdf=decode($2,'hex'),ficha_snapshot=$3::jsonb WHERE id_orden=$1`, order, archived, frozen)
 			h.exec(t, `UPDATE clientes SET nombre=$2 WHERE id_cliente=$1`, client, "Cliente actualizado después de entrega")
 			again := h.send(manager, "GET", "/ordenes/"+order+"/ficha-tecnica.pdf", nil)
 			if !bytes.Equal(pdf.raw, again.raw) {
@@ -175,6 +208,19 @@ func TestAttentionInspectionAndOriginalSheet(t *testing.T) {
 	}
 	t.Log("Atención directa/técnica, controles, PDF inmutable, permisos e ingresos verificados")
 }
+
+// Traces the actual HTTP store connections; fixture writes use the original pool.
+type sheetDownloadTrace struct{ queries, updates atomic.Int64 }
+
+func (s *sheetDownloadTrace) TraceQueryStart(ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
+	s.queries.Add(1)
+	if strings.Contains(strings.ToUpper(data.SQL), "UPDATE ENTREGAS") {
+		s.updates.Add(1)
+	}
+	return ctx
+}
+func (*sheetDownloadTrace) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQueryEndData) {}
+func pointerToSheetSnapshot(value string) *string                                           { return &value }
 
 // The redesigned sheet may continue across pages rather than shrinking text.
 func documentPageCount(raw []byte) int {

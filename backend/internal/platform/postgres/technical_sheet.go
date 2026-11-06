@@ -141,16 +141,8 @@ func (s *Store) SheetPDF(ctx context.Context, id string, u domain.User) ([]byte,
 		return nil, translate(err)
 	}
 	if len(pdf) > 0 {
-		// Presentation evolves from the frozen snapshot, never from current customer
-		// data and never by overwriting the archived historical PDF.
-		if len(snapshot) > 0 {
-			rendered, renderErr := technicalsheet.Render(snapshot)
-			if renderErr != nil {
-				return nil, domain.Invalid("ficha", renderErr.Error())
-			}
-			return rendered, nil
-		}
-		// Very old records with no snapshot can only return their original document.
+		// Issued documents are immutable, even when a snapshot is available.
+		// Only deliveries without an archived PDF enter the compatibility renderer.
 		return pdf, nil
 	}
 	// Legacy deliveries are reconstructed once using available data, then frozen.
