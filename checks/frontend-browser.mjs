@@ -1,3 +1,5 @@
+import {readIsolatedFixture} from './isolated-fixture.mjs';
+const f=await readIsolatedFixture();
 function unifiedFields(values){if(values.findings===undefined&&values.evaluation===undefined)return values;const {findings,evaluation,...rest}=values;return {...rest,technicalDiagnosis:[findings,evaluation].filter(Boolean).join('\n\n')};}
 import {mkdir} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
@@ -5,8 +7,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
-let input='';for await(const chunk of process.stdin)input+=chunk;
-const f=JSON.parse(input);
+
 const shots=fileURLToPath(new URL('../backend/.cache/frontend-E-'+f.suffix+'/',import.meta.url));await mkdir(shots,{recursive:true});
 const browser=await chromium.launch({headless:true,...(process.env.BRAVO_BROWSER?{executablePath:process.env.BRAVO_BROWSER}:{channel:'msedge'})});
 const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();

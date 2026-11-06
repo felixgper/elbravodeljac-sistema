@@ -1,10 +1,11 @@
+import {readIsolatedFixture} from './isolated-fixture.mjs';
+const f=await readIsolatedFixture();
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
-let input='';for await(const chunk of process.stdin)input+=chunk;
-const f=JSON.parse(input);
+
 assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(f.url),'Solo servidor efímero de pruebas');
 assert(/^\d+$/.test(f.orderId));
 const dir=new URL('../backend/.cache/auditoria-ficha-funcional/casillas-browser/',import.meta.url);

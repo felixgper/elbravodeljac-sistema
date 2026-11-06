@@ -1,3 +1,5 @@
+import {readIsolatedFixture} from './isolated-fixture.mjs';
+const isolated=await readIsolatedFixture();
 import assert from 'node:assert/strict';
 import {setDefaultResultOrder} from 'node:dns';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
@@ -7,11 +9,11 @@ import {randomBytes} from 'node:crypto';
 setDefaultResultOrder('ipv4first');
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
 const root=new URL('../',import.meta.url),dir=new URL('backend/.cache/brands-browser/',root);await mkdir(dir,{recursive:true});
-const settings=Object.fromEntries((await readFile(new URL('.env.fase-e.local',root),'utf8')).trim().split(/\r?\n/).map(line=>{const i=line.indexOf('=');return [line.slice(0,i),line.slice(i+1)];}));
+const settings={DEV_ADMIN_USERNAME:isolated.username,DEV_ADMIN_PASSWORD:isolated.password};
 const browser=await chromium.launch({headless:true,executablePath:process.env.BRAVO_BROWSER||'C:/Program Files/Google/Chrome/Application/chrome.exe'});
 const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();
 const suffix=randomBytes(4).toString('hex').toUpperCase(),errors=[];
-const report={date:new Date().toISOString(),url:'http://localhost:8080',checks:[]};let step='inicio';
+const report={date:new Date().toISOString(),url:isolated.url,checks:[]};let step='inicio';
 page.on('pageerror',error=>errors.push(error.message));
 async function route(path){step=path;await page.evaluate(p=>{location.hash='#/'+p;window.dispatchEvent(new Event('hashchange'));},path);await page.waitForFunction(p=>document.querySelector('#app').dataset.route==='#/'+p&&document.querySelector('#app').getAttribute('aria-busy')==='false',path);assert.equal(await page.locator('.error-state').count(),0,'Error al abrir '+path);}
 async function fill(data){for(const [name,value]of Object.entries(data)){const input=page.locator(`input[name="${name}"],select[name="${name}"],textarea[name="${name}"]`).first();if(name==='password'){await input.waitFor();await input.evaluate((el,value)=>el.value=value,String(value));}else if(name==='brand'){await input.locator('..').locator('[role=combobox]').fill(String(value));await input.locator('..').getByRole('option',{name:String(value),exact:true}).click();}else if(await input.evaluate(el=>el.tagName)==='SELECT')await input.selectOption(String(value));else await input.fill(String(value));}}

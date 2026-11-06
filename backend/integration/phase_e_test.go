@@ -36,6 +36,7 @@ func TestPhaseEFrontendBrowserPostgreSQLMongoDB(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
+	token := requireFreshBrowserRun(t, pool)
 	mg, err := mongoadapter.Open(uri, name)
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +58,7 @@ func TestPhaseEFrontendBrowserPostgreSQLMongoDB(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := httptest.NewUnstartedServer(handler)
+	api := httptest.NewUnstartedServer(browserIsolationHandler(handler, token))
 	api.Listener = ln
 	api.Start()
 	defer api.Close()
@@ -82,7 +83,7 @@ func TestPhaseEFrontendBrowserPostgreSQLMongoDB(t *testing.T) {
 		h.call(t, admin, "GET", "/frontend/opciones?module=ordenes&resource="+resource, nil, 200)
 	}
 	h.call(t, admin, "GET", "/frontend/opciones?module=mecanicos&resource=ordenes", nil, 200)
-	fixture := map[string]string{"url": origin, "username": "emanager_" + h.suffix, "password": h.password, "suffix": h.suffix, "adminId": adminID, "mechanicId": mechanicID, "limitedId": limitedID, "limitedUsername": "elimited_" + h.suffix, "serviceId": serviceID, "partId": partID, "unitId": unitID}
+	fixture := map[string]string{"isolationToken": token, "url": origin, "username": "emanager_" + h.suffix, "password": h.password, "suffix": h.suffix, "adminId": adminID, "mechanicId": mechanicID, "limitedId": limitedID, "limitedUsername": "elimited_" + h.suffix, "serviceId": serviceID, "partId": partID, "unitId": unitID}
 	input, _ := json.Marshal(fixture)
 	cmd := exec.CommandContext(ctx, "node", filepath.Join("..", "..", "checks", "frontend-browser.mjs"))
 	cmd.Stdin = bytes.NewReader(input)

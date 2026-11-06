@@ -30,8 +30,8 @@ func TestSheetFunctionalAudit(t *testing.T) {
 		t.Skip("Requiere el cluster exclusivo de auditoría de ficha")
 	}
 	cfg, err := pgxpool.ParseConfig(os.Getenv("INTEGRATION_DATABASE_URL"))
-	if err != nil || cfg.ConnConfig.Database != "elbravodeljac_test" || cfg.ConnConfig.Host != "127.0.0.1" || cfg.ConnConfig.Port != 25439 {
-		t.Fatal("La auditoría solo admite el PostgreSQL nuevo de QA en 127.0.0.1:25439")
+	if err != nil || cfg.ConnConfig.Database != "elbravodeljac_test" || cfg.ConnConfig.Host != "127.0.0.1" || (cfg.ConnConfig.Port == 5432 || cfg.ConnConfig.Port == 5433) {
+		t.Fatal("La auditoría requiere PostgreSQL QA nuevo en loopback y puerto no habitual")
 	}
 	ctx := context.Background()
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
@@ -39,6 +39,7 @@ func TestSheetFunctionalAudit(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
+	token := requireFreshBrowserRun(t, pool)
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
@@ -48,7 +49,7 @@ func TestSheetFunctionalAudit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := httptest.NewUnstartedServer(handler)
+	api := httptest.NewUnstartedServer(browserIsolationHandler(handler, token))
 	api.Listener = listener
 	api.Start()
 	defer api.Close()
@@ -167,7 +168,7 @@ func TestSheetFunctionalAudit(t *testing.T) {
 	if os.Getenv("SHEET_BROWSER_AUDIT") == "1" {
 		browserCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
 		defer cancel()
-		fixture, _ := json.Marshal(map[string]string{"url": origin, "username": "Mecánico QA_" + h.suffix, "password": h.password, "orderId": order})
+		fixture, _ := json.Marshal(map[string]string{"isolationToken": token, "url": origin, "username": "Mecánico QA_" + h.suffix, "password": h.password, "orderId": order})
 		cmd := exec.CommandContext(browserCtx, "node", filepath.Join("..", "..", "checks", "sheet-functional-browser.mjs"))
 		cmd.Stdin = bytes.NewReader(fixture)
 		output, err := cmd.CombinedOutput()

@@ -1,9 +1,11 @@
+import {readIsolatedFixture} from './isolated-fixture.mjs';
+const f=await readIsolatedFixture();
 import assert from 'node:assert/strict';
 import {writeFile,mkdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
-let input='';for await(const chunk of process.stdin)input+=chunk;const f=JSON.parse(input);
+
 assert(/^jac_restore_\d{14}$/.test(f.database));
 const dir=new URL('../backend/.cache/auditoria-20261103/',import.meta.url);await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}),errors=[],result={database:f.database,passed:false,checks:[]};

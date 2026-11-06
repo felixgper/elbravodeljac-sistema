@@ -1,9 +1,11 @@
+import {readIsolatedFixture} from './isolated-fixture.mjs';
+const f=await readIsolatedFixture();
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
-let input='';for await(const b of process.stdin)input+=b;const f=JSON.parse(input);
+
 assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(f.url));
 const out=new URL('../backend/.cache/diseno-login-dashboard/',import.meta.url);await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.BRAVO_BROWSER||'C:/Program Files/Google/Chrome/Application/chrome.exe'});
