@@ -1,16 +1,12 @@
 # Comparación conceptual, lógico y físico
 
-## Fuentes efectivamente disponibles
+## Referencias oficiales
 
-Se abrió el V23 editable local y se revisaron sus 42 relaciones, inventario CSV y documentos de pendientes/diferencias. Se abrió el conceptual V24 simplificado local (13 entidades, 15 relaciones). Se leyó el lógico V20 editable mediante git show desde `docs/propuesta-modelo-v20`, sin cambiar de rama: ese modelo anterior era una propuesta de 27 tablas, no el esquema relacional de hoy. Huellas y recuentos en MODELOS_PREVIOS_REVISADOS.json.
-
-El físico se reconstruyó de `database/postgresql/esquema_actual.sql` más las migraciones 001–009 existentes y registradas en migrate.go. Se inspeccionaron repositorios/validaciones Go, router/endpoints y formularios existentes de clientes, operaciones, pagos y administración. No se generó el lógico por conversión automática del conceptual.
-
-La documentación EMPLEADOS.md y CATALOGO_DOCUMENTOS_TRES_ROLES.md conserva evidencia histórica de integración/desarrollo aislado de esas evoluciones. Esta tarea no se conectó a PostgreSQL/MongoDB ni comprobó el despliegue vivo: describe la cadena versionada, no certifica la aplicación actual de cada migración en producción. No se encontró una migración posterior a 009.
+[Conceptual V24](../V24_Chen_Resumido_Exposicion/El_Bravo_del_JAC_V24_Chen_Resumido.drawio), [lógico sin tipos](../Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.drawio) y referencia física con tipos de esta carpeta. La [comparación real](../COMPARACION_BASE_ACTUAL.md) documenta el contraste con la instancia del 5/11/2026. Antecedentes V23/V20 permanecen en Git como procedencia, no como dependencia para abrir los modelos vigentes.
 
 ## Niveles y diferencias
 
-| Asunto | Conceptual V23 / V24 resumido | Lógico V24 y físico versionado |
+| Asunto | Conceptual V24 resumido | Lógico V24 y físico versionado |
 | --- | --- | --- |
 | Alcance | Negocio y proyecciones; V24 omite detalles | 28 tablas completas, 208 columnas y 50 FK; ninguna tabla omitida |
 | PK/FK | No visibles por decisión didáctica | PK simples/compuestas, FK, NULL y UQ individual identificadas; índices conjuntos/parciales documentados |
@@ -50,6 +46,6 @@ Persisten duplicaciones deliberadas: usuarios.nombre compatible con empleados.no
 
 Un solo lienzo horizontal, seis áreas, cada tabla dibujada una vez. Recorrido superior clientes/vehículos → recepción/diagnóstico/cotización → órdenes; pagos/entrega debajo a la derecha. Auxilio/recursos y personal/seguridad ocupan la segunda fila. El orden visual no añade FK consecutivas.
 
-Conectores ortogonales nativos con extremos Crow’s Foot y tooltip por referencia. Se mantuvieron las 50 FK, incluidas las de auditoría. Los cruces medidos se documentan en GEOMETRIA.json: no se declara un grafo sin cruces ni un óptimo global. El PDF es vectorial A0 horizontal, de una página, para conservar legibilidad. Las seis vistas PNG complementarias no duplican tablas dentro del principal.
+Conectores ortogonales nativos con extremos Crow’s Foot y tooltip por referencia. Se mantuvieron las 50 FK, incluidas las de auditoría. No se declara un grafo sin cruces ni un óptimo global. El PDF es vectorial A0 horizontal, de una página, para conservar legibilidad. El PNG completo permite ampliar bloques sin capturas redundantes.
 
-No se modificaron lógico/físico previos, aplicación, configuración ni bases. Los archivos nuevos están solamente en V24_Logico_CrowsFoot. No hubo commit, push ni merge.
+No se modificaron lógico/físico previos, aplicación, configuración ni bases. La limpieza conserva los editables y exportaciones oficiales sin regenerarlos.

@@ -13,12 +13,12 @@ No se aplica ninguna de las propuestas siguientes. Las diferencias son explícit
 | Condiciones entre procesos no son simples FK | 003/004 y Go: modalidad explícita, diagnóstico de misma recepción y finalizado | Dibujar FK nullable a diagnóstico más recepción obligatoria; explicar condición. Técnica pendiente no pasa a directa por carecer aún de diagnóstico |
 | Autorelación de ampliaciones no previene todo ciclo en SQL | cotizaciones.id_cotizacion_base → cotizaciones | Go controla operaciones admitidas; FK sola permitiría ciclos si se escribiera SQL fuera de API. No se inventa CHECK anticíclos |
 | Titularidad legal no acreditada por software | vehículo con cliente registrado e historial verificado internamente | No atribuir propiedad jurídica probada. Si se requiere prueba externa, definir alcance independiente |
-| Notas antiguas de endpoints sobre idempotencia | ENDPOINTS.md conserva una frase “El SQL actual no tiene almacenamiento de claves”; 006 ya agrega pagos.request_id e índice parcial | Desfase documental. Esta auditoría toma SQL/Go como evidencia más reciente y lo registra sin editar ENDPOINTS.md. La deduplicación de pagos no se generaliza a todos los endpoints |
+| Idempotencia acotada a pagos | 006 agrega pagos.request_id e índice parcial; ENDPOINTS.md describe el contrato vigente | No generalizar esta deduplicación a todos los endpoints |
 | Doble CHECK de fechas en historial | esquema base incluye chk_fechas_propietario y ck_historial_fechas equivalentes | Redundancia declarativa existente, sin cambio de cardinalidad. No se elimina ninguno |
 | Catálogo/etiqueta y nombre laboral redundantes | 007 sincroniza nombres; 008 sincroniza etiqueta documental | Compatibilidad deliberada, no cuenta/persona duplicada a eliminar automáticamente |
 | Stock/costo no equivale a contabilidad de compras | repuestos.stock, precio_referencia; repuesto_proveedor.costo_referencia | No inventar compras ni libro de movimientos. Futuro módulo solo con requisitos confirmados |
 | Instancia viva no inspeccionada | Se usó DDL y migraciones del repositorio; documentación histórica de pruebas aisladas | No se certifica estado de una BD actual ni aplicación exitosa de 001–009 en producción. No se establecieron conexiones para esta tarea |
 
-## Protección
+## Alcance
 
-Solo se crean documentos en `docs/modelos/V24_Logico_CrowsFoot/`. PROTECCION_ANTES.json y VALIDACION_FINAL.json comparan todos los archivos versionados existentes. No se ejecutó SQL, migración, limpieza, restauración ni comando Docker. No se consultaron registros personales ni credenciales. No se ejecutaron suites backend/frontend porque no se modificó la aplicación: las pruebas de esta entrega validan el modelo y sus formatos, no funcionalidad HTTP.
+Hallazgos de la revisión estructural del 2/11/2026; no son instrucciones para modificar la base. La instancia consultada el 5/11/2026 se documenta en [COMPARACION_BASE_ACTUAL.md](../COMPARACION_BASE_ACTUAL.md). Los manifiestos de protección puntuales permanecen en Git; se retiran sin alterar el modelo ni las restricciones.

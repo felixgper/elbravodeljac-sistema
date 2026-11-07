@@ -1,17 +1,11 @@
-# Ficha técnica original
+# Generadores PDF oficiales — Diseño 19
 
-Go incluye assets/pagina-1.jpg, pagina-2.jpg y catalogo.json. Fondos de 300 ppp
-saneados del PDF de dos páginas proporcionado por el usuario. Se retiraron píxeles
-Y texto OCR de muestras de cliente, documento, contacto, vehículo, operario, fechas,
-trabajos, importes y selecciones. No se incorpora el PDF original con datos personales.
-El logo, diseño, etiquetas y casillas originales permanecen. RUC y dirección se
-completan desde PostgreSQL. Fuente SHA-256: 1c51f6c1df4d63ef52b22ee8a37c1138408d3ffc9e3c4d6e17c156615515592b.
+`quote_layout.go` y `sheet_layout.go`, con `document_brand.go`, `sheet_checkboxes.go` y `pdf.go`, generan cotización y ficha borgoña. El emblema oficial se lee de `assets/diseno19-original.png`; `assets/catalogo.json` define los controles existentes. No se añaden resultados, firmas ni conceptos ausentes.
 
-La preparación se verificó con PyMuPDF/Poppler en desarrollo; no son dependencias de
-runtime. El generador Go produce dos páginas A4, fondos raster y texto dinámico vectorial,
-con espacios originales de conformidad. Toda selección empieza sin evaluar.
+La ficha utiliza tres recuadros (fugas, líquidos y neumáticos), casillas B/A/U sin marca cuando no se evaluó, mantenimiento y servicios realizados. El contenido extenso continúa en páginas adicionales sin recortarse. Las cotizaciones conservan importes, estado y revisión, con encabezados de continuación.
 
-Los límites son explícitos: no se recorta contenido para fingir éxito, no se añaden
-páginas ni se inventan firmas. Render devuelve error si el contenido no cabe de forma
-legible o si la tipografía Windows-1252 no lo representa. La capa PostgreSQL conserva
-el snapshot completo y la entrega, y el endpoint informa el error de exportación.
+`assets/pagina-1.jpg` y `pagina-2.jpg` siguen leídos por la ruta interna de compatibilidad `buildDocument(true)`; se conservan aunque el generador oficial use el diseño vectorial actual. No se elimina código para forzar su retirada. El SVG antiguo del toro no tenía consumidor de lectura y se retira; el wildcard de embed no era una referencia de uso.
+
+PostgreSQL entrega primero los bytes de `ficha_pdf` ya archivados, incluso con snapshot. Una ficha emitida no cambia al actualizar el generador. [Contrato, pruebas y capturas aprobadas](../../../../docs/backend/CONSOLIDACION_PDF_DISENO19.md).
+
+No se requiere Poppler/Python para ejecución: solo para inspección externa de PDF en QA. No se modifica diseño ni paginación en la limpieza.

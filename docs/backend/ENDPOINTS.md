@@ -1,6 +1,6 @@
-# Endpoints REST propuestos
+# Endpoints REST vigentes
 
-Base `/api/v1`. **71 de 71 implementadas** tras Fase D. No quedan reservas 501. Inventario: [ESTADO_ENDPOINTS.md](ESTADO_ENDPOINTS.md). Contratos MongoDB y pruebas reales: [FASE_D.md](FASE_D.md). Contratos relacionales: FASE_A.md, FASE_B.md y FASE_C.md.
+Base `/api/v1`. El catálogo y sus permisos están implementados en [routes.go](../../backend/internal/httpapi/routes.go) y sus handlers. El [catálogo original de 71](ESTADO_ENDPOINTS.md) se conserva como regresión; no es el conteo total actual. [MongoDB](../../database/mongodb/README.md) · [Pruebas aisladas](../../checks/README.md).
 
 ## Convenciones
 
@@ -169,34 +169,18 @@ concede permisos ni reemplaza los roles N de acceso.
 | POST | `/api/v1/repuestos` | Alta explícita autorizada para repuesto nuevo |
 | GET | `/api/v1/unidades-auxilio` | Unidades disponibles con ID/código |
 | GET | `/api/v1/proveedores/{id}/repuestos` | Relación y costos de referencia |
-| PUT | `/api/v1/proveedores/{id}/repuestos/{repuestoId}` | Vincular repuesto y costo; contrato futuro de catálogo |
+| PUT | `/api/v1/proveedores/{id}/repuestos/{repuestoId}` | Vincular repuesto y costo de referencia |
 
-## Payloads de escritura (propuesta para implementación)
+## DTO y validaciones vigentes
 
-Campos de alta requeridos salvo que se indique opcional; PATCH admite subconjunto de campos editables. Solo recepción/diagnóstico/auxilio/OT toman el actor de sesión. En todos los módulos las fechas de auditoría y creadores son del servidor.
+La fuente ejecutable de campos, longitudes, compatibilidad y validaciones es:
 
-| Operación | Campos de entrada |
-|---|---|
-| Login | username (usuario o correo), password; remember opcional solo para recordar usuario, no contraseña |
-| Cliente | name, documentType, documentNumber, phone, address; email opcional |
-| Vehículo | clientId, plate, brand, model, year, mileage; notes opcional. PATCH no admite plate/clientId; propietario solo por transferencia. |
-| Transferencia | newClientId, transferVerified=true; observation opcional |
-| Contacto | name, documentType, documentNumber, phone, relation; clientId viene de ruta |
-| Recepción | clientId, vehicleId, mileage, symptoms |
-| Diagnóstico | receptionId, findings |
-| Cotización | diagnosisId, status, items: [{concept, type, serviceId o sparePartId, quantity, unitPrice, origin}]; PUT reemplaza lista completa; total no es entrada |
-| Nueva OT | quoteId, mechanicId; assistantId opcional |
-| Actualizar OT | state, note; mechanicId/assistantId requieren permiso asignar; test/result opcionales, juntos cuando hay prueba |
-| Pago | amount, method; comprobante opcional; orderId viene de ruta |
-| Entrega | kind, method, verified=true; contactId requerido si Tercero; snapshots desde SQL |
-| Auxilio | clientId, vehicleId, location, incident, description, technicianId, unitId (sustituye unit textual) |
-| Proveedor | name, ruc, phone, parts; parts pendiente de decisión de persistencia, no habilitar alta que lo descarte |
-| Usuario | name, username, email, roleId, active; password requerido solo en alta. roleId se resuelve desde select role de la UI |
-| Matriz de permisos | permissions: {modulo: [accion, ...]}; reemplazo completo; validar contra catálogo y reglas de acceso obligatorio |
-| Restablecer permisos | Sin body; política por defecto del servidor, nunca desde navegador |
-| Servicio / repuesto | name, referencePrice; stock inicial opcional solo repuesto (decimal), active opcional |
-| Repuesto/proveedor | referenceCost; IDs en ruta |
-| Escáner | requestId, equipo, dtcs, mediciones; capturadoEn opcional (hora de captura del equipo), capturadoPor/registradoEn del servidor |
-| Evidencia | multipart: archivo, requestId, descripcion; tamaño/hash/MIME verificados por servidor |
+- [Clientes y vehículos](../../backend/internal/domain/models.go).
+- [Recepciones, diagnósticos, cotizaciones, órdenes, pagos y entrega](../../backend/internal/domain/workshop.go).
+- [Usuarios, roles, proveedores y catálogos](../../backend/internal/domain/relational.go).
+- [Empleados](../../backend/internal/domain/employee.go).
+- [Escáner y evidencias](../../backend/internal/domain/technical.go).
 
-La correspondencia SQL completa y los límites de longitud están en CORRESPONDENCIA.md y ESQUEMA_POSTGRESQL.md. Esto es un contrato de arquitectura: DTO formales y OpenAPI detallado se escribirán al resolver las diferencias, antes de activar los handlers. El catálogo Go y estas rutas deben mantenerse alineados.
+Se retiran los payloads propuestos en fases iniciales, que eran incompletos. Recepción lleva modalidad explícita; Directo no crea diagnóstico ficticio. Cotización exige recepción y diagnóstico finalizado cuando corresponde. Las referencias de conceptos manuales son opcionales y validadas. OT exige aprobación. Pago usa requestId estable y entrega verifica saldo, identidad y conformidad.
+
+[Diagnósticos asignados](FLUJO_DIAGNOSTICOS_ASIGNADOS.md) · [Empleados](EMPLEADOS.md) · [PDF oficiales e históricos inmutables](CONSOLIDACION_PDF_DISENO19.md) · [PostgreSQL verificado](../modelos/COMPARACION_BASE_ACTUAL.md).
