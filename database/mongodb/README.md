@@ -1,19 +1,11 @@
-# MongoDB técnico: implementado en Fase D
+# MongoDB técnico
 
-Colecciones: resultados_escaner y evidencias_tecnicas; bucket privado GridFS
-archivos_tecnicos.files/chunks. No se copian datos transaccionales de PostgreSQL.
-Los documentos se vinculan a diagnosticoId y capturadoPor SQL; cada acceso verifica
-existencia, usuario, permisos y alcance del diagnóstico en PostgreSQL.
+Colecciones `resultados_escaner` y `evidencias_tecnicas`; bucket privado GridFS `archivos_tecnicos.files/chunks`. No duplica clientes, vehículos, órdenes, pagos ni credenciales de PostgreSQL.
 
-collections.schema.json conserva el contrato JSON de dominio. Los validadores BSON
-aplicables, con _id ObjectID, fechas Date, payloadHash y estado/lease internos,
-están en backend/internal/platform/mongodb/validators.json. El driver oficial Go
-v2 los instala únicamente mediante cmd/mongo-init en una base _test o _dev separada.
-El arranque de la API no cambia los validadores de una colección existente.
+El contrato ejecutable es [validators.json](../../backend/internal/platform/mongodb/validators.json), embebido en el adaptador Go; incluye ObjectID y fechas BSON. Se retira la propuesta JSON anterior, que no se utilizaba para inicializar ni validar las colecciones.
 
-Índices únicos por (diagnosticoId,requestId) y gridfsFileId; índice de captura por
-diagnóstico e índices estándar GridFS. Idempotencia con digest, reservas uploading,
-confirmación ready, compensación y herramienta explícita de conciliación.
+Cada documento referencia `diagnosticoId` y `capturadoPor` SQL. Antes de leer/escribir, Go verifica existencia, permisos y alcance en PostgreSQL. Índices únicos `(diagnosticoId, requestId)` y `gridfsFileId`, índices por captura y los de GridFS. Reintentos usan digest y reservas `uploading`/`ready`; hay compensación y conciliación explícita.
 
-Configuración, límites, payloads, permisos, Compose y resultados de integración real:
-[FASE_D.md](../../docs/backend/FASE_D.md).
+Las rutas de escáner/evidencias y límites están en [ENDPOINTS.md](../../docs/backend/ENDPOINTS.md) y en los DTO/validaciones de `backend/internal/domain/technical.go`. El adaptador usa el driver oficial MongoDB Go v2. `cmd/mongo-init` aplica explícitamente validadores/índices solo en las bases separadas admitidas; arrancar la API no modifica validadores existentes.
+
+[Configuración y ejecución](../../backend/README.md) · [Pruebas aisladas](../../checks/README.md). No ejecutar inicialización, conciliación o pruebas sobre datos reales sin autorización específica.

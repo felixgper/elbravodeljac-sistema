@@ -1,152 +1,44 @@
-# Backend Go: fases A, B, C, D y E
+# Backend Go vigente
 
-[Revisión funcional y migración de desarrollo](../docs/backend/REVISION_12_OBSERVACIONES.md): conceptos manuales con referencias opcionales, búsqueda normalizada y períodos Lima. Aplicar con start-dev.ps1 antes de iniciar esta versión.
+Monolito modular: Go sirve `dist/` y `/api/v1` en el mismo origen. PostgreSQL mantiene transacciones, cuentas y permisos; MongoDB guarda resultados de escáner y evidencias/GridFS vinculados a diagnósticos SQL. Dependencias fijadas en `go.mod`/`go.sum`; Go 1.26 o superior (verificado con 1.27.1).
 
-APIs reales de acceso, Clientes, contactos, Vehículos y proceso del taller:
-recepción, diagnóstico, cotización, OT, asignaciones, avances/pruebas, pagos y entrega.
-[Integración del frontend, ejecución Windows y pruebas E](../docs/backend/FASE_E.md).
-[Contratos y pruebas MongoDB](../docs/backend/FASE_D.md).
-[Inventario de las 71 operaciones](../docs/backend/ESTADO_ENDPOINTS.md).
-Incluye usuarios/roles/matriz, auxilios, proveedores, catálogos, Dashboard/reportes
-y resultados de escáner/evidencias con MongoDB y GridFS (71/71 del catálogo).
-Requiere Go 1.26 o superior; verificado con Go 1.27.1.
+## Ejecutar
 
-## Ejecución verificada con Docker en Windows
-
-Desde la raíz: `./backend/scripts/start-dev.ps1`. Abrir http://localhost:8080/.
-Credenciales iniciales privadas en `backend/.cache/acceso-desarrollo.txt`.
-El comando `dev-bootstrap` solo provisiona usuarios en la base aislada exacta
-`elbravodeljac_dev`, con confirmación explícita y si no existen usuarios.
-No restablece cuentas ni permisos de una base ya provisionada.
-
-Docker, Go, PostgreSQL, MongoDB y Chrome se comprobaron juntos, incluyendo
-persistencia después de reiniciar nuestro entorno. Resultados y distinción
-entre suites aprobadas y SKIP en [VERIFICACION_DOCKER.md](../docs/backend/VERIFICACION_DOCKER.md).
-
-## Pruebas unitarias y análisis estático
-
-Desde backend/:
+Desde la raíz, con Docker Desktop Linux y PowerShell 7:
 
 ```powershell
-go mod download
-go test ./... -count=1 -v
-go vet ./...
+./backend/scripts/start-dev.ps1
 ```
 
-Sin INTEGRATION_DATABASE_URL, la integración muestra SKIP: eso no prueba PostgreSQL.
-La integración usa HTTP real (httptest.Server), PostgreSQL real y el esquema aprobado.
+Abrir http://localhost:8080/. Las credenciales iniciales son privadas (`backend/.cache/acceso-desarrollo.txt`); una base ya provisionada conserva sus cuentas. El comando `dev-bootstrap` solo permite `elbravodeljac_dev`, confirmación explícita y ausencia de usuarios.
 
-## PostgreSQL aislado en Windows
+La ruta técnica de instalación nueva es `database/postgresql/esquema_actual.sql` → migraciones embebidas 001–009 → inicialización MongoDB → provisión autorizada → API. Los runners aplican cada migración una vez, mediante Compose o `cmd/db-migrate` según el entorno. El SQL académico `esquema_entrega.sql` es una exportación estructural independiente, no reemplaza ese procedimiento. No ejecutar restauraciones sobre bases existentes.
 
-Desde la raíz del repositorio, con PostgreSQL 18 y Go instalados:
+`compose.dev.yaml` conserva volúmenes de desarrollo; `compose.test.yaml` utiliza `tmpfs` y red aislada. Los overrides QA históricos se conservan por compatibilidad y propiedad de recursos; no constituyen otro esquema ni son la entrada recomendada.
 
-```powershell
-./backend/scripts/test-local-postgres.ps1
-# Para otra instalación:
-./backend/scripts/test-local-postgres.ps1 -PostgresBin 'D:/PostgreSQL/18/bin'
-```
+## Configuración
 
-Crea un clúster nuevo en backend/.cache/pg-test-<guid>, puerto loopback aleatorio y
-base elbravodeljac_test. Inicializa SOLO esta base nueva con el esquema aprobado,
-ejecuta todas las pruebas y detiene el clúster en finally. No usa el servicio,
-credenciales ni puerto habituales. Trust se limita al clúster local descartable.
-Los archivos detenidos quedan en .cache, excluidos de Git, para revisar fallos.
-Se requieren permisos de conexión TCP local. No se elimina ninguna carpeta existente.
+`.env.example` es documentación; Go no la carga automáticamente. Configurar privadamente `POSTGRES_DSN`, `JWT_SECRET_BASE64`, `APP_ORIGIN` y, para documentos técnicos, `MONGODB_URI`/`MONGODB_DATABASE`. `HTTP_ADDR`, `COOKIE_SECURE` y `FRONTEND_DIR` permiten ajustar escucha, cookies y ubicación del mismo frontend. Las bases admitidas son las separadas `_dev`/`_test` previstas por `internal/config`; no usar `ElBravoDelJac`.
 
-La suite genera sus propias contraseñas, usuarios y roles, sin datos reales ni
-accesos fijos. Solo admite la base exacta elbravodeljac_test. No modifica el esquema.
+Desde `backend/`, con variables privadas configuradas: `go run ./cmd/api`. `cmd/mongo-init` instala explícitamente validadores e índices del entorno permitido; arrancar la API no los cambia. Sin MongoDB configurado, las operaciones técnicas informan indisponibilidad; no simulan persistencia.
 
-## Docker Compose de pruebas
+En HTTP loopback de desarrollo, `COOKIE_SECURE=false`; en HTTPS usar Secure. Login exige Origin y JSON; devuelve cookie HttpOnly y token CSRF. Las escrituras exigen Origin y `X-CSRF-Token`. Logout revoca sesión. Los permisos efectivos unen todos los roles existentes, sin bypass por su nombre. Se protege el último acceso administrativo y se impide autoescalamiento.
 
-Con Docker Engine activo y PowerShell 7, desde la raíz:
+## Contratos y organización
 
-```powershell
-./backend/scripts/test-compose.ps1
-```
+- [Rutas y DTO vigentes](../docs/backend/ENDPOINTS.md); el [catálogo original de 71](../docs/backend/ESTADO_ENDPOINTS.md) se conserva como regresión, no como conteo total actual.
+- [Empleados y cuentas opcionales](../docs/backend/EMPLEADOS.md), [catálogo documental y roles](../docs/backend/CATALOGO_DOCUMENTOS_TRES_ROLES.md), [diagnósticos asignados](../docs/backend/FLUJO_DIAGNOSTICOS_ASIGNADOS.md).
+- [MongoDB y su contrato BSON](../database/mongodb/README.md).
+- [PDF oficiales y descarga histórica inmutable](../docs/backend/CONSOLIDACION_PDF_DISENO19.md).
 
-Genera contraseña efímera en el entorno, usa compose.test.yaml, ejecuta el contenedor
-Go y baja los contenedores al finalizar. PostgreSQL usa tmpfs, no publica puertos y
-está en una red interna. Monta el SQL original de solo lectura para inicializar el
-contenedor nuevo. No hay volumen persistente ni contraseña fija en Git.
-El servicio Go usa backend/Dockerfile.test. Para validar sintaxis sin mostrar secretos:
-`docker compose -f compose.test.yaml config --quiet` (con la variable de prueba configurada).
+`cmd/` contiene ejecutables; `internal/httpapi` transporte y autorización; `internal/auth` JWT/CSRF; `internal/domain` DTO y validaciones; `internal/application` interfaz Store; `internal/platform/postgres` SQL/transacciones/migraciones; `internal/platform/mongodb` driver oficial/índices/GridFS; `internal/platform/technicalsheet` generadores aprobados. `integration/` contiene pruebas HTTP con motores reales aislados.
 
-## Arrancar la API
+## Pruebas
 
-.env.example es referencia; Go NO lo carga automáticamente. Define privadamente:
-POSTGRES_DSN, JWT_SECRET_BASE64, APP_ORIGIN y opcionalmente HTTP_ADDR/COOKIE_SECURE.
-La fase A rechaza bases distintas de elbravodeljac_test/elbravodeljac_dev antes de
-conectar. El servidor no crea tablas, restaura dumps, siembra usuarios ni migra hashes.
-Las cuentas para pruebas manuales deben provisionarse con bcrypt en la base separada;
-la suite de integración crea cuentas efímeras y no deja una contraseña fija.
+Desde la raíz: `node checks/run.mjs` (ocho suites), `./backend/scripts/test-isolated.ps1` (QA nuevo). Para Chrome, runners nativos y requisitos: [checks/README.md](../checks/README.md). No reutilizar bases ni volúmenes. El runner no reconstruye ni reemplaza el aplicativo habitual.
 
-Generar clave en memoria con PowerShell 7, sin compartir ni publicar su valor:
+Desde `backend/`: `go test ./...` y `go vet ./...`. Sin DSN/flags de integración habrá SKIP, no pruebas reales aprobadas. [Aislamiento y limitaciones](../docs/backend/ETAPA2_PRUEBAS_AISLADAS.md).
 
-```powershell
-$jwtBytes = New-Object byte[] 32
-[System.Security.Cryptography.RandomNumberGenerator]::Fill($jwtBytes)
-$env:JWT_SECRET_BASE64 = [Convert]::ToBase64String($jwtBytes)
-$env:APP_ORIGIN = 'http://localhost:8080'
-$env:COOKIE_SECURE = 'false' # excepción solo para HTTP loopback
-# Configura POSTGRES_DSN privadamente hacia la base separada.
-# Desde backend/:
-go run ./cmd/api
-```
+## Límites de despliegue
 
-Por defecto escucha 127.0.0.1:8080. En HTTPS usa Secure=true. Login exige Origin
-exacto y application/json. Devuelve cookie HttpOnly bravo_access y csrfToken.
-GET /api/v1/auth/me recupera csrfToken. Escrituras requieren cookie, Origin y
-X-CSRF-Token. Logout revoca de inmediato. No hay CORS abierto; la integración del
-frontend se sirve desde Go bajo el mismo origen. La demo queda separada en /demo/.
-
-## Organización
-
-- cmd/api: configuración, pool, servidor y cierre ordenado.
-- internal/httpapi: middleware, handlers y catálogo de rutas futuras.
-- internal/auth: JWT, CSRF y revocación en memoria.
-- internal/config: secretos y bloqueo de bases reales en fase A.
-- internal/application: puerto Store tipado.
-- internal/domain: DTO, validadores y precisión decimal.
-- internal/platform/postgres: SQL parametrizado y transacciones.
-- internal/platform/mongodb: driver oficial, validadores, índices, GridFS y conciliación.
-- integration: suite HTTP/PostgreSQL aislada.
-
-El permiso efectivo une los códigos de TODOS los roles existentes. No hay bypass
-por nombre de rol ni edición de asignaciones en login. Las sesiones y el limitador
-son de una instancia: reiniciar invalida sesiones. Antes de producción faltan estado
-compartido, despliegue TLS/proxy y observabilidad. No hay refresh token.
-
-## MongoDB y pruebas completas
-
-Configurar MONGODB_URI y MONGODB_DATABASE (_tecnico_dev o _tecnico_test; ver .env.example).
-Desde backend/: `go run ./cmd/mongo-init` inicializa explícitamente validadores e
-índices del entorno separado; `go run ./cmd/api` usa esa configuración sin alterarlos.
-Sin URI, las APIs SQL siguen operativas y las técnicas informan 503, no éxito falso.
-
-Con PostgreSQL 18 y MongoDB instalados, desde la raíz:
-
-```powershell
-./backend/scripts/test-local-databases.ps1
-```
-
-Se puede indicar -PostgresBin y -MongoBin. Crea dos instancias temporales aisladas,
-ejecuta todas las pruebas A–D y las cierra. Sin variables INTEGRATION_MONGODB_URI,
-INTEGRATION_MONGODB_DATABASE e INTEGRATION_DATABASE_URL, la suite D muestra SKIP.
-
-compose.test.yaml incluye ahora ambos motores; compose.dev.yaml ofrece desarrollo
-aislado con inicialización MongoDB explícita. Comandos, configuración privada,
-contratos multipart, reintentos y resultados comprobados en FASE_D.md.
-
-
-## Frontend real y demo separados
-
-El servidor publica el frontend aprobado de `../dist` en el mismo origen de la
-API. `FRONTEND_DIR` permite indicar otra ruta al mismo frontend. Abrir `/` para
-modo real o `/demo/` para demostración. No requiere npm ni recompilar el HTML.
-La imagen Docker incluye ahora `dist/`.
-
-Desde la raíz: `node checks/run.mjs`. Para integración real del navegador,
-configurar `FRONTEND_E2E=1` y disponer de Playwright y Edge antes de ejecutar
-`test-local-databases.ps1`. El informe [FASE_E.md](../docs/backend/FASE_E.md)
-distingue pruebas nativas comprobadas, ejecución Docker bloqueada y controles
-visuales pendientes. Las suites sin bases o sin navegador informan SKIP.
+Las sesiones/revocaciones y el limitador son de una instancia; el reinicio invalida sesiones. No hay refresh token. Un despliegue empresarial requiere revisión de TLS/proxy, estado compartido y observabilidad. Esta documentación no autoriza cambios del entorno habitual ni publica secretos.

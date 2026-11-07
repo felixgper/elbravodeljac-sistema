@@ -1,66 +1,53 @@
 # El Bravo del JAC
 
-Sistema web de gestión de un taller automotriz, desarrollado como proyecto universitario y aplicativo para una empresa. Incluye clientes, vehículos, recepciones, diagnósticos, cotizaciones, órdenes, auxilios, pagos/entrega, empleados, usuarios y permisos.
+Sistema web de gestión automotriz: clientes, vehículos, recepciones, diagnósticos, cotizaciones, órdenes, auxilios, pagos/entrega, empleados y control de acceso. Frontend HTML/CSS/JavaScript servido por Go, PostgreSQL transaccional y MongoDB/GridFS para escáner y evidencias.
 
-Tecnologías: HTML/CSS/JavaScript, Go, PostgreSQL transaccional y MongoDB/GridFS para escáner/evidencias. Go sirve el frontend y las APIs en un mismo origen, con JWT en cookies HttpOnly, protección CSRF y permisos del servidor.
+## Entregables oficiales
 
-## Entrega universitaria vigente
+Una versión vigente por nivel. Las versiones anteriores se recuperan desde el historial de Git; no son alternativas para instalar.
 
-**La estructura REAL de PostgreSQL de desarrollo fue consultada el 5 de noviembre de 2026: 28 tablas, 208 columnas y 50 FK.** No es un conteo supuesto por la presencia de migraciones.
+| Entregable | Archivo oficial |
+|---|---|
+| Prototipo Balsamiq V14.1 | [Editable BMPR](docs/Balsamiq_V14_1_REPARADO.bmpr) · [Inventario de pantallas](docs/balsamiq-v14.1.json) |
+| Conceptual Chen V24 resumido | [Draw.io](docs/modelos/V24_Chen_Resumido_Exposicion/El_Bravo_del_JAC_V24_Chen_Resumido.drawio) · [PDF](docs/modelos/V24_Chen_Resumido_Exposicion/El_Bravo_del_JAC_V24_Chen_Resumido.pdf) · [PNG](docs/modelos/V24_Chen_Resumido_Exposicion/El_Bravo_del_JAC_V24_Chen_Resumido.png) |
+| Lógico Crow’s Foot, sin tipos | [Draw.io](docs/modelos/Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.drawio) · [PDF](docs/modelos/Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.pdf) · [PNG](docs/modelos/Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.png) |
+| Referencia física detallada V24, con tipos | [Draw.io](docs/modelos/V24_Logico_CrowsFoot/El_Bravo_del_JAC_V24_Logico_Completo.drawio) · [PDF](docs/modelos/V24_Logico_CrowsFoot/El_Bravo_del_JAC_V24_Logico_Completo.pdf) · [PNG](docs/modelos/V24_Logico_CrowsFoot/El_Bravo_del_JAC_V24_Logico_Completo.png) |
+| PostgreSQL: SQL oficial de entrega | [esquema_entrega.sql](database/postgresql/esquema_entrega.sql) · [Comparación y límites de verificación](docs/modelos/COMPARACION_BASE_ACTUAL.md) |
 
-| Entregable | Archivo vigente |
-| --- | --- |
-| SQL oficial de entrega: estructura real sin datos | [database/postgresql/esquema_entrega.sql](database/postgresql/esquema_entrega.sql) |
-| Modelo lógico Crow’s Foot sin tipos | [Draw.io editable](docs/modelos/Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.drawio) · [PDF](docs/modelos/Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.pdf) · [PNG](docs/modelos/Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.png) |
-| Comparación con la instancia existente | [Resultado, inventario y alcance](docs/modelos/COMPARACION_BASE_ACTUAL.md) |
-| Conceptual Chen V24: resumen del negocio | [Draw.io editable](docs/modelos/V24_Chen_Resumido_Exposicion/El_Bravo_del_JAC_V24_Chen_Resumido.drawio) · [PDF](docs/modelos/V24_Chen_Resumido_Exposicion/El_Bravo_del_JAC_V24_Chen_Resumido.pdf) |
+**PostgreSQL verificado el 5 de noviembre de 2026: 28 tablas, 208 columnas y 50 FK.** El SQL de entrega es estructura sin filas, contraseñas, propietarios ni ACL; no se debe cargar sobre una base existente. El nombre de carpeta `V24_Logico_CrowsFoot` se conserva para no romper rutas: su diagrama con tipos es la referencia física, no otro lógico oficial. El conceptual resume el negocio (13 entidades y 15 relaciones), no todas las tablas.
 
-El SQL de entrega incluye tablas, campos, tipos, restricciones, índices, secuencias, vistas, funciones, triggers y extensiones de la base consultada. Es una exportación de **estructura**, no un respaldo de registros ni de cuentas o asignaciones. Omite propietarios y ACL para no depender de cuentas PostgreSQL locales. Los inventarios y diagramas anteriores conservados en `docs/` documentan la evolución; no sustituyen estos entregables. El conceptual resume el negocio y no enumera todas las tablas físicas.
+## Diseños actuales
 
-## Login y Dashboard actuales
+- **Login:** oscuro de dos columnas, logo Diseño 19, campos «Correo o usuario» y «Contraseña».
+- **Dashboard:** carbón y borgoña, datos reales de la API en modo real.
+- **Cotización PDF:** borgoña, estados/revisiones e importes de la cotización guardada.
+- **Ficha técnica:** borgoña, tres recuadros de inspección, casillas B/A/U y continuación de páginas. Los PDF ya archivados se descargan sin regenerar sus bytes.
 
-La versión vigente utiliza **logo Diseño 19**, **Login oscuro de dos columnas** con **Correo o usuario** y **Contraseña**, y **Dashboard carbón/borgoña** con indicadores, filtros y datos de la API en modo real. No hay un frontend nuevo separado: se mantiene `dist/`.
+[Login y Dashboard](docs/frontend/LOGIN_DASHBOARD_CARBON.md) · [PDF oficiales y capturas QA](docs/backend/CONSOLIDACION_PDF_DISENO19.md). El aplicativo está en `dist/`; no hay que crear ni compilar otro frontend.
 
-- Entrada: `dist/index.html`; Login y navegación: `dist/assets/js/app.js`.
-- Dashboard: `dist/assets/js/views/dashboard.js`.
-- Tema actual: `dist/assets/css/gestion-carbon.css`, sobre los estilos base necesarios.
-- Identidad visual: `dist/assets/images/diseno19/`.
+## Instalación y ejecución en Windows
 
-**Descargar o actualizar GitHub no reemplaza un servidor o contenedor que ya estaba ejecutándose.** Si aparece un diseño anterior, comprueba qué versión está sirviendo la API y reconstruye solo su imagen cuando corresponda; no borres volúmenes ni recrees bases para actualizar la interfaz.
-
-## Ejecutar el aplicativo real
-
-Entorno documentado: Windows, PowerShell 7 y Docker Desktop con motor Linux. Para **preparar un entorno de desarrollo nuevo y separado**, desde la raíz:
+Requisitos: PowerShell 7, Git y Docker Desktop con motor Linux activo. Desde una copia del repositorio, para preparar **un entorno de desarrollo nuevo y separado**:
 
 ```powershell
 ./backend/scripts/start-dev.ps1
 ```
 
-Abrir **http://localhost:8080/**. El script genera configuración privada y crea la cuenta inicial de pruebas solo si la base nueva no tiene usuarios. El acceso se guarda en `backend/.cache/acceso-desarrollo.txt`, excluido de Git. No se publican credenciales en este README. Una instalación ya utilizada conserva sus cuentas: utiliza el acceso propio de ese entorno.
+Abrir **http://localhost:8080/** en Chrome. El script genera configuración privada; solo provisiona la cuenta inicial cuando la base de desarrollo está vacía de usuarios. El acceso inicial queda en `backend/.cache/acceso-desarrollo.txt`, ignorado por Git. Una instalación existente conserva sus cuentas y datos; utiliza su acceso propio.
 
-Si el entorno solo está detenido, inicia sus contenedores existentes de PostgreSQL/MongoDB, espera que estén saludables y después inicia la API. No hace falta restaurar SQL ni volver a provisionar cuentas para reanudarlo.
+`start-dev.ps1` utiliza el esquema inicial técnico `database/postgresql/esquema_actual.sql`, las migraciones oficiales **001–009**, inicialización MongoDB y API Go. **No sustituir el esquema inicial por `esquema_entrega.sql` ni ejecutar ambos procedimientos juntos.** No restaurar SQL ni reinicializar volúmenes para reanudar un entorno detenido. Descargar GitHub tampoco actualiza por sí solo un binario/contenedor que ya está ejecutándose; una actualización de la imagen habitual requiere revisión independiente y conserva los volúmenes.
 
-### Procedimiento técnico conservado
+Go sirve UI y API bajo el mismo origen con JWT HttpOnly, CSRF y permisos en servidor. `/demo/` es demostración ficticia separada; Live Server solo sirve esa demostración. No abrir `index.html` con doble clic.
 
-`compose.dev.yaml` y `start-dev.ps1` siguen usando **esquema inicial → migraciones oficiales 001–009 → provisión del entorno nuevo → API**. No se cambia ese procedimiento para esta entrega.
+## Pruebas y mantenimiento
 
-**`database/postgresql/esquema_actual.sql` mantiene su nombre histórico porque Go, Docker y las pruebas lo utilizan como esquema inicial técnico. No es el SQL vigente para presentar.** Las migraciones siguen siendo necesarias para su evolución.
-
-**No sustituir ese archivo técnico por `esquema_entrega.sql`, ni cargar ambos y volver a aplicar las mismas modificaciones.** El SQL de entrega permite revisar la estructura actual o cargarla por separado en una base vacía independiente; no es una nueva ruta de arranque ni contiene los catálogos y cuentas del procedimiento técnico. No ejecutarlo sobre bases existentes.
-
-## Demostración y pruebas
-
-- **Real:** `http://localhost:8080/`, servido por Go con PostgreSQL/MongoDB y permisos del backend.
-- **Demo:** `http://localhost:8080/demo/`, con datos ficticios y almacenamiento del navegador; no acredita seguridad ni persistencia del servidor.
-- Live Server o `python -m http.server 8000 --directory dist` sirven la demostración, no el aplicativo conectado. No abrir el HTML mediante doble clic.
+Node.js y Go 1.26 o superior para las herramientas locales:
 
 ```powershell
 node checks/run.mjs
-cd backend
-go test ./...
-go vet ./...
+./backend/scripts/test-isolated.ps1
 ```
 
-Go y Node.js se necesitan para herramientas/pruebas ejecutadas fuera de Docker. Las integraciones sin configuración se omiten: no deben presentarse como aprobadas. El procedimiento aislado está en `backend/scripts/test-compose.ps1`; no apuntar pruebas a bases existentes.
+El primer comando ejecuta ocho suites de demo/unidad/prototipo. El segundo crea PostgreSQL/MongoDB temporales con UUID y ejecuta Go y `go vet`. Para integración Chrome, requisitos y `-Browser`: [guía de pruebas](checks/README.md). **PASS, FAIL y SKIP se reportan por separado; SKIP no significa aprobado.** Nunca dirigir pruebas de escritura a localhost:8080 ni a bases existentes.
 
-Detalles de implementación en [backend/README.md](backend/README.md) y [endpoints](docs/backend/ENDPOINTS.md). Los informes de fases conservan su fecha y alcance histórico. Esta entrega documental no modifica el aplicativo ni los datos.
+[Backend y configuración](backend/README.md) · [API REST](docs/backend/ENDPOINTS.md) · [Informe de limpieza y conservación](docs/LIMPIEZA_REPOSITORIO.md).

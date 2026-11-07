@@ -2,18 +2,16 @@
 
 ## Propósito y alcance
 
-Fecha: 2026-11-02. Lámina académica de alto nivel, derivada del V23 original editable. No sustituye el modelo lógico/físico ni certifica que propuestas anteriores hayan sido migradas. Se conservan 13 entidades principales y 15 relaciones en un lienzo. Rectángulos y rombos nativos editables; sin atributos, identificadores, columnas ni tipos. Se mantiene fondo claro y azul contrastado para proyección e impresión económica; no se dispuso de un archivo MI FINCA en esta solicitud y se toma únicamente su simplicidad descrita.
+Lámina académica oficial elaborada el 2/11/2026. No sustituye el modelo lógico/físico ni certifica que propuestas anteriores hayan sido migradas. Se conservan 13 entidades principales y 15 relaciones en un lienzo. Rectángulos y rombos nativos editables; sin atributos, identificadores, columnas ni tipos. Se mantiene fondo claro y azul contrastado para proyección e impresión económica.
 
 La lectura empieza arriba de izquierda a derecha y continúa desde COTIZACIONES hacia ENTREGAS de derecha a izquierda. Así se evita una franja horizontal excesiva. Los recursos y empleados quedan debajo. Los pares mínimo-máximo describen a la entidad junto a su etiqueta, no a la opuesta. El 0 permite registros iniciales y procesos que no llegan a la entrega; N no significa simultaneidad.
 
-## Fuentes revisadas y alcance de la comprobación
+## Referencias vigentes y alcance
 
-- V23: `docs/modelos/V23_Chen_Corregido/El_Bravo_del_JAC_V23_Chen_Corregido.drawio`, su especificación y auditoría. Se contrastaron los 27 rectángulos y las 42 relaciones.
-- V22 corregido: archivo editable leído con `git show` desde `docs/modelo-conceptual-chen-v21`, sin cambiar de rama. Referencia, huella y recuentos en FUENTES_REVISADAS.json.
-- Modelo lógico V20 Crow's Foot: XML original leído desde `docs/propuesta-modelo-v20`; su informe lo identifica como propuesta. No se confunde ese archivo histórico con la implementación posterior. No se modificó ni se reconstruyó.
-- Esquema base `database/postgresql/esquema_actual.sql`, 26 tablas originales; migraciones versionadas 001–009 y su registro en `backend/internal/platform/postgres/migrate.go`. No se encontró ninguna migración posterior a 009 en el repositorio.
-- Go: domain/workshop.go y relational.go, postgres/store.go, workshop_writes.go, diagnosis_workflow.go, relational.go, identity.go y documents.go. Formularios y funcionalidades referenciados por la auditoría V23; no se modificaron.
-- Informes `docs/backend/EMPLEADOS.md` y `CATALOGO_DOCUMENTOS_TRES_ROLES.md`: documentan ejecución previa de 007 y de la actualización documental/roles en entornos aislados. Son evidencia histórica disponible, **no una nueva comprobación de despliegue**. Esta tarea no consultó PostgreSQL ni MongoDB y no certifica qué migraciones están aplicadas hoy en una instancia concreta.
+- [Lógico sin tipos](../Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.drawio) y [referencia física con tipos](../V24_Logico_CrowsFoot/El_Bravo_del_JAC_V24_Logico_Completo.drawio).
+- [Comparación real del 5/11/2026](../COMPARACION_BASE_ACTUAL.md) y [SQL oficial de entrega](../../../database/postgresql/esquema_entrega.sql): acreditan esa instancia y fecha, no cualquier instalación.
+- El editable V24 es autónomo. ESPECIFICACION_V24.json, RELACIONES_V24.json y generar_v24.py se conservan como fuentes auxiliares; no necesitan V23.
+- Los antecedentes V23/V22/V20 y sus manifiestos permanecen en Git, no son requisitos para abrir/exportar V24. La limpieza no altera entidades, relaciones, cardinalidades ni geometría.
 
 ## Entidades conservadas
 
@@ -33,7 +31,7 @@ La lectura empieza arriba de izquierda a derecha y continúa desde COTIZACIONES 
 
 EMPLEADOS representa a la persona trabajadora y su cargo laboral, no su cuenta ni su permiso. No se crean entidades MECÁNICOS ni RECEPCIONISTAS. La administradora realiza la recepción como función del negocio; el software conserva el usuario autenticado que la registra. Un campo `id_recepcionista` no se convierte en entidad.
 
-## Entidades de V23 omitidas solamente de esta vista
+## Detalle conservado en el lógico y la referencia física
 
 | Entidad omitida | Motivo y conservación |
 | --- | --- |
@@ -199,7 +197,7 @@ Una cotización válida tiene de 1 a 100 líneas aunque S13 y S14 admitan cero s
 
 Se conservan revisiones, huella y aprobación; la autorrelación de ampliaciones se omite visualmente para no sobrecargar. Cada ampliación mantiene su recepción/base y autorización según Go; el máximo una orden por cotización permanece. No se afirma una nueva orden obligatoria por revisión.
 
-Cliente solicitante y titular actual pueden diferir históricamente por traspaso: la recepción conserva su cliente. La API de alta requiere el titular registrado en ese momento; V24 no elimina esa identidad histórica por omitir su línea directa. Un auxilio mantiene cliente, vehículo, unidad y posible recepción. Se omite su vínculo con recepción porque V23 P3 aún requiere confirmar el máximo inverso: la base permite varios auxilios por recepción. No se adopta unicidad 1:1.
+Cliente solicitante y titular actual pueden diferir históricamente por traspaso: la recepción conserva su cliente. La API de alta requiere el titular registrado en ese momento; V24 no elimina esa identidad histórica por omitir su línea directa. Un auxilio mantiene cliente, vehículo, unidad y posible recepción. Se omite su vínculo con recepción porque el máximo inverso no es único en el esquema implementado: la base permite varios auxilios por recepción. No se adopta unicidad 1:1.
 
 S10, S11 y S12 muestran responsabilidad humana de negocio. **No se presenta como implementada la obligatoriedad de vincular cada cuenta con EMPLEADOS.** La FK de usuarios es nullable y única, y las FK operativas siguen hacia usuarios técnicos. Las cuentas históricas sin empleado no quedan regularizadas mediante el dibujo. El registrador administrativo puede ser distinto del ejecutor; la administradora no se vuelve mecánica por capturar información. Las operaciones nuevas requieren cuenta técnica habilitada; no se permite asignar directamente a cualquier empleado sin ella.
 
@@ -211,6 +209,6 @@ Draw.io contiene 13 rectángulos, 15 rombos y 30 conectores, todos nativos. Una 
 
 Se abrió el XML con el motor oficial GraphViewer/mxGraph de draw.io en Chrome local, se exportó SVG/PNG y se comprobó una modificación temporal de CLIENTES sin reemplazar el original. El PDF se exportó desde esa representación vectorial, no desde una captura: una página A3 horizontal con márgenes, verificable con pypdf y renderizado Poppler. Se inspeccionó la imagen de la página completa. No es una sesión manual del editor remoto.
 
-Los hashes de 234 archivos versionados previos se conservan en PROTECCION_ORIGINALES.json; la validación final verifica que siguen intactos. Se añaden documentos solo dentro de esta carpeta. No se ejecutaron migraciones, SQL, limpieza, pruebas de aplicación ni operaciones Docker. No se hizo commit, push ni merge.
+La conservación actual se comprueba en [el informe de limpieza](../../LIMPIEZA_REPOSITORIO.md). No se regeneraron los diagramas oficiales durante esta etapa.
 
 Para exponer: utilizar PDF a pantalla completa; para editar: abrir el .drawio en draw.io Desktop o Archivo → Abrir desde → Dispositivo. Para imprimir se recomienda A3 horizontal, ajustar a una página; A4 reduce legibilidad de las cardinalidades.

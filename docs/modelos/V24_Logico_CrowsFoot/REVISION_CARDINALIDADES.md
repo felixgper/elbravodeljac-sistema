@@ -425,6 +425,6 @@ Los mínimos de hijos SQL son cero. Go crea al menos un detalle/asignación/esta
 
 ## Verificación
 
-VALIDACION_FINAL.json comprueba tablas/columnas, PK, 50 FK y sus columnas, metadata y símbolos NULL/UQ, puentes, autorrelación, geometría, protección de archivos y PDF. El motor oficial draw.io local abre XML nativo y conserva una edición temporal de una tabla; no se afirma sesión manual del editor web.
+La revisión original comprobó tablas/columnas, PK, 50 FK y sus columnas, metadata y símbolos NULL/UQ, puentes, autorrelación, geometría, protección de archivos y PDF. El motor oficial draw.io local abre XML nativo y conserva una edición temporal de una tabla; no se afirma sesión manual del editor web.
 
 Principal único y completo; vistas por bloque son recortes complementarios. PDF A0 horizontal de una sola página, sin compresión A4. Ampliar en pantalla o imprimir en formato amplio.
