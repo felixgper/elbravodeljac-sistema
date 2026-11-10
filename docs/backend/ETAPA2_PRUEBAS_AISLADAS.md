@@ -1,3 +1,5 @@
+> **Nota posterior:** este informe corresponde al proceso anterior. En la instalación nueva se usa `database/postgresql/esquema_entrega.sql`. Las pruebas de migración histórica usan `backend/internal/platform/postgres/migrations/000_base_legacy.sql`.
+
 # Etapa 2 — Pruebas vigentes y aislamiento
 
 6 de noviembre de 2026. Rama `feature/aislamiento-pruebas-vigentes`, creada desde `main` sincronizada en `c824414`, después de fusionarse el PR #5. El cambio se limita a herramientas, fixtures, pruebas y documentación de pruebas. No modifica el aplicativo, sus generadores PDF, SQL, migraciones, modelos ni diseños.

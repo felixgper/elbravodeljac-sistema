@@ -7,42 +7,42 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_orden",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_usuario",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "rol_en_trabajo",
           "type": "VARCHAR(30)",
           "not_null": true,
           "definition": "character varying(30) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha_asignacion",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "activo",
           "type": "BOOLEAN",
           "not_null": true,
           "definition": "boolean DEFAULT true NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -50,7 +50,7 @@
       ],
       "unique": [],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "auxilios": {
       "columns": [
@@ -59,84 +59,84 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_vehiculo",
           "type": "BIGINT",
           "not_null": false,
           "definition": "bigint",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_cliente_solicitante",
           "type": "BIGINT",
           "not_null": false,
           "definition": "bigint",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_usuario_registro",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_tecnico",
           "type": "BIGINT",
           "not_null": false,
           "definition": "bigint",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_unidad_auxilio",
           "type": "BIGINT",
           "not_null": false,
           "definition": "bigint",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_recepcion",
           "type": "BIGINT",
           "not_null": false,
           "definition": "bigint",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "ubicacion",
           "type": "TEXT",
           "not_null": true,
           "definition": "text NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "tipo_incidente",
           "type": "VARCHAR(60)",
           "not_null": false,
           "definition": "character varying(60)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "descripcion",
           "type": "TEXT",
           "not_null": false,
           "definition": "text",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "estado",
           "type": "VARCHAR(30)",
           "not_null": true,
           "definition": "character varying(30) DEFAULT 'pendiente'::character varying NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -144,7 +144,7 @@
       ],
       "unique": [],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "avances_ot": {
       "columns": [
@@ -153,35 +153,35 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_orden",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_usuario",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "observacion",
           "type": "TEXT",
           "not_null": true,
           "definition": "text NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -189,7 +189,7 @@
       ],
       "unique": [],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "clientes": {
       "columns": [
@@ -198,49 +198,49 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "tipo_documento",
           "type": "VARCHAR(20)",
           "not_null": true,
           "definition": "character varying(20) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "numero_documento",
           "type": "VARCHAR(20)",
           "not_null": true,
           "definition": "character varying(20) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "nombre",
           "type": "VARCHAR(150)",
           "not_null": true,
           "definition": "character varying(150) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "telefono",
           "type": "VARCHAR(20)",
           "not_null": false,
           "definition": "character varying(20)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "direccion",
           "type": "TEXT",
           "not_null": false,
           "definition": "text",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "correo",
           "type": "VARCHAR(150)",
           "not_null": false,
           "definition": "character varying(150)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_tipo_documento",
@@ -261,7 +261,7 @@
             "numero_documento"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "uq_clientes_tipo_catalogo_numero",
@@ -274,7 +274,7 @@
         }
       ],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "contactos_cliente": {
       "columns": [
@@ -283,56 +283,56 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_cliente",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "nombre",
           "type": "VARCHAR(150)",
           "not_null": true,
           "definition": "character varying(150) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "tipo_documento",
           "type": "VARCHAR(20)",
           "not_null": true,
           "definition": "character varying(20) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "numero_documento",
           "type": "VARCHAR(20)",
           "not_null": true,
           "definition": "character varying(20) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "telefono",
           "type": "VARCHAR(20)",
           "not_null": false,
           "definition": "character varying(20)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "relacion",
           "type": "VARCHAR(50)",
           "not_null": false,
           "definition": "character varying(50)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "activo",
           "type": "BOOLEAN",
           "not_null": true,
           "definition": "boolean DEFAULT true NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_tipo_documento",
@@ -347,7 +347,7 @@
       ],
       "unique": [],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "cotizaciones": {
       "columns": [
@@ -356,42 +356,42 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_diagnostico",
           "type": "BIGINT",
           "not_null": false,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "estado",
           "type": "VARCHAR(20)",
           "not_null": true,
           "definition": "character varying(20) DEFAULT 'pendiente'::character varying NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "total",
           "type": "NUMERIC(12,2)",
           "not_null": true,
           "definition": "numeric(12,2) DEFAULT 0 NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha_emision",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "aprobada_en",
           "type": "TIMESTAMPTZ",
           "not_null": false,
           "definition": "timestamp with time zone",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_recepcion",
@@ -443,7 +443,7 @@
       "checks": [
         "CONSTRAINT ck_cotizaciones_total CHECK ((total >= (0)::numeric))"
       ],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "detalle_cotizacion": {
       "columns": [
@@ -452,63 +452,63 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_cotizacion",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_servicio",
           "type": "BIGINT",
           "not_null": false,
           "definition": "bigint",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_repuesto",
           "type": "BIGINT",
           "not_null": false,
           "definition": "bigint",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "descripcion",
           "type": "TEXT",
           "not_null": false,
           "definition": "text",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "cantidad",
           "type": "NUMERIC(10,2)",
           "not_null": true,
           "definition": "numeric(10,2) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "precio_unitario",
           "type": "NUMERIC(12,2)",
           "not_null": true,
           "definition": "numeric(12,2) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "subtotal",
           "type": "NUMERIC(12,2)",
           "not_null": true,
           "definition": "numeric(12,2) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "origen_repuesto",
           "type": "VARCHAR(12)",
           "not_null": false,
           "definition": "character varying(12)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "tipo_concepto",
@@ -547,7 +547,7 @@
           "origin": "backend/internal/platform/postgres/migrations/001_revision_funcional.sql"
         }
       ],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "diagnosticos": {
       "columns": [
@@ -556,35 +556,35 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_recepcion",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_tecnico",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "resumen",
           "type": "TEXT",
           "not_null": true,
           "definition": "text NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "estado",
@@ -654,11 +654,11 @@
             "id_recepcion"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "entregas": {
       "columns": [
@@ -667,98 +667,98 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_orden",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_usuario_entrega",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_contacto_receptor",
           "type": "BIGINT",
           "not_null": false,
           "definition": "bigint",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha_entrega",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "tipo_receptor",
           "type": "VARCHAR(30)",
           "not_null": true,
           "definition": "character varying(30) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "nombre_receptor_snap",
           "type": "VARCHAR(150)",
           "not_null": false,
           "definition": "character varying(150)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "tipo_doc_receptor_snap",
           "type": "VARCHAR(20)",
           "not_null": false,
           "definition": "character varying(20)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "documento_receptor_snap",
           "type": "VARCHAR(30)",
           "not_null": false,
           "definition": "character varying(30)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "telefono_receptor_snap",
           "type": "VARCHAR(20)",
           "not_null": false,
           "definition": "character varying(20)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "autorizacion_verificada",
           "type": "BOOLEAN",
           "not_null": true,
           "definition": "boolean DEFAULT false NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "medio_verificacion",
           "type": "VARCHAR(80)",
           "not_null": false,
           "definition": "character varying(80)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha_verificacion",
           "type": "TIMESTAMPTZ",
           "not_null": false,
           "definition": "timestamp with time zone",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_usuario_verificador",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "ficha_snapshot",
@@ -799,11 +799,11 @@
             "id_orden"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "historial_estados_ot": {
       "columns": [
@@ -812,42 +812,42 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_orden",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_usuario",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "estado_anterior",
           "type": "VARCHAR(30)",
           "not_null": false,
           "definition": "character varying(30)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "estado_nuevo",
           "type": "VARCHAR(30)",
           "not_null": true,
           "definition": "character varying(30) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -855,7 +855,7 @@
       ],
       "unique": [],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "historial_propietarios": {
       "columns": [
@@ -864,56 +864,56 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_vehiculo",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_cliente",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha_inicio",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha_fin",
           "type": "TIMESTAMPTZ",
           "not_null": false,
           "definition": "timestamp with time zone",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_usuario_registro",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "verificado",
           "type": "BOOLEAN",
           "not_null": true,
           "definition": "boolean DEFAULT false NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "observacion",
           "type": "TEXT",
           "not_null": false,
           "definition": "text",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -926,14 +926,14 @@
             "id_vehiculo"
           ],
           "predicate": "WHERE (fecha_fin IS NULL)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "checks": [
         "CONSTRAINT chk_fechas_propietario CHECK (((fecha_fin IS NULL) OR (fecha_fin >= fecha_inicio)))",
         "CONSTRAINT ck_historial_fechas CHECK (((fecha_fin IS NULL) OR (fecha_fin >= fecha_inicio)))"
       ],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "ordenes_trabajo": {
       "columns": [
@@ -942,56 +942,56 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_cotizacion",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "codigo_ot",
           "type": "VARCHAR(24)",
           "not_null": true,
           "definition": "character varying(24) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "estado",
           "type": "VARCHAR(30)",
           "not_null": true,
           "definition": "character varying(30) DEFAULT 'creada'::character varying NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_usuario_creacion",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha_creacion",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha_inicio",
           "type": "TIMESTAMPTZ",
           "not_null": false,
           "definition": "timestamp with time zone",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha_fin",
           "type": "TIMESTAMPTZ",
           "not_null": false,
           "definition": "timestamp with time zone",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "control_tecnico",
@@ -1046,7 +1046,7 @@
             "codigo_ot"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "uq_ordenes_trabajo_id_cotizacion",
@@ -1054,11 +1054,11 @@
             "id_cotizacion"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "pagos": {
       "columns": [
@@ -1067,49 +1067,49 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_orden",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "monto",
           "type": "NUMERIC(12,2)",
           "not_null": true,
           "definition": "numeric(12,2) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "metodo_pago",
           "type": "VARCHAR(30)",
           "not_null": true,
           "definition": "character varying(30) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha_pago",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "comprobante",
           "type": "VARCHAR(50)",
           "not_null": false,
           "definition": "character varying(50)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_usuario_registro",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "request_id",
@@ -1150,7 +1150,7 @@
       "checks": [
         "CONSTRAINT ck_pagos_monto CHECK ((monto > (0)::numeric))"
       ],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "permisos": {
       "columns": [
@@ -1159,21 +1159,21 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "codigo",
           "type": "VARCHAR(80)",
           "not_null": true,
           "definition": "character varying(80) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "descripcion",
           "type": "VARCHAR(150)",
           "not_null": false,
           "definition": "character varying(150)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -1186,11 +1186,11 @@
             "codigo"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "proveedores": {
       "columns": [
@@ -1199,35 +1199,35 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "nombre",
           "type": "VARCHAR(150)",
           "not_null": true,
           "definition": "character varying(150) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "documento",
           "type": "VARCHAR(20)",
           "not_null": true,
           "definition": "character varying(20) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "telefono",
           "type": "VARCHAR(20)",
           "not_null": false,
           "definition": "character varying(20)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "contacto",
           "type": "VARCHAR(120)",
           "not_null": false,
           "definition": "character varying(120)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -1240,11 +1240,11 @@
             "documento"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "pruebas_ot": {
       "columns": [
@@ -1253,49 +1253,49 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_orden",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_usuario",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "tipo_prueba",
           "type": "VARCHAR(100)",
           "not_null": true,
           "definition": "character varying(100) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "resultado",
           "type": "VARCHAR(20)",
           "not_null": true,
           "definition": "character varying(20) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "observaciones",
           "type": "TEXT",
           "not_null": false,
           "definition": "text",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -1303,7 +1303,7 @@
       ],
       "unique": [],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "recepciones": {
       "columns": [
@@ -1312,49 +1312,49 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_vehiculo",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_cliente_atencion",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_recepcionista",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "fecha_ingreso",
           "type": "TIMESTAMPTZ",
           "not_null": true,
           "definition": "timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "km_ingreso",
           "type": "NUMERIC(10,2)",
           "not_null": false,
           "definition": "numeric(10,2)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "sintomas",
           "type": "TEXT",
           "not_null": false,
           "definition": "text",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "tipo_atencion",
@@ -1406,7 +1406,7 @@
       "checks": [
         "CONSTRAINT ck_recepciones_km CHECK (((km_ingreso IS NULL) OR (km_ingreso >= (0)::numeric)))"
       ],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "repuesto_proveedor": {
       "columns": [
@@ -1415,28 +1415,28 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_repuesto",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_proveedor",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "costo_referencia",
           "type": "NUMERIC(12,2)",
           "not_null": true,
           "definition": "numeric(12,2) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -1450,13 +1450,13 @@
             "id_proveedor"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "checks": [
         "CONSTRAINT ck_rp_costo CHECK ((costo_referencia >= (0)::numeric))"
       ],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "repuestos": {
       "columns": [
@@ -1465,35 +1465,35 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "nombre",
           "type": "VARCHAR(120)",
           "not_null": true,
           "definition": "character varying(120) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "stock",
           "type": "NUMERIC(12,2)",
           "not_null": true,
           "definition": "numeric(12,2) DEFAULT 0 NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "precio_referencia",
           "type": "NUMERIC(12,2)",
           "not_null": true,
           "definition": "numeric(12,2) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "activo",
           "type": "BOOLEAN",
           "not_null": true,
           "definition": "boolean DEFAULT true NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -1504,7 +1504,7 @@
         "CONSTRAINT ck_repuestos_precio CHECK ((precio_referencia >= (0)::numeric))",
         "CONSTRAINT ck_repuestos_stock CHECK ((stock >= (0)::numeric))"
       ],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "rol_permisos": {
       "columns": [
@@ -1513,14 +1513,14 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_permiso",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -1529,7 +1529,7 @@
       ],
       "unique": [],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "roles": {
       "columns": [
@@ -1538,14 +1538,14 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "nombre_rol",
           "type": "VARCHAR(60)",
           "not_null": true,
           "definition": "character varying(60) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "activo",
@@ -1565,11 +1565,11 @@
             "nombre_rol"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "servicios": {
       "columns": [
@@ -1578,28 +1578,28 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "nombre",
           "type": "VARCHAR(100)",
           "not_null": true,
           "definition": "character varying(100) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "precio_referencia",
           "type": "NUMERIC(12,2)",
           "not_null": true,
           "definition": "numeric(12,2) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "activo",
           "type": "BOOLEAN",
           "not_null": true,
           "definition": "boolean DEFAULT true NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -1612,13 +1612,13 @@
             "nombre"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "checks": [
         "CONSTRAINT ck_servicios_precio CHECK ((precio_referencia >= (0)::numeric))"
       ],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "unidades_auxilio": {
       "columns": [
@@ -1627,28 +1627,28 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "codigo",
           "type": "VARCHAR(30)",
           "not_null": true,
           "definition": "character varying(30) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "descripcion",
           "type": "VARCHAR(150)",
           "not_null": false,
           "definition": "character varying(150)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "activo",
           "type": "BOOLEAN",
           "not_null": true,
           "definition": "boolean DEFAULT true NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -1661,11 +1661,11 @@
             "codigo"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "usuario_roles": {
       "columns": [
@@ -1674,14 +1674,14 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_rol",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -1690,7 +1690,7 @@
       ],
       "unique": [],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "usuarios": {
       "columns": [
@@ -1699,42 +1699,42 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "nombre",
           "type": "VARCHAR(150)",
           "not_null": true,
           "definition": "character varying(150) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "usuario",
           "type": "VARCHAR(60)",
           "not_null": true,
           "definition": "character varying(60) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "correo",
           "type": "VARCHAR(150)",
           "not_null": false,
           "definition": "character varying(150)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "password_hash",
           "type": "TEXT",
           "not_null": true,
           "definition": "text NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "activo",
           "type": "BOOLEAN",
           "not_null": true,
           "definition": "boolean DEFAULT true NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_empleado",
@@ -1754,7 +1754,7 @@
             "correo"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "usuarios_usuario_key",
@@ -1762,7 +1762,7 @@
             "usuario"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "uq_usuarios_empleado",
@@ -1774,7 +1774,7 @@
         }
       ],
       "checks": [],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "vehiculos": {
       "columns": [
@@ -1783,56 +1783,56 @@
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "id_cliente",
           "type": "BIGINT",
           "not_null": true,
           "definition": "bigint NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "placa",
           "type": "VARCHAR(12)",
           "not_null": true,
           "definition": "character varying(12) NOT NULL",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "marca",
           "type": "VARCHAR(40)",
           "not_null": false,
           "definition": "character varying(40)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "modelo",
           "type": "VARCHAR(60)",
           "not_null": false,
           "definition": "character varying(60)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "anio",
           "type": "SMALLINT",
           "not_null": false,
           "definition": "smallint",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "kilometraje_actual",
           "type": "NUMERIC(10,2)",
           "not_null": false,
           "definition": "numeric(10,2)",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         },
         {
           "name": "observaciones",
           "type": "TEXT",
           "not_null": false,
           "definition": "text",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "pk": [
@@ -1845,14 +1845,14 @@
             "placa"
           ],
           "predicate": "",
-          "origin": "database/postgresql/esquema_actual.sql"
+          "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
         }
       ],
       "checks": [
         "CONSTRAINT ck_vehiculos_anio CHECK (((anio IS NULL) OR ((anio >= 1900) AND (anio <= 2100))))",
         "CONSTRAINT ck_vehiculos_km CHECK (((kilometraje_actual IS NULL) OR (kilometraje_actual >= (0)::numeric)))"
       ],
-      "origin": "database/postgresql/esquema_actual.sql"
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql"
     },
     "empleados": {
       "columns": [
@@ -1947,7 +1947,7 @@
       "column": "id_orden",
       "parent": "ordenes_trabajo",
       "parent_column": "id_orden",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.asignaciones_ot\n    ADD CONSTRAINT fk_asignaciones_ot_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
       "generatedName": false,
       "id": "F01",
@@ -1963,7 +1963,7 @@
       "column": "id_usuario",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.asignaciones_ot\n    ADD CONSTRAINT fk_asignaciones_ot_id_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F02",
@@ -1979,7 +1979,7 @@
       "column": "id_cliente_solicitante",
       "parent": "clientes",
       "parent_column": "id_cliente",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_cliente_solicitante FOREIGN KEY (id_cliente_solicitante) REFERENCES public.clientes(id_cliente);",
       "generatedName": false,
       "id": "F03",
@@ -1995,7 +1995,7 @@
       "column": "id_recepcion",
       "parent": "recepciones",
       "parent_column": "id_recepcion",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_recepcion FOREIGN KEY (id_recepcion) REFERENCES public.recepciones(id_recepcion);",
       "generatedName": false,
       "id": "F04",
@@ -2011,7 +2011,7 @@
       "column": "id_tecnico",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_tecnico FOREIGN KEY (id_tecnico) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F05",
@@ -2027,7 +2027,7 @@
       "column": "id_unidad_auxilio",
       "parent": "unidades_auxilio",
       "parent_column": "id_unidad_auxilio",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_unidad_auxilio FOREIGN KEY (id_unidad_auxilio) REFERENCES public.unidades_auxilio(id_unidad_auxilio);",
       "generatedName": false,
       "id": "F06",
@@ -2043,7 +2043,7 @@
       "column": "id_usuario_registro",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_usuario_registro FOREIGN KEY (id_usuario_registro) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F07",
@@ -2059,7 +2059,7 @@
       "column": "id_vehiculo",
       "parent": "vehiculos",
       "parent_column": "id_vehiculo",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.auxilios\n    ADD CONSTRAINT fk_auxilios_id_vehiculo FOREIGN KEY (id_vehiculo) REFERENCES public.vehiculos(id_vehiculo);",
       "generatedName": false,
       "id": "F08",
@@ -2075,7 +2075,7 @@
       "column": "id_orden",
       "parent": "ordenes_trabajo",
       "parent_column": "id_orden",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.avances_ot\n    ADD CONSTRAINT fk_avances_ot_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
       "generatedName": false,
       "id": "F09",
@@ -2091,7 +2091,7 @@
       "column": "id_usuario",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.avances_ot\n    ADD CONSTRAINT fk_avances_ot_id_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F10",
@@ -2123,7 +2123,7 @@
       "column": "id_cliente",
       "parent": "clientes",
       "parent_column": "id_cliente",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.contactos_cliente\n    ADD CONSTRAINT fk_contactos_cliente_id_cliente FOREIGN KEY (id_cliente) REFERENCES public.clientes(id_cliente);",
       "generatedName": false,
       "id": "F12",
@@ -2171,7 +2171,7 @@
       "column": "id_diagnostico",
       "parent": "diagnosticos",
       "parent_column": "id_diagnostico",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.cotizaciones\n    ADD CONSTRAINT fk_cotizaciones_id_diagnostico FOREIGN KEY (id_diagnostico) REFERENCES public.diagnosticos(id_diagnostico);",
       "generatedName": false,
       "id": "F15",
@@ -2203,7 +2203,7 @@
       "column": "id_cotizacion",
       "parent": "cotizaciones",
       "parent_column": "id_cotizacion",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.detalle_cotizacion\n    ADD CONSTRAINT fk_detalle_cotizacion_id_cotizacion FOREIGN KEY (id_cotizacion) REFERENCES public.cotizaciones(id_cotizacion);",
       "generatedName": false,
       "id": "F17",
@@ -2219,7 +2219,7 @@
       "column": "id_repuesto",
       "parent": "repuestos",
       "parent_column": "id_repuesto",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.detalle_cotizacion\n    ADD CONSTRAINT fk_detalle_cotizacion_id_repuesto FOREIGN KEY (id_repuesto) REFERENCES public.repuestos(id_repuesto);",
       "generatedName": false,
       "id": "F18",
@@ -2235,7 +2235,7 @@
       "column": "id_servicio",
       "parent": "servicios",
       "parent_column": "id_servicio",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.detalle_cotizacion\n    ADD CONSTRAINT fk_detalle_cotizacion_id_servicio FOREIGN KEY (id_servicio) REFERENCES public.servicios(id_servicio);",
       "generatedName": false,
       "id": "F19",
@@ -2251,7 +2251,7 @@
       "column": "id_recepcion",
       "parent": "recepciones",
       "parent_column": "id_recepcion",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.diagnosticos\n    ADD CONSTRAINT fk_diagnosticos_id_recepcion FOREIGN KEY (id_recepcion) REFERENCES public.recepciones(id_recepcion);",
       "generatedName": false,
       "id": "F20",
@@ -2267,7 +2267,7 @@
       "column": "id_tecnico",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.diagnosticos\n    ADD CONSTRAINT fk_diagnosticos_id_tecnico FOREIGN KEY (id_tecnico) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F21",
@@ -2283,7 +2283,7 @@
       "column": "id_contacto_receptor",
       "parent": "contactos_cliente",
       "parent_column": "id_contacto",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.entregas\n    ADD CONSTRAINT fk_entregas_id_contacto_receptor FOREIGN KEY (id_contacto_receptor) REFERENCES public.contactos_cliente(id_contacto);",
       "generatedName": false,
       "id": "F22",
@@ -2299,7 +2299,7 @@
       "column": "id_orden",
       "parent": "ordenes_trabajo",
       "parent_column": "id_orden",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.entregas\n    ADD CONSTRAINT fk_entregas_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
       "generatedName": false,
       "id": "F23",
@@ -2315,7 +2315,7 @@
       "column": "id_usuario_entrega",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.entregas\n    ADD CONSTRAINT fk_entregas_id_usuario_entrega FOREIGN KEY (id_usuario_entrega) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F24",
@@ -2331,7 +2331,7 @@
       "column": "id_usuario_verificador",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.entregas\n    ADD CONSTRAINT fk_entregas_id_usuario_verificador FOREIGN KEY (id_usuario_verificador) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F25",
@@ -2347,7 +2347,7 @@
       "column": "id_orden",
       "parent": "ordenes_trabajo",
       "parent_column": "id_orden",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.historial_estados_ot\n    ADD CONSTRAINT fk_historial_estados_ot_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
       "generatedName": false,
       "id": "F26",
@@ -2363,7 +2363,7 @@
       "column": "id_usuario",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.historial_estados_ot\n    ADD CONSTRAINT fk_historial_estados_ot_id_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F27",
@@ -2379,7 +2379,7 @@
       "column": "id_cliente",
       "parent": "clientes",
       "parent_column": "id_cliente",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.historial_propietarios\n    ADD CONSTRAINT fk_historial_cliente FOREIGN KEY (id_cliente) REFERENCES public.clientes(id_cliente);",
       "generatedName": false,
       "id": "F28",
@@ -2395,7 +2395,7 @@
       "column": "id_usuario_registro",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.historial_propietarios\n    ADD CONSTRAINT fk_historial_usuario FOREIGN KEY (id_usuario_registro) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F29",
@@ -2411,7 +2411,7 @@
       "column": "id_vehiculo",
       "parent": "vehiculos",
       "parent_column": "id_vehiculo",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.historial_propietarios\n    ADD CONSTRAINT fk_historial_vehiculo FOREIGN KEY (id_vehiculo) REFERENCES public.vehiculos(id_vehiculo);",
       "generatedName": false,
       "id": "F30",
@@ -2443,7 +2443,7 @@
       "column": "id_cotizacion",
       "parent": "cotizaciones",
       "parent_column": "id_cotizacion",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.ordenes_trabajo\n    ADD CONSTRAINT fk_ordenes_trabajo_id_cotizacion FOREIGN KEY (id_cotizacion) REFERENCES public.cotizaciones(id_cotizacion);",
       "generatedName": false,
       "id": "F32",
@@ -2459,7 +2459,7 @@
       "column": "id_usuario_creacion",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.ordenes_trabajo\n    ADD CONSTRAINT fk_ordenes_trabajo_id_usuario_creacion FOREIGN KEY (id_usuario_creacion) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F33",
@@ -2475,7 +2475,7 @@
       "column": "id_orden",
       "parent": "ordenes_trabajo",
       "parent_column": "id_orden",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.pagos\n    ADD CONSTRAINT fk_pagos_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
       "generatedName": false,
       "id": "F34",
@@ -2491,7 +2491,7 @@
       "column": "id_usuario_registro",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.pagos\n    ADD CONSTRAINT fk_pagos_id_usuario_registro FOREIGN KEY (id_usuario_registro) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F35",
@@ -2507,7 +2507,7 @@
       "column": "id_orden",
       "parent": "ordenes_trabajo",
       "parent_column": "id_orden",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.pruebas_ot\n    ADD CONSTRAINT fk_pruebas_ot_id_orden FOREIGN KEY (id_orden) REFERENCES public.ordenes_trabajo(id_orden);",
       "generatedName": false,
       "id": "F36",
@@ -2523,7 +2523,7 @@
       "column": "id_usuario",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.pruebas_ot\n    ADD CONSTRAINT fk_pruebas_ot_id_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F37",
@@ -2555,7 +2555,7 @@
       "column": "id_cliente_atencion",
       "parent": "clientes",
       "parent_column": "id_cliente",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.recepciones\n    ADD CONSTRAINT fk_recepciones_id_cliente_atencion FOREIGN KEY (id_cliente_atencion) REFERENCES public.clientes(id_cliente);",
       "generatedName": false,
       "id": "F39",
@@ -2587,7 +2587,7 @@
       "column": "id_recepcionista",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.recepciones\n    ADD CONSTRAINT fk_recepciones_id_recepcionista FOREIGN KEY (id_recepcionista) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F41",
@@ -2603,7 +2603,7 @@
       "column": "id_vehiculo",
       "parent": "vehiculos",
       "parent_column": "id_vehiculo",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.recepciones\n    ADD CONSTRAINT fk_recepciones_id_vehiculo FOREIGN KEY (id_vehiculo) REFERENCES public.vehiculos(id_vehiculo);",
       "generatedName": false,
       "id": "F42",
@@ -2619,7 +2619,7 @@
       "column": "id_proveedor",
       "parent": "proveedores",
       "parent_column": "id_proveedor",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.repuesto_proveedor\n    ADD CONSTRAINT fk_repuesto_proveedor_id_proveedor FOREIGN KEY (id_proveedor) REFERENCES public.proveedores(id_proveedor);",
       "generatedName": false,
       "id": "F43",
@@ -2635,7 +2635,7 @@
       "column": "id_repuesto",
       "parent": "repuestos",
       "parent_column": "id_repuesto",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.repuesto_proveedor\n    ADD CONSTRAINT fk_repuesto_proveedor_id_repuesto FOREIGN KEY (id_repuesto) REFERENCES public.repuestos(id_repuesto);",
       "generatedName": false,
       "id": "F44",
@@ -2651,7 +2651,7 @@
       "column": "id_permiso",
       "parent": "permisos",
       "parent_column": "id_permiso",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.rol_permisos\n    ADD CONSTRAINT fk_rol_permisos_permiso FOREIGN KEY (id_permiso) REFERENCES public.permisos(id_permiso);",
       "generatedName": false,
       "id": "F45",
@@ -2667,7 +2667,7 @@
       "column": "id_rol",
       "parent": "roles",
       "parent_column": "id_rol",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.rol_permisos\n    ADD CONSTRAINT fk_rol_permisos_rol FOREIGN KEY (id_rol) REFERENCES public.roles(id_rol);",
       "generatedName": false,
       "id": "F46",
@@ -2683,7 +2683,7 @@
       "column": "id_rol",
       "parent": "roles",
       "parent_column": "id_rol",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.usuario_roles\n    ADD CONSTRAINT fk_usuario_roles_rol FOREIGN KEY (id_rol) REFERENCES public.roles(id_rol);",
       "generatedName": false,
       "id": "F47",
@@ -2699,7 +2699,7 @@
       "column": "id_usuario",
       "parent": "usuarios",
       "parent_column": "id_usuario",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.usuario_roles\n    ADD CONSTRAINT fk_usuario_roles_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id_usuario);",
       "generatedName": false,
       "id": "F48",
@@ -2731,7 +2731,7 @@
       "column": "id_cliente",
       "parent": "clientes",
       "parent_column": "id_cliente",
-      "origin": "database/postgresql/esquema_actual.sql",
+      "origin": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "definition": "ALTER TABLE ONLY public.vehiculos\n    ADD CONSTRAINT fk_vehiculos_cliente FOREIGN KEY (id_cliente) REFERENCES public.clientes(id_cliente);",
       "generatedName": false,
       "id": "F50",
@@ -2744,7 +2744,7 @@
   ],
   "sources": [
     {
-      "path": "database/postgresql/esquema_actual.sql",
+      "path": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "sha256": "5c4b2b3221c1af2411882d62747332272137ffb1978a1713658579bfdab0de5d"
     },
     {
@@ -2786,7 +2786,7 @@
   ],
   "evolution": [
     {
-      "source": "database/postgresql/esquema_actual.sql",
+      "source": "backend/internal/platform/postgres/migrations/000_base_legacy.sql",
       "tables": 26,
       "columns": 160,
       "foreignKeys": 42

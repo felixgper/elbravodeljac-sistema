@@ -1,3 +1,5 @@
+> **Nota posterior a la verificación del 5/11:** el esquema físico único oficial y de instalación nueva es `database/postgresql/esquema_entrega.sql`. El punto de partida antiguo fue archivado para regresión en `backend/internal/platform/postgres/migrations/000_base_legacy.sql`. La comparación histórica descrita abajo conserva su fecha y alcance.
+
 # Comparación del lógico vigente con PostgreSQL de desarrollo
 
 Fecha de verificación: **5 de noviembre de 2026**. Consulta real de **elbravodeljac_dev**, PostgreSQL **18.6**, en el contenedor **elbravodeljac-fase-e-dev-postgres-dev-1** del aplicativo local. No se utilizó como fuente de esta entrega la instancia separada del puerto 5433 ni se supuso que las migraciones estuvieran aplicadas.
