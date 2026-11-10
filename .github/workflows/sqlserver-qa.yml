@@ -1,0 +1,120 @@
+name: SQL Server 2025 QA
+
+on:
+  pull_request:
+    branches: [main]
+    types: [synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  schema:
+    if: >-
+      github.repository == 'felixgper/elbravodeljac-sistema' &&
+      github.event.pull_request.number == 12 &&
+      github.head_ref == 'codex/migracion-sql-server' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    defaults:
+      run:
+        shell: bash
+    env:
+      SQL_CONTAINER: bravo-sqlserver-qa
+      SQL_IMAGE: mcr.microsoft.com/mssql/server:2025-latest
+      SQL_DATABASE: elbravodeljac_sqlserver_qa
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Comprobar recursos
+        id: resources
+        run: |
+          awk '/^MemAvailable:/ {print "RAM disponible:", $2, "KiB"; ok = $2 >= 4 * 1024 * 1024}
+               END {exit !ok}' /proc/meminfo
+          docker_root="$(docker info --format '{{.DockerRootDir}}')"
+          df -Pk "$docker_root" | awk 'NR == 2 {print "Disco disponible:", $4, "KiB"; ok = $4 >= 8 * 1024 * 1024}
+                                      END {exit !ok}'
+
+      - name: Iniciar SQL Server 2025 Standard Developer
+        id: server
+        run: |
+          export MSSQL_SA_PASSWORD="Qa9!$(openssl rand -hex 24)"
+          printf '::add-mask::%s\n' "$MSSQL_SA_PASSWORD"
+          docker pull "$SQL_IMAGE"
+          docker image inspect "$SQL_IMAGE" --format '{{range .RepoDigests}}{{println .}}{{end}}'
+          docker run -d --network none --name "$SQL_CONTAINER" \
+            --memory 4g --memory-swap 4g --env MSSQL_MEMORY_LIMIT_MB=3072 \
+            --env ACCEPT_EULA=Y --env MSSQL_PID=StandardDeveloper \
+            --env MSSQL_SA_PASSWORD "$SQL_IMAGE"
+          for attempt in {1..36}; do
+            if docker exec -e SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" "$SQL_CONTAINER" \
+              /opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -C -b -l 2 \
+              -Q 'SET NOCOUNT ON; SELECT 1;' >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "$(docker inspect --format '{{.State.Running}}' "$SQL_CONTAINER")" != true || "$attempt" == 36 ]]; then
+              docker logs --tail 35 "$SQL_CONTAINER" >&2
+              exit 1
+            fi
+            sleep 3
+          done
+          docker exec -e SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" "$SQL_CONTAINER" \
+            /opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -C -b -l 5 -t 20 -Q "
+              IF CONVERT(int, SERVERPROPERTY('ProductMajorVersion')) <> 17
+                 OR CONVERT(bigint, SERVERPROPERTY('EditionID')) <> -1785266663
+                  THROW 52090, N'Se requiere SQL Server 2025 Standard Developer.', 1;
+              SELECT SERVERPROPERTY('ProductVersion') AS Version, SERVERPROPERTY('Edition') AS Edition;"
+          docker exec -e SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" "$SQL_CONTAINER" \
+            /opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -C -b -l 5 -t 20 \
+            -Q "CREATE DATABASE [$SQL_DATABASE];"
+          docker exec -e SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" "$SQL_CONTAINER" \
+            /opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -C -b -l 5 -t 20 \
+            -Q "ALTER DATABASE [$SQL_DATABASE] SET COMPATIBILITY_LEVEL = 170;"
+
+      - name: Crear esquema
+        id: ddl
+        run: |
+          docker exec -i "$SQL_CONTAINER" sh -ec '
+            export SQLCMDPASSWORD="$MSSQL_SA_PASSWORD"
+            exec /opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -C -b -l 5 -t 120 -f 65001 -d "$1" -i /dev/stdin
+          ' sh "$SQL_DATABASE" < database/sqlserver/esquema_entrega.sql
+
+      - name: Validar catálogo y escrituras por lotes
+        id: integrity
+        run: |
+          docker exec -i "$SQL_CONTAINER" sh -ec '
+            export SQLCMDPASSWORD="$MSSQL_SA_PASSWORD"
+            exec /opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -C -b -l 5 -t 120 -f 65001 -d "$1" -i /dev/stdin
+          ' sh "$SQL_DATABASE" < database/sqlserver/pruebas_esquema.sql
+
+      - name: Retirar contenedor de QA
+        if: always()
+        run: |
+          if docker container inspect "$SQL_CONTAINER" >/dev/null 2>&1; then
+            docker rm -f -v "$SQL_CONTAINER"
+          fi
+
+      - name: Resumir validación
+        if: always()
+        env:
+          RESOURCES: ${{ steps.resources.outcome }}
+          SERVER: ${{ steps.server.outcome }}
+          DDL: ${{ steps.ddl.outcome }}
+          INTEGRITY: ${{ steps.integrity.outcome }}
+        run: |
+          pass=0 fail=0 skip=0
+          {
+            printf '| Verificación | Resultado |\n| --- | --- |\n'
+            for item in "Recursos=$RESOURCES" "Motor=$SERVER" "Esquema=$DDL" "Integridad=$INTEGRITY"; do
+              case "${item#*=}" in
+                success) status=PASS; pass=$((pass + 1)) ;;
+                failure|cancelled) status=FAIL; fail=$((fail + 1)) ;;
+                *) status=SKIP; skip=$((skip + 1)) ;;
+              esac
+              printf '| %s | %s |\n' "${item%%=*}" "$status"
+            done
+            printf '\n**PASS %s · FAIL %s · SKIP %s**\n' "$pass" "$fail" "$skip"
+          } >> "$GITHUB_STEP_SUMMARY"
