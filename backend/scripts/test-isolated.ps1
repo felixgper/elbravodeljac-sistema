@@ -52,14 +52,20 @@ foreach ($entry in Get-ChildItem Env:) {
 $keys += @('INTEGRATION_DATABASE_URL','INTEGRATION_MONGODB_URI','INTEGRATION_MONGODB_DATABASE','INTEGRATION_QA_TOKEN','FRONTEND_AUDIT','FRONTEND_E2E','SHEET_FUNCTIONAL_AUDIT','SHEET_BROWSER_AUDIT','CARBON_DESIGN_QA','LEGACY_BROWSER_E2E')
 $compose = @('compose','-p',$project,'-f',(Join-Path $repoRoot 'compose.test.yaml'),'-f',$override)
 $report = @{project=$project; workingDirectory=$repoRoot; workspace=$workspace; postgresPort=$pgPort; mongoPort=$mongoPort; tmpfs=$true; credentialsSaved=$false; browser=[bool]$Browser}
+$owned = $false
+$failed = $false
 Push-Location $workspace
 try {
     $bytes=New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
     $env:TEST_POSTGRES_PASSWORD=[Convert]::ToHexString($bytes).ToLowerInvariant()
     [Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
     $env:INTEGRATION_QA_TOKEN=[Convert]::ToHexString($bytes).ToLowerInvariant()
-    $existing = & docker @compose ps -a -q
+    $label = "label=com.docker.compose.project=$project"
+    $existing = & docker container ls -aq --filter $label
     if ($LASTEXITCODE -ne 0 -or $existing) { throw 'El proyecto QA no es nuevo; no se reutiliza.' }
+    $existing = & docker network ls -q --filter $label
+    if ($LASTEXITCODE -ne 0 -or $existing) { throw 'El proyecto QA ya tiene una red; no se reutiliza.' }
+    $owned = $true
     & docker @compose up -d --wait postgres-test mongo-test 1> (Join-Path $runRoot 'docker.log') 2> (Join-Path $runRoot 'docker-stderr.log')
     if ($LASTEXITCODE -ne 0) { throw 'No se pudo crear el QA nuevo.' }
     # Only the NEW test database is stamped. A mere JS opt-in cannot attest the API.
@@ -90,12 +96,27 @@ try {
         & go vet ./... 1> (Join-Path $runRoot 'go-vet.log') 2> (Join-Path $runRoot 'go-vet-stderr.log')
         $report.goVetExitCode=$LASTEXITCODE
     } finally { Pop-Location }
-    $report | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runRoot 'resultado.json') -Encoding utf8
-    Write-Output "Evidencias QA: $runRoot"
-    Write-Output "Proyecto: $project (solo recursos nuevos; no se detuvo ningún servicio previo)"
     if ($report.javascriptExitCode -ne 0 -or $report.goTestExitCode -ne 0 -or $report.goVetExitCode -ne 0) { throw 'Hay pruebas fallidas. Revisar los logs ignorados; no se modifican bases existentes para corregirlas.' }
+} catch {
+    $failed = $true
+    throw
 } finally {
-    foreach ($key in $keys) { [Environment]::SetEnvironmentVariable($key,$null,'Process') }
-    foreach ($key in $previous.Keys) { [Environment]::SetEnvironmentVariable($key,$previous[$key],'Process') }
-    Pop-Location
+    try {
+        if ($owned) {
+            # Keep the test output, images and volumes. Compose owns only this UUID.
+            & docker @compose down *> (Join-Path $runRoot 'docker-cleanup.log')
+            $report.cleanupExitCode = $LASTEXITCODE
+        }
+    } finally {
+        foreach ($key in $keys) { [Environment]::SetEnvironmentVariable($key,$null,'Process') }
+        foreach ($key in $previous.Keys) { [Environment]::SetEnvironmentVariable($key,$previous[$key],'Process') }
+        Pop-Location
+        $report.failed = $failed
+        $report | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runRoot 'resultado.json') -Encoding utf8
+        Write-Output "Evidencias QA: $runRoot"
+    }
+    if ($owned -and $report.cleanupExitCode -ne 0) {
+        if (!$failed) { throw "No se pudo retirar completamente el QA $project. Consulta docker-cleanup.log." }
+        Write-Warning "No se pudo retirar completamente el QA $project. Consulta docker-cleanup.log."
+    }
 }
