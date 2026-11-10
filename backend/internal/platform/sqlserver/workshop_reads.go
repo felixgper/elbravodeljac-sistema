@@ -9,7 +9,7 @@ import (
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 )
 
-const receptionJSON = `JSON_OBJECT(
+const receptionFields = `
 'id':CONVERT(varchar(20),r.id_recepcion), 'attentionType':r.tipo_atencion,
 'technicianId':CONVERT(varchar(20),r.id_mecanico_diagnostico),
 'technicianName':(SELECT nombre FROM dbo.usuarios WHERE id_usuario=r.id_mecanico_diagnostico),
@@ -19,7 +19,8 @@ const receptionJSON = `JSON_OBJECT(
 'clientId':CONVERT(varchar(20),r.id_cliente_atencion),'clientName':(SELECT nombre FROM dbo.clientes WHERE id_cliente=r.id_cliente_atencion),
 'vehicleId':CONVERT(varchar(20),r.id_vehiculo),'vehiclePlate':(SELECT placa FROM dbo.vehiculos WHERE id_vehiculo=r.id_vehiculo),
 'vehicleBrand':(SELECT marca FROM dbo.vehiculos WHERE id_vehiculo=r.id_vehiculo),'vehicleModel':(SELECT modelo FROM dbo.vehiculos WHERE id_vehiculo=r.id_vehiculo),
-'mileage':CONVERT(varchar(32),r.km_ingreso),'symptoms':r.sintomas,'createdAt':r.fecha_ingreso,'createdBy':CONVERT(varchar(20),r.id_recepcionista))`
+'mileage':CONVERT(varchar(32),r.km_ingreso),'symptoms':r.sintomas,'createdAt':r.fecha_ingreso,'createdBy':CONVERT(varchar(20),r.id_recepcionista)`
+const receptionJSON = "JSON_OBJECT(" + receptionFields + ")"
 
 const diagnosisJSON = `JSON_OBJECT('id':CONVERT(varchar(20),d.id_diagnostico),'receptionId':CONVERT(varchar(20),d.id_recepcion),
 'findings':d.resumen,'evaluation':d.evaluacion,'recommendations':d.recomendaciones,'notes':d.observaciones,
@@ -165,13 +166,9 @@ func (s *Store) WorkshopList(ctx context.Context, resource string, f domain.Work
 AND (@p2=0 OR (r.tipo_atencion=N'Diagnostico' AND NOT EXISTS(SELECT 1 FROM dbo.diagnosticos d WHERE d.id_recepcion=r.id_recepcion)))`
 		args = []any{f.ClientID, f.Pending}
 	case "atenciones":
-		expr = `JSON_MODIFY(JSON_MODIFY(JSON_MODIFY(JSON_MODIFY(` + receptionJSON + `,'strict $.id',CONVERT(varchar(20),r.id_recepcion)),
-'$.clientDocumentType',c.tipo_documento),'$.clientDocumentNumber',c.numero_documento),'$.quoteId',
-(SELECT TOP (1) CONVERT(varchar(20),cq.id_cotizacion) FROM dbo.cotizaciones cq WHERE cq.id_recepcion=r.id_recepcion ORDER BY cq.id_cotizacion))`
-		// Strict JSON paths preserve explicit nulls, even when no diagnosis or quote exists.
-		expr = "JSON_MODIFY(JSON_MODIFY(" + expr + `,'$.diagnosis',0),'strict $.diagnosis',JSON_QUERY(CASE WHEN d.id_diagnostico IS NULL THEN NULL ELSE ` + diagnosisJSON + " END))"
-		expr = "JSON_MODIFY(JSON_MODIFY(" + expr + `,'$.quoteId',0),'strict $.quoteId',
-(SELECT TOP (1) CONVERT(varchar(20),cq.id_cotizacion) FROM dbo.cotizaciones cq WHERE cq.id_recepcion=r.id_recepcion ORDER BY cq.id_cotizacion))`
+		expr = "JSON_OBJECT(" + receptionFields + `,'clientDocumentType':c.tipo_documento,'clientDocumentNumber':c.numero_documento,
+'diagnosis':JSON_QUERY(CASE WHEN d.id_diagnostico IS NULL THEN NULL ELSE ` + diagnosisJSON + ` END),
+'quoteId':(SELECT TOP (1) CONVERT(varchar(20),cq.id_cotizacion) FROM dbo.cotizaciones cq WHERE cq.id_recepcion=r.id_recepcion ORDER BY cq.id_cotizacion))`
 		from = `dbo.recepciones r JOIN dbo.clientes c ON c.id_cliente=r.id_cliente_atencion
 JOIN dbo.vehiculos v ON v.id_vehiculo=r.id_vehiculo LEFT JOIN dbo.diagnosticos d ON d.id_recepcion=r.id_recepcion`
 		where = `(r.tipo_atencion=N'Directo' OR d.estado=N'Finalizado') AND (@p1=N'' OR r.id_recepcion=TRY_CONVERT(bigint,@p1))

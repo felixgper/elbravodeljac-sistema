@@ -16,6 +16,7 @@ jobs:
       SQL_CONTAINER: bravo-backend-qa
       SQL_IMAGE: mcr.microsoft.com/mssql/server@sha256:21cba63f9e5f93ae72d211e50bceca8f047a6233da18ed5ecb497152f97eca7b
       SQL_DATABASE: elbravodeljac_sqlserver_qa
+      MONGO_CONTAINER: bravo-backend-mongo-qa
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -53,17 +54,36 @@ jobs:
           dsn="sqlserver://sa:$MSSQL_SA_PASSWORD@$port?database=$SQL_DATABASE&encrypt=true&TrustServerCertificate=true"
           printf '::add-mask::%s\n' "$dsn"
           printf 'SQLSERVER_QA_DSN=%s\n' "$dsn" >> "$GITHUB_ENV"
+      - name: Preparar MongoDB aislado para evidencias
+        run: |
+          docker run -d --name "$MONGO_CONTAINER" -p 127.0.0.1::27017 mongo:9.0
+          for attempt in {1..20}; do
+            if docker exec "$MONGO_CONTAINER" mongosh --quiet --eval 'if (db.adminCommand({ping:1}).ok !== 1) quit(1)' >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "$attempt" == 20 ]]; then
+              docker logs --tail 35 "$MONGO_CONTAINER" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+          printf 'SQLSERVER_QA_MONGO_URI=mongodb://%s/?directConnection=true\n' "$(docker port "$MONGO_CONTAINER" 27017/tcp)" >> "$GITHUB_ENV"
       - name: Probar Go con SQL Server 2025
         working-directory: backend
         run: go test -count=1 -v ./internal/platform/sqlserver
       - name: Probar suites Go
         working-directory: backend
-        run: go test -count=1 ./...
+        run: |
+          go test -count=1 ./...
+          go vet ./...
         env:
           SQLSERVER_QA_DSN: ''
+          SQLSERVER_QA_MONGO_URI: ''
       - name: Retirar contenedor de QA
         if: always()
         run: |
-          if docker container inspect "$SQL_CONTAINER" >/dev/null 2>&1; then
-            docker rm -f -v "$SQL_CONTAINER"
-          fi
+          for container in "$SQL_CONTAINER" "$MONGO_CONTAINER"; do
+            if docker container inspect "$container" >/dev/null 2>&1; then
+              docker rm -f -v "$container"
+            fi
+          done

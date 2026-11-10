@@ -8,11 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/felixgper/elbravodeljac-sistema/backend/internal/application"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 	mssql "github.com/microsoft/go-mssqldb"
 )
 
 type Store struct{ db *sql.DB }
+
+var _ application.Store = (*Store)(nil)
 
 // Applied to every new and reused connection. Filtered indexes require these settings.
 const sessionOptions = `SET ANSI_NULLS ON; SET ANSI_PADDING ON; SET ANSI_WARNINGS ON;

@@ -17,7 +17,7 @@ func TestSQLServer2025(t *testing.T) {
 	if dsn == "" {
 		t.Skip("requires isolated SQL Server 2025 QA")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 	s, err := Open(dsn)
 	if err != nil {
@@ -131,4 +131,5 @@ func TestSQLServer2025(t *testing.T) {
 	if err := s.DeleteVehicle(ctx, v.ID); !errors.Is(err, domain.ErrConflict) {
 		t.Fatalf("expected ownership history conflict: %v", err)
 	}
+	exerciseWorkshopHTTP(t, s, password, b.ID, v.ID)
 }

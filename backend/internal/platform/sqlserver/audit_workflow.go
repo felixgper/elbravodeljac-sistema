@@ -141,3 +141,25 @@ SELECT `+paymentJSON+` FROM dbo.pagos p WHERE p.id_pago=@p2;`, id, payment, u.ID
 	}
 	return out, translate(tx.Commit())
 }
+
+func (s *Store) AttentionHistory(ctx context.Context, client, vehicle string, u domain.User) (any, error) {
+	return readJSON(ctx, s.db, `SELECT JSON_OBJECT('attentions':JSON_QUERY((
+SELECT JSON_QUERY(`+receptionJSON+`) AS reception,
+ JSON_QUERY((SELECT CONVERT(varchar(20),o.id_orden) AS id,o.codigo_ot AS code,o.estado AS state,
+  JSON_QUERY((SELECT dc.descripcion AS concept,dc.tipo_concepto AS type,CONVERT(varchar(32),dc.cantidad) AS quantity,
+   COALESCE(JSON_VALUE(o.control_tecnico,CONCAT(N'$.execution."',dc.id_detalle,N'".status')),
+    CASE WHEN EXISTS(SELECT 1 FROM OPENJSON(o.control_tecnico,N'$.performedItems') x WHERE x.value=CONVERT(varchar(20),dc.id_detalle))
+    THEN N'Realizado' ELSE N'Sin confirmar' END) AS status,
+   JSON_VALUE(o.control_tecnico,CONCAT(N'$.execution."',dc.id_detalle,N'".notes')) AS notes
+   FROM dbo.detalle_cotizacion dc WHERE dc.id_cotizacion=q.id_cotizacion ORDER BY dc.id_detalle FOR JSON PATH, INCLUDE_NULL_VALUES)) AS works,
+  JSON_QUERY(o.control_tecnico,N'$.execution') AS execution,
+  CASE WHEN @p3=1 THEN CONVERT(varchar(42),dbo.jac_importe_orden(o.id_orden)) END AS total,
+  JSON_QUERY(CASE WHEN @p3=1 THEN (SELECT `+paymentColumns+` FROM dbo.pagos p
+    WHERE p.id_orden=o.id_orden ORDER BY p.fecha_pago,p.id_pago FOR JSON PATH, INCLUDE_NULL_VALUES) ELSE N'[]' END) AS payments,
+  CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM dbo.entregas e WHERE e.id_orden=o.id_orden) THEN 1 ELSE 0 END) AS delivered
+  FROM dbo.ordenes_trabajo o JOIN dbo.cotizaciones q ON q.id_cotizacion=o.id_cotizacion
+  WHERE q.id_recepcion=r.id_recepcion ORDER BY o.id_orden FOR JSON PATH, INCLUDE_NULL_VALUES)) AS orders
+FROM dbo.recepciones r WHERE (@p1=N'' OR r.id_cliente_atencion=TRY_CONVERT(bigint,@p1))
+ AND (@p2=N'' OR r.id_vehiculo=TRY_CONVERT(bigint,@p2))
+ORDER BY r.fecha_ingreso DESC,r.id_recepcion DESC FOR JSON PATH, INCLUDE_NULL_VALUES)))`, client, vehicle, u.Can("pagos.ver"))
+}
