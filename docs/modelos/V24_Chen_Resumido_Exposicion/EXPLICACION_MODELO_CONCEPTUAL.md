@@ -81,7 +81,7 @@ Evidencia: `recepciones.id_vehiculo; CreateReception`.
 
 Índice uq_diagnosticos_id_recepcion fija máximo uno. Directo no admite diagnóstico; una atención técnica pendiente puede carecer todavía de él.
 
-Evidencia: `esquema_actual.sql: uq_diagnosticos_id_recepcion; migraciones 003/004`.
+Evidencia: `esquema_entrega.sql: uq_diagnosticos_id_recepcion; migraciones 003/004`.
 
 ### S04: RECEPCIONES — GENERA — COTIZACIONES
 

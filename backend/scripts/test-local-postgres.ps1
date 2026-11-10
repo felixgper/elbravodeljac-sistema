@@ -16,7 +16,7 @@ $clusterRoot = Join-Path $backendRoot ('.cache/pg-test-' + [guid]::NewGuid().ToS
 New-Item -ItemType Directory -Path $clusterRoot | Out-Null
 $dataPath = Join-Path $clusterRoot 'data'
 $logPath = Join-Path $clusterRoot 'postgres.log'
-$schemaPath = (Resolve-Path (Join-Path $backendRoot '../database/postgresql/esquema_actual.sql')).Path
+$schemaPath = (Resolve-Path (Join-Path $backendRoot '../database/postgresql/esquema_entrega.sql')).Path
 function New-TestPort {
     $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,0)
     $listener.Start()

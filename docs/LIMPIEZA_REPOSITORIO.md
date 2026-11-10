@@ -1,3 +1,5 @@
+> **Actualización posterior (esquema único):** `database/postgresql/esquema_entrega.sql` es el único modelo físico consolidado; el antiguo punto de partida se conservó solo para regresión histórica en `backend/internal/platform/postgres/migrations/000_base_legacy.sql`. Esta sección documenta la limpieza anterior.
+
 # Limpieza del repositorio — entregables oficiales
 
 Fecha: 6 de noviembre de 2026. Rama `feature/limpieza-entregables-oficiales`, creada desde `main` sincronizada en `4cb8e7ccf5d071cdda32e15954a4b8be579a31f3` (PR #6 fusionado).
@@ -35,7 +37,7 @@ Para recuperar un antecedente: consultar la ruta del CSV en el [árbol anterior 
 | Fuentes V24: ESPECIFICACION_V24.json, RELACIONES_V24.json, ESQUEMA_VERIFICADO.json, INVENTARIO_FK.csv, REGLAS_POR_FK.json, generar_v24.py, inventariar_esquema.py, generar_logico.py | Fuentes de mantenimiento autónomas. No necesitan V23. No se ejecutaron ni modificaron; pueden sobrescribir salidas y solo deben usarse bajo revisión. El Draw.io completo permite editar/exportar la entrega sin los exportadores privados retirados. |
 | Inventario, cardinalidades, explicación y limitaciones de los modelos | Mantienen criterios NULL/UNIQUE, puentes N:M, diagnóstico opcional y separación cargo laboral/acceso. Las limitaciones no se presentan como cambios aplicados. |
 | `database/postgresql/esquema_entrega.sql`, `docs/modelos/COMPARACION_BASE_ACTUAL.md` | Entrega estructural verificada el 5/11/2026 y alcance de esa consulta. No modificados ni ejecutados en esta etapa. |
-| `database/postgresql/esquema_actual.sql`, migraciones 001–009 y su registro Go | Dependencias reales de inicialización y pruebas; no se sustituyen por el SQL de entrega. |
+| `backend/internal/platform/postgres/migrations/000_base_legacy.sql`, migraciones 001–009 y su registro Go | Referencia histórica para migraciones y regresión; las instalaciones nuevas usan el único esquema final. |
 | `backend/` Go, go.mod/sum, Dockerfiles, Compose, scripts, `.env.example`, `.gitignore`, `.dockerignore` | Compilación, configuración e inicialización preservadas. Overrides QA y utilidades manuales históricas quedan por compatibilidad/propiedad de recursos: no se altera código para eliminarlos artificialmente. |
 | `checks/`, `backend/integration/`, pruebas Go y runners aislados | Todas conservadas, incluidas regresiones de nombre antiguo que siguen validando comportamientos vigentes. No se retira ninguna prueba para obtener PASS. |
 | `dist/` HTML/JS/CSS, Diseño 19 y recursos PDF | Código visual y funcional intacto, salvo el SVG sin consumidor. styles.css, atelier.css y gestion-carbon.css se cargan conjuntamente. |

@@ -3,9 +3,10 @@
 -- Exportacion pg_dump --schema-only, en modo de solo lectura.
 -- No contiene filas, contrasenas, cuentas globales ni valores actuales de secuencias.
 -- Modelo verificado: 28 tablas, 208 columnas, 50 FK.
--- Solo para revisar la estructura o cargarla en una base VACIA independiente.
--- No ejecutar sobre bases existentes ni combinar con esquema_actual.sql/migraciones.
--- El arranque Go/Docker conserva su procedimiento tecnico original, sin cambios.
+-- UNICO ESQUEMA FISICO OFICIAL: tambien inicializa bases completamente NUEVAS.
+-- No ejecutar sobre bases existentes ni combinar con migraciones historicas 001-009.
+-- El migrador distingue la marca tecnica final y conserva la ruta legacy para actualizar bases anteriores.
+-- No elimina ni modifica ningun volumen, usuario, tabla o registro existente.
 
 --
 -- PostgreSQL database dump
@@ -2578,6 +2579,9 @@ ALTER TABLE ONLY public.usuarios
 
 
 --
+-- Marca de instalacion COMPLETA desde el SQL consolidado; no es una migracion.
+COMMENT ON SCHEMA public IS 'elbravodeljac:esquema_entrega:v1';
+
 -- PostgreSQL database dump complete
 --
 

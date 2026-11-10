@@ -30,7 +30,7 @@ func TestFrontendSameOriginAndPublicFilesOnly(t *testing.T) {
 	}{
 		{"/", 200, `content="real"`}, {"/demo/", 200, `content="demo"`},
 		{"/assets/js/app.js", 200, "publicAsset"}, {"/demo/assets/js/app.js", 200, "publicAsset"},
-		{"/backend/.env", 404, ""}, {"/assets/js/", 404, ""}, {"/database/postgresql/esquema_actual.sql", 404, ""},
+		{"/backend/.env", 404, ""}, {"/assets/js/", 404, ""}, {"/database/postgresql/esquema_entrega.sql", 404, ""},
 		{"/api/v1/clientes", 401, "UNAUTHORIZED"},
 	} {
 		t.Run(tc.path, func(t *testing.T) {

@@ -80,6 +80,11 @@ try {
     $report.javascriptExitCode=$LASTEXITCODE
     Push-Location backend
     try {
+        $env:POSTGRES_DSN = $env:INTEGRATION_DATABASE_URL
+        try {
+            & go run ./cmd/db-migrate
+            if ($LASTEXITCODE -ne 0) { throw 'No se pudo preparar el catálogo documental del QA nuevo.' }
+        } finally { Remove-Item Env:POSTGRES_DSN -ErrorAction SilentlyContinue }
         & go test ./... -run $TestPattern -json -count=1 -timeout=20m 1> (Join-Path $runRoot 'go-test.log') 2> (Join-Path $runRoot 'go-test-stderr.log')
         $report.goTestExitCode=$LASTEXITCODE
         & go vet ./... 1> (Join-Path $runRoot 'go-vet.log') 2> (Join-Path $runRoot 'go-vet-stderr.log')

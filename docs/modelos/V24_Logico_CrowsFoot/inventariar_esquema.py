@@ -16,7 +16,8 @@ def column(table,name,raw,origin):
  if 'UNIQUE' in raw.upper():T[table]['unique'].append(dict(name=table+'_'+name+'_key',columns=[name],predicate='',origin=origin))
  ref=re.search(r'REFERENCES (?:public\.)?(\w+)\s*\((\w+)\)',raw,re.I)
  if ref:FK.append(dict(name=table+'_'+name+'_fkey',child=table,column=name,parent=ref[1],parent_column=ref[2],origin=origin,definition=raw,generatedName=True))
-for file in [ROOT/'database/postgresql/esquema_actual.sql']+sorted((ROOT/'backend/internal/platform/postgres/migrations').glob('*.sql')):
+# Historical provenance: baseline 000 comes before migrations 001-009.
+for file in sorted((ROOT/'backend/internal/platform/postgres/migrations').glob('*.sql')):
  raw=file.read_text(encoding='utf8');origin=str(file.relative_to(ROOT)).replace('\\','/');sql=re.sub(r'--[^\n]*','',raw)
  sources.append(dict(path=origin,sha256=hashlib.sha256(file.read_bytes()).hexdigest()))
  for m in re.finditer(r'CREATE TABLE (?:IF NOT EXISTS )?(?:public\.)?(\w+) \(\n(.*?)\n\);',sql,re.S|re.I):
