@@ -86,7 +86,7 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 	t.Helper()
 	var technical application.Technical
 	if uri := os.Getenv("SQLSERVER_QA_MONGO_URI"); uri != "" {
-		mg, err := mongodb.Open(uri, "elbravodeljac_sqlserver_qa")
+		mg, err := mongodb.Open(uri, "elbravodeljac_tecnico_test")
 		if err != nil {
 			t.Fatal(err)
 		}

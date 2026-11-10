@@ -78,7 +78,7 @@ func (s *Store) Statistics(ctx context.Context, dashboard bool, start, end time.
 	}
 	if end.Sub(start) <= 31*24*time.Hour {
 		cte = strings.ReplaceAll(cte, "(month,", "(day,")
-		projection = strings.ReplaceAll(projection, "char(7)", "char(10)")
+		projection = strings.ReplaceAll(projection, "char(7),bucket", "char(10),bucket")
 	}
 	return readJSON(ctx, s.db, cte+"SELECT "+projection+" OPTION (MAXRECURSION 366)", start, end, dashboard)
 }

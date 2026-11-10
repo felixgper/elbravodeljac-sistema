@@ -74,12 +74,9 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 	}
 	defer tx.Rollback()
 	if v.DiagnosisID != "" {
-		var reception, state string
-		if err = tx.QueryRowContext(ctx, `SELECT CONVERT(varchar(20),id_recepcion),estado FROM diagnosticos WITH (HOLDLOCK) WHERE id_diagnostico=@p1`, v.DiagnosisID).Scan(&reception, &state); err != nil {
+		var reception string
+		if err = tx.QueryRowContext(ctx, `SELECT CONVERT(varchar(20),id_recepcion) FROM diagnosticos WHERE id_diagnostico=@p1`, v.DiagnosisID).Scan(&reception); err != nil {
 			return nil, translate(err)
-		}
-		if state != "Finalizado" {
-			return nil, domain.Invalid("diagnosisId", "Finaliza el diagnóstico antes de cotizar.")
 		}
 		if v.ReceptionID != "" && v.ReceptionID != reception {
 			return nil, domain.Invalid("receptionId", "Diagnóstico y recepción no corresponden.")
@@ -92,6 +89,16 @@ func (s *Store) SaveQuote(ctx context.Context, id string, v domain.QuoteInput, u
 	}
 	if (attention == "Directo") != (v.DiagnosisID == "") {
 		return nil, domain.Invalid("diagnosisId", "El tipo de atención determina si se requiere diagnóstico.")
+	}
+	// Take the reception lock first, as in diagnosis assignment and finalization.
+	if v.DiagnosisID != "" {
+		var state string
+		if err = tx.QueryRowContext(ctx, `SELECT estado FROM diagnosticos WITH (HOLDLOCK) WHERE id_diagnostico=@p1 AND id_recepcion=@p2`, v.DiagnosisID, v.ReceptionID).Scan(&state); err != nil {
+			return nil, translate(err)
+		}
+		if state != "Finalizado" {
+			return nil, domain.Invalid("diagnosisId", "Finaliza el diagnóstico antes de cotizar.")
+		}
 	}
 	rawContent, _ := json.Marshal(v.Items)
 	contentHash := fmt.Sprintf("%x", sha256.Sum256(rawContent))

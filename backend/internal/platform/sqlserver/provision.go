@@ -2,7 +2,6 @@ package sqlserver
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"strings"
 
@@ -54,13 +53,10 @@ func (s *Store) Provision(ctx context.Context, target, username, password string
 	// A separate, explicit provisioning command must never augment an existing installation.
 	var occupied int
 	err = tx.QueryRowContext(ctx, `
-SELECT CASE WHEN EXISTS(SELECT 1 FROM dbo.usuarios)
-    OR EXISTS(SELECT 1 FROM dbo.roles)
-    OR EXISTS(SELECT 1 FROM dbo.permisos)
-    OR EXISTS(SELECT 1 FROM dbo.tipos_documento)
-    OR EXISTS(SELECT 1 FROM dbo.clientes)
-    OR EXISTS(SELECT 1 FROM dbo.empleados)
-THEN 1 ELSE 0 END`).Scan(&occupied)
+SELECT CASE WHEN EXISTS (
+    SELECT 1 FROM sys.partitions p JOIN sys.tables t ON t.object_id=p.object_id
+    WHERE t.schema_id=SCHEMA_ID(N'dbo') AND p.index_id IN(0,1) AND p.rows>0
+) THEN 1 ELSE 0 END`).Scan(&occupied)
 	if err != nil {
 		return translate(err)
 	}
@@ -107,5 +103,3 @@ INSERT dbo.usuario_roles(id_usuario,id_rol) SELECT @user,id_rol FROM dbo.roles W
 	}
 	return translate(tx.Commit())
 }
-
-var _ queryer = (*sql.Tx)(nil)
