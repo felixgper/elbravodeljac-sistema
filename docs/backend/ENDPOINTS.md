@@ -127,9 +127,9 @@ El catálogo documental se consulta en `GET /tipos-documento` con `clientes.ver`
 | Método | Ruta | Operación |
 |---|---|---|
 | GET | `/api/v1/proveedores` | Buscar nombre/documento |
-| POST | `/api/v1/proveedores` | Alta; resolver parts antes de implementación |
+| POST | `/api/v1/proveedores` | Alta con datos del proveedor |
 | GET | `/api/v1/proveedores/{id}` | Detalle |
-| PATCH | `/api/v1/proveedores/{id}` | Editar; resolver parts antes de implementación |
+| PATCH | `/api/v1/proveedores/{id}` | Edición de datos del proveedor |
 | DELETE | `/api/v1/proveedores/{id}` | Eliminar solo sin referencias |
 
 ### Reportes
@@ -166,6 +166,8 @@ El catálogo documental se consulta en `GET /tipos-documento` con `clientes.ver`
 | PUT | `/api/v1/proveedores/{id}/repuestos/{repuestoId}` | Vincular repuesto y costo de referencia |
 
 ## DTO y validaciones vigentes
+
+Las altas y ediciones de proveedores rechazan un valor no vacío en `parts` con 422. Para registrar repuestos y costos de referencia, utiliza las rutas de vinculación de proveedores y repuestos.
 
 La fuente ejecutable de campos, longitudes, compatibilidad y validaciones es:
 

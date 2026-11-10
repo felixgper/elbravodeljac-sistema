@@ -1,6 +1,6 @@
 # Referencia física detallada V24 — con tipos
 
-Única referencia detallada oficial **con tipos**. Su nombre histórico de carpeta/archivo dice “lógico”; el [lógico oficial sin tipos](../Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.drawio) está separado. No se renombra ni modifica el diagrama.
+Referencia física oficial de PostgreSQL con tipos de datos. El [modelo lógico oficial sin tipos](../Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.drawio) está disponible por separado.
 
 28 tablas, 208 atributos y 50 FK; PK, FK, unicidad y nulabilidad. Una página, seis bloques, Crow’s Foot ortogonal. El diagnóstico sigue siendo opcional según modalidad. La vinculación empleado/cuenta continúa opcional y única.
 
@@ -8,7 +8,7 @@
 
 [Draw.io editable](El_Bravo_del_JAC_V24_Logico_Completo.drawio) · [PDF vectorial A0 horizontal](El_Bravo_del_JAC_V24_Logico_Completo.pdf) · [PNG 7993 × 5400](El_Bravo_del_JAC_V24_Logico_Completo.png).
 
-Abrir en draw.io Desktop o Archivo → Abrir desde → Dispositivo. Exportar desde el editor manteniendo una página y área completa. El editable nativo contiene todo; no requiere V23, capturas de bloques ni herramientas ligadas a una caché privada.
+Abre el archivo en draw.io Desktop o desde Archivo → Abrir desde → Dispositivo. Al exportar, conserva el área completa en una sola página.
 
 ## Alcance del modelo
 

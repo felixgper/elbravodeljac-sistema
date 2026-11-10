@@ -1,6 +1,6 @@
 # El Bravo del JAC
 
-Sistema web de gestión automotriz: clientes, vehículos, recepciones, diagnósticos, cotizaciones, órdenes, auxilios, pagos/entrega, empleados y control de acceso. Frontend HTML/CSS/JavaScript servido por Go, PostgreSQL transaccional y MongoDB/GridFS para escáner y evidencias.
+El Bravo del JAC es un sistema web de gestión automotriz. Administra clientes, vehículos, recepciones, diagnósticos, cotizaciones, órdenes de trabajo, auxilios, pagos, entregas, empleados y permisos. Go sirve el frontend en HTML, CSS y JavaScript. PostgreSQL almacena los datos transaccionales y MongoDB con GridFS conserva los resultados de escáner y las evidencias técnicas.
 
 ## Entregables oficiales
 

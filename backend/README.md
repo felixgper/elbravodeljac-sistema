@@ -38,7 +38,7 @@ En HTTP loopback de desarrollo, `COOKIE_SECURE=false`; en HTTPS usar Secure. Log
 
 Desde la raíz: `node checks/run.mjs` (ocho suites), `./backend/scripts/test-isolated.ps1` (QA nuevo). Para Chrome, runners nativos y requisitos: [checks/README.md](../checks/README.md). No reutilizar bases ni volúmenes. El runner no reconstruye ni reemplaza el aplicativo habitual.
 
-Desde `backend/`: `go test ./...` y `go vet ./...`. Sin DSN/flags de integración habrá SKIP, no pruebas reales aprobadas..
+Ejecuta `go test ./...` y `go vet ./...` desde `backend/`. Las pruebas que requieren una conexión de integración o una opción explícita se omiten cuando falta esa configuración.
 
 ## Límites de despliegue
 

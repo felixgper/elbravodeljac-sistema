@@ -38,7 +38,7 @@ Alternativas existentes conservadas:
 - `backend/scripts/test-local-databases.ps1`: delega al mismo propietario y añade un proceso MongoDB nativo nuevo con directorio/puerto propios; verifica que el puerto pertenece al PID recién creado. `-Browser` habilita además los harness actuales.
 - `backend/scripts/test-audit.ps1`: alias histórico del runner nuevo con navegador. Rechaza los antiguos parámetros de reutilización antes de consultar Docker o ejecutar SQL.
 
-Los runners limpian/restauran sus variables de conexión y opt-ins del proceso. No heredan un `INTEGRATION_CLEAN_DATABASE_URL`, una URI MongoDB ni flags de navegador de otra ejecución. El nativo desactiva también configuración PostgreSQL de entorno y usa `psql -X`, sin ejecutar el `.psqlrc` del usuario.
+Los scripts de pruebas aíslan las variables de conexión y las opciones de integración durante la ejecución y restauran el entorno al finalizar. No heredan un `INTEGRATION_CLEAN_DATABASE_URL`, una URI MongoDB ni flags de navegador de otra ejecución. El nativo desactiva también configuración PostgreSQL de entorno y usa `psql -X`, sin ejecutar el `.psqlrc` del usuario.
 
 ## Acreditación del navegador
 
