@@ -1,0 +1,69 @@
+name: Backend SQL Server QA
+
+on:
+  push:
+    branches: [codex/backend-sql-server]
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    if: github.repository == 'felixgper/elbravodeljac-sistema'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      SQL_CONTAINER: bravo-backend-qa
+      SQL_IMAGE: mcr.microsoft.com/mssql/server@sha256:21cba63f9e5f93ae72d211e50bceca8f047a6233da18ed5ecb497152f97eca7b
+      SQL_DATABASE: elbravodeljac_sqlserver_qa
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Preparar SQL Server 2025 Standard Developer
+        run: |
+          export MSSQL_SA_PASSWORD="Qa9$(openssl rand -hex 24)"
+          printf '::add-mask::%s\n' "$MSSQL_SA_PASSWORD"
+          docker run -d --name "$SQL_CONTAINER" -p 127.0.0.1::1433 \
+            --memory 4g --memory-swap 4g --env MSSQL_MEMORY_LIMIT_MB=3072 \
+            --env ACCEPT_EULA=Y --env MSSQL_PID=StandardDeveloper \
+            --env MSSQL_SA_PASSWORD "$SQL_IMAGE"
+          sqlcmd() {
+            docker exec -i -e SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" "$SQL_CONTAINER" \
+              /opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -C -b -l 2 "$@"
+          }
+          for attempt in {1..36}; do
+            if sqlcmd -Q 'SELECT 1' >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "$(docker inspect --format '{{.State.Running}}' "$SQL_CONTAINER")" != true || "$attempt" == 36 ]]; then
+              docker logs --tail 35 "$SQL_CONTAINER" >&2
+              exit 1
+            fi
+            sleep 3
+          done
+          sqlcmd -Q "CREATE DATABASE [$SQL_DATABASE]"
+          sqlcmd -Q "ALTER DATABASE [$SQL_DATABASE] SET COMPATIBILITY_LEVEL = 170"
+          sqlcmd -f 65001 -d "$SQL_DATABASE" -i /dev/stdin < database/sqlserver/esquema_entrega.sql
+          port="$(docker port "$SQL_CONTAINER" 1433/tcp)"
+          dsn="sqlserver://sa:$MSSQL_SA_PASSWORD@$port?database=$SQL_DATABASE&encrypt=true&TrustServerCertificate=true"
+          printf '::add-mask::%s\n' "$dsn"
+          printf 'SQLSERVER_QA_DSN=%s\n' "$dsn" >> "$GITHUB_ENV"
+      - name: Probar Go con SQL Server 2025
+        working-directory: backend
+        run: go test -count=1 -v ./internal/platform/sqlserver
+      - name: Probar suites Go
+        working-directory: backend
+        run: go test -count=1 ./...
+        env:
+          SQLSERVER_QA_DSN: ''
+      - name: Retirar contenedor de QA
+        if: always()
+        run: |
+          if docker container inspect "$SQL_CONTAINER" >/dev/null 2>&1; then
+            docker rm -f -v "$SQL_CONTAINER"
+          fi
