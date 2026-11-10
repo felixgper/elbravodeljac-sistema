@@ -14,6 +14,8 @@ Abrir http://localhost:8080/. Las credenciales iniciales son privadas (`backend/
 
 La ruta técnica de instalación nueva es `database/postgresql/esquema_entrega.sql` (único esquema físico consolidado) → catálogo documental por el migrador → inicialización MongoDB → provisión autorizada → API. Su marca evita reaplicar migraciones históricas. Las migraciones embebidas 001–009 y `000_base_legacy.sql` se conservan únicamente para actualizar/probar bases anteriores. Nunca ejecutar el esquema final sobre bases existentes ni recrear volúmenes.
 
+Antes de reiniciar PostgreSQL de una instalación existente, revisa el origen del bind mount con `docker inspect`. Compose puede recrear el contenedor si cambia el montaje. Verifica el volumen y los respaldos antes de programar esa recreación. PostgreSQL solo ejecuta el SQL de inicialización con un directorio de datos vacío.
+
 `compose.dev.yaml` conserva volúmenes de desarrollo; `compose.test.yaml` utiliza `tmpfs` y red aislada. Los overrides QA históricos se conservan por compatibilidad y propiedad de recursos; no constituyen otro esquema ni son la entrada recomendada.
 
 ## Configuración

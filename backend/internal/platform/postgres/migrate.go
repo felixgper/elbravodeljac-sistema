@@ -55,7 +55,9 @@ func (s *Store) Migrate(ctx context.Context) error {
 				(SELECT count(*) FROM pg_constraint
 				 WHERE contype='f' AND connamespace='public'::regnamespace)
 		`).Scan(&tables, &columns, &fks)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		if tables != 28 || columns != 208 || fks != 50 {
 			return fmt.Errorf("esquema consolidado incompleto: tablas=%d columnas=%d fk=%d; no ejecutar migraciones historicas", tables, columns, fks)
 		}

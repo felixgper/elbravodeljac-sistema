@@ -54,6 +54,7 @@ func TestSheetFunctionalAudit(t *testing.T) {
 	api.Start()
 	defer api.Close()
 	h := workshopHarness{ctx: ctx, pool: pool, api: api, origin: origin, password: rand.Text(), suffix: rand.Text()[:8]}
+	h.seedCanonicalRoles(t)
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(h.password), bcrypt.DefaultCost)
 	if err != nil {
 		t.Fatal(err)

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/httpapi"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -153,6 +154,23 @@ func (h *workshopHarness) scalar(t *testing.T, sql string, args ...any) string {
 	}
 	return v
 }
+func (h *workshopHarness) seedCanonicalRoles(t *testing.T) {
+	t.Helper()
+	for name, matrix := range domain.PermissionPolicy().Defaults {
+		h.exec(t, `INSERT INTO roles(nombre_rol) VALUES($1) ON CONFLICT(nombre_rol) DO NOTHING`, name)
+		codes, err := matrix.Codes()
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, code := range codes {
+			h.exec(t, `INSERT INTO permisos(codigo) VALUES($1) ON CONFLICT(codigo) DO NOTHING`, code)
+			h.exec(t, `INSERT INTO rol_permisos(id_rol,id_permiso)
+				SELECT r.id_rol,p.id_permiso FROM roles r CROSS JOIN permisos p
+				WHERE r.nombre_rol=$1 AND p.codigo=$2 ON CONFLICT DO NOTHING`, name, code)
+		}
+	}
+}
+
 func (h *workshopHarness) user(t *testing.T, label, role string, permissions []string) (string, workshopSession) {
 	t.Helper()
 	hash, err := bcrypt.GenerateFromPassword([]byte(h.password), bcrypt.DefaultCost)

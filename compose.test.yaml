@@ -31,6 +31,7 @@ services:
       retries: 30
     networks: [test-only]
   tests:
+    command: ["sh", "-ec", 'POSTGRES_DSN="$$INTEGRATION_DATABASE_URL" go run ./cmd/db-migrate && exec go test ./... -count=1 -v']
     build:
       context: .
       dockerfile: backend/Dockerfile.test
