@@ -6,14 +6,12 @@
 
 ## Entregables
 
-[Draw.io editable](El_Bravo_del_JAC_V24_Logico_Completo.drawio) · [PDF vectorial A0 horizontal](El_Bravo_del_JAC_V24_Logico_Completo.pdf) · [PNG 7993 × 5400](El_Bravo_del_JAC_V24_Logico_Completo.png) · [SVG](El_Bravo_del_JAC_V24_Logico_Completo.svg).
+[Draw.io editable](El_Bravo_del_JAC_V24_Logico_Completo.drawio) · [PDF vectorial A0 horizontal](El_Bravo_del_JAC_V24_Logico_Completo.pdf) · [PNG 7993 × 5400](El_Bravo_del_JAC_V24_Logico_Completo.png).
 
 Abrir en draw.io Desktop o Archivo → Abrir desde → Dispositivo. Exportar desde el editor manteniendo una página y área completa. El editable nativo contiene todo; no requiere V23, capturas de bloques ni herramientas ligadas a una caché privada.
 
-## Fuentes de mantenimiento
+## Alcance del modelo
 
-Se conservan ESQUEMA_VERIFICADO.json, INVENTARIO_FK.csv, REGLAS_POR_FK.json, [inventario](INVENTARIO_TABLAS_Y_FK.md), [cardinalidades](REVISION_CARDINALIDADES.md), [niveles](COMPARACION_CONCEPTUAL_LOGICO_FISICO.md) y [limitaciones](INCONSISTENCIAS_DETECTADAS.md).
+El [esquema oficial](../../../database/postgresql/esquema_entrega.sql) define la estructura para instalaciones nuevas. La comparación del 5 de noviembre de 2026 verificó las tablas, columnas y claves del modelo lógico contra el catálogo de PostgreSQL de desarrollo de esa fecha.
 
-`inventariar_esquema.py` reconstruye el inventario desde el esquema inicial y 001–009; `generar_logico.py` produce el editable desde ese inventario. Son herramientas opcionales que sobrescriben sus salidas; no ejecutarlas para consultar/exportar la entrega aprobada. Sus salidas auxiliares de geometría no son entradas necesarias. Los validadores/exportadores retirados dependían de rutas privadas, GraphViewer en caché y hashes de un estado histórico.
-
-La [comparación de PostgreSQL real del 5/11/2026](../COMPARACION_BASE_ACTUAL.md) complementa la revisión original basada en DDL; no acredita otra instancia. La limpieza conserva editables y exportaciones byte por byte, sin ejecutar generadores, SQL ni migraciones.
+El modelo representa las restricciones declarativas de PostgreSQL. Las referencias a responsables operativos siguen apuntando a usuarios. El vínculo entre empleado y cuenta es opcional y único. Una recepción puede estar referenciada por varios auxilios. Reglas como exigir un diagnóstico finalizado para cotizar una atención técnica, validar el alcance de un usuario o exigir asignaciones en nuevas órdenes deben leerse junto con el [contrato de la API](../../backend/ENDPOINTS.md).

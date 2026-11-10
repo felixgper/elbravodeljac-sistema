@@ -29,16 +29,16 @@ $env:BRAVO_BROWSER = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 ./backend/scripts/test-isolated.ps1 -Browser
 ```
 
-El runner crea otro proyecto Compose con UUID, PostgreSQL/MongoDB `tmpfs`, puertos loopback aleatorios y una copia temporal de las fuentes. Aplica el SQL inicial y las nueve migraciones oficiales únicamente en la inicialización de la base vacía. Usa contraseñas efímeras en memoria, guarda evidencia ignorada y deja el QA identificado para revisión; no detiene otros proyectos. `-TestPattern` permite elegir escenarios. `-GoBuildCache` permite reutilizar únicamente compilaciones, nunca bases o volúmenes; `-count=1` evita reutilizar resultados de pruebas.
+El runner crea otro proyecto Compose con UUID, PostgreSQL/MongoDB `tmpfs`, puertos loopback aleatorios y una copia temporal de las fuentes. Inicializa la base vacía con `esquema_entrega.sql`. El migrador detecta su marca, prepara el catálogo documental y no vuelve a aplicar 001–009. Las pruebas de compatibilidad que parten de `000_base_legacy.sql` sí ejercitan las migraciones 001–009. Usa contraseñas efímeras en memoria, guarda evidencia ignorada y deja el QA identificado para revisión; no detiene otros proyectos. `-TestPattern` permite elegir escenarios. `-GoBuildCache` permite reutilizar únicamente compilaciones, nunca bases o volúmenes; `-count=1` evita reutilizar resultados de pruebas.
 
 Alternativas existentes conservadas:
 
 - `backend/scripts/test-compose.ps1`: ejecuta Go dentro de una imagen de pruebas y crea un proyecto nuevo sin puertos publicados. Al terminar retira solamente ese proyecto cuya ausencia comprobó antes de crearlo. No compila/reemplaza la imagen del aplicativo habitual. Las suites Chrome no se habilitan en esa entrada.
-- `backend/scripts/test-local-postgres.ps1`: crea un clúster PostgreSQL nativo nuevo, puerto aleatorio y esquema inicial; llama una vez a `go run ./cmd/db-migrate` para 001–009. No mantiene otra lista SQL de migraciones. Después ejecuta Go y cierra únicamente ese clúster. Requiere PostgreSQL 18, Go y Node.
+- `backend/scripts/test-local-postgres.ps1`: crea un clúster PostgreSQL nativo nuevo, puerto aleatorio y esquema inicial; llama una vez a `go run ./cmd/db-migrate` para preparar el catálogo documental. No mantiene otra lista SQL de migraciones. Después ejecuta Go y cierra únicamente ese clúster. Requiere PostgreSQL 18, Go y Node.
 - `backend/scripts/test-local-databases.ps1`: delega al mismo propietario y añade un proceso MongoDB nativo nuevo con directorio/puerto propios; verifica que el puerto pertenece al PID recién creado. `-Browser` habilita además los harness actuales.
 - `backend/scripts/test-audit.ps1`: alias histórico del runner nuevo con navegador. Rechaza los antiguos parámetros de reutilización antes de consultar Docker o ejecutar SQL.
 
-Los runners limpian/restauran sus variables de conexión y opt-ins del proceso. No heredan un `INTEGRATION_CLEAN_DATABASE_URL`, una URI MongoDB ni flags de navegador de otra ejecución. El nativo desactiva también configuración PostgreSQL de entorno y usa `psql -X`, sin ejecutar el `.psqlrc` del usuario. El esquema oficial académico `esquema_entrega.sql` no reemplaza la inicialización técnica.
+Los runners limpian/restauran sus variables de conexión y opt-ins del proceso. No heredan un `INTEGRATION_CLEAN_DATABASE_URL`, una URI MongoDB ni flags de navegador de otra ejecución. El nativo desactiva también configuración PostgreSQL de entorno y usa `psql -X`, sin ejecutar el `.psqlrc` del usuario.
 
 ## Acreditación del navegador
 
@@ -50,4 +50,4 @@ Cada escenario histórico tiene su propio servidor y limitador de Login. No se d
 
 Esta protección previene conexiones accidentales mediante los runners soportados; no sustituye JWT/CSRF/permisos ni es una barrera contra un operador que altere deliberadamente el harness o marque manualmente otra base. No apuntar variables de integración a instalaciones existentes.
 
-`go test ./...` sin DSN o flags omite las integraciones correspondientes. **SKIP significa no ejecutada**, no aprobada. El informe de la etapa 2 documenta los resultados efectivos y las precondiciones pendientes.
+`go test ./...` sin DSN o flags omite las integraciones correspondientes. **SKIP significa no ejecutada**, no aprobada.

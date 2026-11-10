@@ -16,7 +16,7 @@ La ruta técnica de instalación nueva es `database/postgresql/esquema_entrega.s
 
 Antes de reiniciar PostgreSQL de una instalación existente, revisa el origen del bind mount con `docker inspect`. Compose puede recrear el contenedor si cambia el montaje. Verifica el volumen y los respaldos antes de programar esa recreación. PostgreSQL solo ejecuta el SQL de inicialización con un directorio de datos vacío.
 
-`compose.dev.yaml` conserva volúmenes de desarrollo; `compose.test.yaml` utiliza `tmpfs` y red aislada. Los overrides QA históricos se conservan por compatibilidad y propiedad de recursos; no constituyen otro esquema ni son la entrada recomendada.
+`compose.dev.yaml` conserva volúmenes de desarrollo; `compose.test.yaml` utiliza `tmpfs` y red aislada. El script manual `scripts/backup-audit.ps1` y sus dos Compose de auditoría se reservan para el procedimiento de respaldo y restauración aislada. El script exige identificar los proyectos y sus archivos Compose antes de leer la fuente o restaurar en QA.
 
 ## Configuración
 
@@ -28,10 +28,9 @@ En HTTP loopback de desarrollo, `COOKIE_SECURE=false`; en HTTPS usar Secure. Log
 
 ## Contratos y organización
 
-- [Rutas y DTO vigentes](../docs/backend/ENDPOINTS.md); el [catálogo original de 71](../docs/backend/ESTADO_ENDPOINTS.md) se conserva como regresión, no como conteo total actual.
-- [Empleados y cuentas opcionales](../docs/backend/EMPLEADOS.md), [catálogo documental y roles](../docs/backend/CATALOGO_DOCUMENTOS_TRES_ROLES.md), [diagnósticos asignados](../docs/backend/FLUJO_DIAGNOSTICOS_ASIGNADOS.md).
+- [API REST y reglas operativas](../docs/backend/ENDPOINTS.md).
 - [MongoDB y su contrato BSON](../database/mongodb/README.md).
-- [PDF oficiales y descarga histórica inmutable](../docs/backend/CONSOLIDACION_PDF_DISENO19.md).
+- [Generación y conservación de PDF](internal/platform/technicalsheet/README.md).
 
 `cmd/` contiene ejecutables; `internal/httpapi` transporte y autorización; `internal/auth` JWT/CSRF; `internal/domain` DTO y validaciones; `internal/application` interfaz Store; `internal/platform/postgres` SQL/transacciones/migraciones; `internal/platform/mongodb` driver oficial/índices/GridFS; `internal/platform/technicalsheet` generadores aprobados. `integration/` contiene pruebas HTTP con motores reales aislados.
 
@@ -39,7 +38,7 @@ En HTTP loopback de desarrollo, `COOKIE_SECURE=false`; en HTTPS usar Secure. Log
 
 Desde la raíz: `node checks/run.mjs` (ocho suites), `./backend/scripts/test-isolated.ps1` (QA nuevo). Para Chrome, runners nativos y requisitos: [checks/README.md](../checks/README.md). No reutilizar bases ni volúmenes. El runner no reconstruye ni reemplaza el aplicativo habitual.
 
-Desde `backend/`: `go test ./...` y `go vet ./...`. Sin DSN/flags de integración habrá SKIP, no pruebas reales aprobadas. [Aislamiento y limitaciones](../docs/backend/ETAPA2_PRUEBAS_AISLADAS.md).
+Desde `backend/`: `go test ./...` y `go vet ./...`. Sin DSN/flags de integración habrá SKIP, no pruebas reales aprobadas..
 
 ## Límites de despliegue
 

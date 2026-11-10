@@ -1,18 +1,12 @@
 # Endpoints REST vigentes
 
-Base `/api/v1`. El catálogo y sus permisos están implementados en [routes.go](../../backend/internal/httpapi/routes.go) y sus handlers. El [catálogo original de 71](ESTADO_ENDPOINTS.md) se conserva como regresión; no es el conteo total actual. [MongoDB](../../database/mongodb/README.md) · [Pruebas aisladas](../../checks/README.md).
+Base `/api/v1`. El catálogo y sus permisos están implementados en [routes.go](../../backend/internal/httpapi/routes.go) y sus handlers. [MongoDB](../../database/mongodb/README.md) · [Pruebas aisladas](../../checks/README.md).
 
 ## Convenciones
 
-Catálogo documental: `GET /api/v1/tipos-documento`, con sesión y `clientes.ver`
-o `pagos.ver`. `/roles` devuelve `active`; nuevas asignaciones usan Gerente,
-Administrador y Mecánico. Nuevas asignaciones/modificaciones de `assistantId`
-en órdenes devuelven 422. Detalles y pruebas:
-[Catálogo y tres roles](CATALOGO_DOCUMENTOS_TRES_ROLES.md).
+El catálogo documental se consulta en `GET /tipos-documento` con `clientes.ver` o `pagos.ver`. Los tipos iniciales son DNI, RUC, CE y PASAPORTE. `documentType` y `documentNumber` mantienen su formato JSON. Se puede conservar una identidad histórica inactiva al editar otros campos. Cambiarla exige un tipo activo. La identidad del receptor de una entrega queda en su snapshot.
 
-Extensión de empleados: cuatro operaciones adicionales y vinculación opcional
-en usuarios, documentadas en [EMPLEADOS.md](EMPLEADOS.md). El cargo laboral no
-concede permisos ni reemplaza los roles N de acceso.
+`GET /roles` devuelve `active`. Los roles disponibles para nuevas asignaciones son Gerente, Administrador y Mecánico. Un rol legado inactivo deja de ofrecerse, pero conserva los permisos de las cuentas que lo mantienen asignado. La asignación de roles y la edición de matrices requieren autorización y no permiten conceder permisos que el actor no posea. Se protegen la matriz de Gerente, el último acceso administrativo y, una vez establecido, el último Gerente activo. Cambiar roles o desactivar una cuenta revoca sus sesiones.
 
 - JSON UTF-8. IDs SQL como strings decimales; campos JSON camelCase del formulario. Rutas {id} usan ID SQL, nunca codigo_ot.
 - Dinero, km y cantidades: strings decimales exactos; respuesta con dos decimales. total/subtotal/saldo son calculados por servidor.
@@ -181,6 +175,18 @@ La fuente ejecutable de campos, longitudes, compatibilidad y validaciones es:
 - [Empleados](../../backend/internal/domain/employee.go).
 - [Escáner y evidencias](../../backend/internal/domain/technical.go).
 
-Se retiran los payloads propuestos en fases iniciales, que eran incompletos. Recepción lleva modalidad explícita; Directo no crea diagnóstico ficticio. Cotización exige recepción y diagnóstico finalizado cuando corresponde. Las referencias de conceptos manuales son opcionales y validadas. OT exige aprobación. Pago usa requestId estable y entrega verifica saldo, identidad y conformidad.
+### Empleados y cuentas
 
-[Diagnósticos asignados](FLUJO_DIAGNOSTICOS_ASIGNADOS.md) · [Empleados](EMPLEADOS.md) · [PDF oficiales e históricos inmutables](CONSOLIDACION_PDF_DISENO19.md) · [PostgreSQL verificado](../modelos/COMPARACION_BASE_ACTUAL.md).
+`GET /empleados` y `GET /empleados/{id}` requieren `usuarios.ver`. El alta por POST requiere `usuarios.crear` y la edición parcial por PATCH requiere `usuarios.editar`. El alta acepta `name` (hasta 150 caracteres), `employeeType` (hasta 40) y `active` (true por defecto). El empleado puede existir sin cuenta y su cargo laboral no concede permisos. Se cambia su estado laboral sin borrarlo físicamente.
+
+El POST o PATCH de usuarios acepta `employeeId`. Vincular requiere además `usuarios.roles` y se realiza en la misma transacción que la cuenta y sus roles. Un vínculo ocupado devuelve 409, una referencia inexistente devuelve 404 y un empleado inactivo devuelve 422. El nombre de una cuenta vinculada se administra desde Empleados. Desactivar el empleado no desactiva su cuenta. Los registros operativos siguen referenciando usuarios y el sistema conserva la relación de múltiples roles por cuenta.
+
+### Recepción, diagnóstico y órdenes
+
+Una recepción directa no crea diagnóstico. Para atención técnica, la interfaz exige un mecánico asignado. Las recepciones técnicas sin asignación admitidas por compatibilidad deben asignarse antes de diagnosticar. Los permisos de ver, asignar y supervisar diagnósticos se verifican junto al alcance del registro. Una asignación a una orden no otorga supervisión general de diagnósticos.
+
+El diagnóstico admite Borrador o Finalizado. La finalización exige hallazgos, evaluación y recomendaciones. Las observaciones son opcionales. La edición usa `version` y la reasignación usa `assignmentVersion`. Un conflicto de versión devuelve 409. Reasignar conserva borrador e historial y cambia el acceso del técnico anterior. Un diagnóstico finalizado es inmutable y habilita la cotización técnica.
+
+La cotización exige recepción y diagnóstico finalizado cuando corresponde. Las referencias de conceptos manuales son opcionales y validadas. La orden exige aprobación y un mecánico de ejecución, que puede ser distinto del responsable del diagnóstico. Las nuevas asignaciones de auxiliar y los cambios de `assistantId` devuelven 422. Las asignaciones históricas se conservan. Pago requiere `requestId` estable y entrega verifica saldo, identidad y conformidad.
+
+Los PDF archivados de entrega se devuelven byte por byte. Para su generación y descarga, consulta el [contrato de PDF](../../backend/internal/platform/technicalsheet/README.md).
