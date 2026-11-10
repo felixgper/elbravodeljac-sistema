@@ -72,9 +72,9 @@ function shell(session, module) {
     <aside class="sidebar" id="sidebar" aria-label="Menú principal"><a class="sidebar-brand" href="#/${homePath(session.role)}" aria-label="Inicio de El Bravo del JAC">${brand()}</a><div class="sidebar-caption">GESTIÓN DEL TALLER</div><nav>${allowed.map(m => `${m.id === 'mecanicos' && allowed.indexOf(m) > 0 ? '<div class="nav-divider"></div>' : ''}<a class="nav-item ${m.id === module.id ? 'active' : ''}" href="#/${m.id}" ${m.id === module.id ? 'aria-current="page"' : ''} title="${m.label}">${icon(m.icon)}<span>${m.label}</span>${!m.ready ? '<span class="nav-pending" aria-label="Próxima etapa"></span>' : ''}</a>`).join('')}</nav><div class="sidebar-footer"><span>EL BRAVO DEL JAC</span><small>Cuidado experto. En cada detalle.</small></div></aside>
     <main class="workspace" id="main-content"><div class="page-heading"><div><div class="breadcrumb">El Bravo del JAC ${icon('chevron')} <span>${module.id === 'inicio' ? 'Dashboard' : module.label}</span></div><h1>${module.id === 'inicio' ? `Bienvenido, ${escapeHtml(session.name)}` : module.label}</h1><p>${module.id === 'inicio' ? 'Panel de control del taller' : 'Sistema de gestión del taller automotriz'}</p></div><div class="page-date">${icon('clock')}<span>${date}</span></div></div><div id="page-content"></div><footer class="workspace-footer"><span>El Bravo del JAC · Gestión del taller</span><span>${realMode?'Modo real':'Frontend demo'} <span class="footer-dot">•</span> ${realMode?'Datos del taller':'Datos ilustrativos'}</span></footer></main>
   </div>`;
-  bindShell();
+  bindShell(session);
 }
-function bindShell() {
+function bindShell(session) {
   const app = root.querySelector('.app-shell'), toggle = document.getElementById('menu-toggle'), scrim = document.getElementById('sidebar-scrim');
   const sidebar = document.getElementById('sidebar');
   const menuMedia = matchMedia('(max-width: 900px)');
@@ -85,6 +85,7 @@ function bindShell() {
   disposeShell = () => menuMedia.removeEventListener('change',adjustMenu);
   const profileButton = document.getElementById('profile-toggle'), profileMenu = document.getElementById('profile-menu');
   const search = document.getElementById('module-search'), results = document.getElementById('search-results');
+  const canViewReports = permissionChecker(session.role)('reportes','ver');
   function closeMenu() { app.classList.remove('sidebar-open'); scrim.hidden = true; toggle.setAttribute('aria-expanded','false'); sidebar.inert = matchMedia('(max-width: 900px)').matches; }
   toggle.addEventListener('click', () => {
     if (matchMedia('(max-width: 900px)').matches) {
@@ -111,7 +112,8 @@ function bindShell() {
   document.getElementById('logout').addEventListener('click', async () => { try {await logout(); location.hash = '#/login';}catch(error){notify(error.message);} });
   search.addEventListener('input', () => {
     const query = search.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    const matches = allowed.filter(m => (m.label+' '+(m.keywords||'')).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(query));
+    const searchEntries = canViewReports ? [...allowed, {id:'inicio?tab=analisis',label:'Reportes · Análisis',keywords:'ingresos',icon:'chart',ready:true}] : allowed;
+    const matches = searchEntries.filter(m => (m.label+' '+(m.keywords||'')).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(query));
     results.innerHTML = matches.length ? matches.map(m => `<a role="option" href="#/${m.id}">${icon(m.icon)}<span>${m.label}</span>${!m.ready ? '<small>Próxima etapa</small>' : ''}</a>`).join('') : '<p role="option" aria-disabled="true">No se encontraron módulos.</p>';
     results.hidden = !query; search.setAttribute('aria-expanded',String(Boolean(query)));
   });

@@ -1,5 +1,5 @@
 export const modules = [
-  { id: 'inicio', label: 'Inicio', keywords: 'dashboard reportes analisis ingresos', icon: 'home', ready: true, screens: ['14 - Reportes'] },
+  { id: 'inicio', label: 'Inicio', keywords: 'dashboard', icon: 'home', ready: true, screens: ['14 - Reportes'] },
   { id: 'clientes', label: 'Clientes', icon: 'users', screens: ['03 - Clientes', '04 - Nuevo cliente'] },
   { id: 'vehiculos', label: 'Vehículos', icon: 'car', screens: ['05 - Vehículos', '06 - Nuevo vehículo', '06B - Actualizar vehículo'] },
   { id: 'recepciones', label: 'Recepciones', icon: 'reception', screens: ['07 - Nueva recepción'] },
