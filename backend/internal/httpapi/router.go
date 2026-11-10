@@ -24,6 +24,7 @@ type Options struct {
 	Origin        string
 	Key           []byte
 	SecureCookies bool
+	SQLServer     bool
 }
 type server struct {
 	store     application.Store
@@ -82,7 +83,11 @@ func New(store application.Store, opts Options) (http.Handler, error) {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { respond(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
 		if err := store.Ping(r.Context()); err != nil {
-			writeError(w, 503, "NOT_READY", "PostgreSQL no está disponible.")
+			message := "PostgreSQL no está disponible."
+			if opts.SQLServer {
+				message = "SQL Server no está disponible."
+			}
+			writeError(w, 503, "NOT_READY", message)
 			return
 		}
 		if opts.Technical != nil {

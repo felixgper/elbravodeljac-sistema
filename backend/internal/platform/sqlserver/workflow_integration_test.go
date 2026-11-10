@@ -284,7 +284,34 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 			}
 			manager.call(t, "POST", orderPath+"/pagos", payment("excess-"+order, "40.26"), 422)
 			manager.call(t, "POST", orderPath+"/entrega", delivery, 422)
-			finalID := qaID(t, manager.call(t, "POST", orderPath+"/pagos", payment("final-"+order, "40.25"), 201))
+			start = make(chan struct{})
+			for _, suffix := range []string{"a", "b"} {
+				go func() {
+					<-start
+					st, b, e := manager.request("POST", "/api/v1"+orderPath+"/pagos", payment("final-"+order+suffix, "40.25"))
+					results <- result{st, b, e}
+				}()
+			}
+			close(start)
+			var finalID string
+			rejected := 0
+			for range 2 {
+				got := <-results
+				if got.err != nil {
+					t.Fatal(got.err)
+				}
+				switch got.status {
+				case 201:
+					finalID = qaID(t, got.raw)
+				case 422:
+					rejected++
+				default:
+					t.Fatalf("competing payment: %d %s", got.status, got.raw)
+				}
+			}
+			if rejected != 1 || finalID == "" {
+				t.Fatal("exactly one payment may settle the balance")
+			}
 			manager.call(t, "POST", orderPath+"/entrega", delivery, 201)
 			first := manager.call(t, "GET", orderPath+"/ficha-tecnica.pdf", nil, 200)
 			if !bytes.HasPrefix(first, []byte("%PDF-")) {

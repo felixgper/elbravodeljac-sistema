@@ -73,7 +73,7 @@ func main() {
 	if frontendDir == "" {
 		frontendDir = "../dist"
 	}
-	handler, err := httpapi.New(store, httpapi.Options{FrontendDir: frontendDir, Origin: cfg.Origin, Key: cfg.Key, SecureCookies: cfg.SecureCookies, Technical: technical})
+	handler, err := httpapi.New(store, httpapi.Options{FrontendDir: frontendDir, Origin: cfg.Origin, Key: cfg.Key, SecureCookies: cfg.SecureCookies, Technical: technical, SQLServer: cfg.SQLServer})
 	if err != nil {
 		log.Fatal("No se pudo preparar HTTP")
 	}
