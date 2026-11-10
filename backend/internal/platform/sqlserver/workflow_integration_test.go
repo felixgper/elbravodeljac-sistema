@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -121,6 +120,9 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 		return u
 	}
 	anon := session()
+	if status, raw, err := anon.request("GET", "/readyz", nil); err != nil || status != 200 {
+		t.Fatalf("readiness: %d %s %v", status, raw, err)
+	}
 	anon.call(t, "GET", "/usuarios", nil, 401)
 	manager := login("gerente_qa")
 	var managerRole, mechanicRole, adminRole string
@@ -132,22 +134,42 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 			t.Fatal(err)
 		}
 	}
-	mechanicID := qaID(t, manager.call(t, "POST", "/usuarios", map[string]string{"name": "Mecánico QA", "username": "mecanico_qa", "password": password, "roleId": mechanicRole}, 201))
+	employee := qaID(t, manager.call(t, "POST", "/empleados", map[string]string{"name": "Mecánico QA", "employeeType": "Mecánico"}, 201))
+	mechanicID := qaID(t, manager.call(t, "POST", "/usuarios", map[string]string{"name": "Mecánico QA", "username": "mecanico_qa", "password": password, "roleId": mechanicRole, "employeeId": employee}, 201))
 	manager.call(t, "POST", "/usuarios", map[string]string{"name": "Otro Mecánico QA", "username": "otro_qa", "password": password, "roleId": mechanicRole}, 201)
 	manager.call(t, "POST", "/usuarios", map[string]string{"name": "Administrador QA", "username": "administrador_qa", "password": password, "roleId": adminRole}, 201)
 	worker, other, admin := login("mecanico_qa"), login("otro_qa"), login("administrador_qa")
 	worker.call(t, "GET", "/usuarios", nil, 403)
+	worker.call(t, "POST", "/roles/"+mechanicRole+"/permisos/restablecer", nil, 403)
+	manager.call(t, "POST", "/roles/"+mechanicRole+"/permisos/restablecer", nil, 200)
 	csrf := manager
 	csrf.csrf = ""
 	csrf.call(t, "POST", "/recepciones", map[string]string{}, 403)
 	for _, p := range []string{"/usuarios", "/empleados", "/roles", "/permisos", "/roles/" + managerRole + "/permisos", "/proveedores", "/auxilios", "/unidades-auxilio", "/servicios", "/repuestos", "/dashboard", "/reportes", "/recepciones", "/diagnosticos", "/cotizaciones", "/ordenes", "/cotizaciones/atenciones", "/diagnosticos/pendientes-cotizacion"} {
 		manager.call(t, "GET", p, nil, 200)
 	}
+	manager.call(t, "GET", "/frontend/opciones?module=ordenes&resource=mecanicos", nil, 200)
+	manager.call(t, "GET", "/frontend/opciones?module=ordenes&resource=clientes", nil, 200)
+	provider := qaID(t, manager.call(t, "POST", "/proveedores", map[string]string{"name": "Proveedor QA", "document": "QA-SYNTHETIC"}, 201))
+	part := qaID(t, manager.call(t, "POST", "/repuestos", map[string]string{"name": "Repuesto QA", "referencePrice": "10.00", "stock": "2"}, 201))
+	providerPart := "/proveedores/" + provider + "/repuestos/" + part
+	manager.call(t, "PUT", providerPart, map[string]string{"referenceCost": "7.00"}, 200)
+	manager.call(t, "PUT", providerPart, map[string]string{"referenceCost": "7.25"}, 200)
+	manager.call(t, "GET", "/proveedores/"+provider+"/repuestos", nil, 200)
+	manager.call(t, "DELETE", providerPart, nil, 204)
+	unit := qaID(t, manager.call(t, "POST", "/unidades-auxilio", map[string]string{"code": "QA-01"}, 201))
+	rescue := qaID(t, manager.call(t, "POST", "/auxilios", map[string]string{
+		"clientId": client, "vehicleId": vehicle, "technicianId": mechanicID, "unitId": unit,
+		"location": "Punto QA", "incident": "Neumático", "description": "Evento sintético",
+	}, 201))
+	manager.call(t, "PATCH", "/auxilios/"+rescue, map[string]string{"state": "en_atencion"}, 200)
+	worker.call(t, "GET", "/me/tareas", nil, 200)
+	service := qaID(t, manager.call(t, "POST", "/servicios", map[string]string{"name": "Revisión sintética", "referencePrice": "100.25"}, 201))
 	for _, attention := range []string{"Directo", "Diagnostico"} {
 		t.Run(attention, func(t *testing.T) {
 			reception := qaID(t, manager.call(t, "POST", "/recepciones", map[string]string{"clientId": client, "vehicleId": vehicle, "mileage": "12", "attentionType": attention, "symptoms": "Ruido de prueba"}, 201))
 			manager.call(t, "GET", "/recepciones/"+reception, nil, 200)
-			quoteBody := map[string]any{"receptionId": reception, "status": "Pendiente", "items": []map[string]string{{"type": "Servicio", "concept": "Revisión sintética", "quantity": "1", "unitPrice": "100.25"}}}
+			quoteBody := map[string]any{"receptionId": reception, "status": "Pendiente", "items": []map[string]string{{"type": "Servicio", "concept": "Revisión sintética", "serviceId": service, "quantity": "1", "unitPrice": "100.25"}}}
 			if attention == "Diagnostico" {
 				manager.call(t, "POST", "/cotizaciones", quoteBody, 422)
 				manager.call(t, "PATCH", "/recepciones/"+reception+"/mecanico", map[string]any{"technicianId": mechanicID, "version": 0}, 200)
@@ -168,7 +190,7 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 						t.Skip("requires isolated MongoDB QA")
 					}
 					base := "/diagnosticos/" + diagnosis
-					scan := map[string]any{"requestId": "qa-scan", "equipo": map[string]string{"nombre": "Scanner QA", "version": "1"}, "dtcs": []map[string]string{{"codigo": "P0300"}}}
+					scan := map[string]any{"requestId": "qa-scan", "equipo": map[string]string{"nombre": "Scanner QA", "version": "1"}, "dtcs": []map[string]string{{"codigo": "P0300"}}, "mediciones": map[string]any{"rpm": 1234}}
 					id := qaID(t, worker.call(t, "POST", base+"/escaneres", scan, 201))
 					if got := qaID(t, worker.call(t, "POST", base+"/escaneres", scan, 200)); got != id {
 						t.Fatal("scan replay changed id")
@@ -268,6 +290,10 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 			if !bytes.HasPrefix(first, []byte("%PDF-")) {
 				t.Fatal("missing delivery PDF")
 			}
+			var archive []byte
+			if err := s.db.QueryRow("SELECT ficha_pdf FROM entregas WHERE id_orden=@p1", order).Scan(&archive); err != nil || !bytes.Equal(archive, first) {
+				t.Fatalf("PDF served differs from its archived bytes: %v", err)
+			}
 			fix := map[string]any{"reason": "Corregir método de pago de QA", "requestId": "replace-" + order, "replacement": map[string]string{"method": "Tarjeta", "comprobante": "RECT-QA"}}
 			manager.call(t, "PATCH", orderPath+"/pagos/"+finalID, fix, 200)
 			manager.call(t, "PATCH", orderPath+"/pagos/"+finalID, fix, 200)
@@ -275,11 +301,15 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 				t.Fatal("archived PDF changed")
 			}
 			if got := qaData(t, manager.call(t, "GET", orderPath+"/pagos", nil, 200))["balance"]; got != "0.00" {
-				t.Fatal(fmt.Sprint(got))
+				t.Fatalf("unexpected balance after correction: %v", got)
 			}
 			manager.call(t, "GET", "/dashboard", nil, 200)
 			manager.call(t, "GET", "/reportes", nil, 200)
 		})
+	}
+	manager.call(t, "GET", "/clientes/"+client+"/historial", nil, 200)
+	if income := qaData(t, manager.call(t, "GET", "/reportes", nil, 200))["income"]; income != "200.50" {
+		t.Fatalf("report duplicated or missed payments: %v", income)
 	}
 	admin.call(t, "GET", "/dashboard", nil, 200)
 }
