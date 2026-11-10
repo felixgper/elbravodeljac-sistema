@@ -4,8 +4,8 @@
 
 La ficha utiliza tres recuadros (fugas, líquidos y neumáticos), casillas B/A/U sin marca cuando no se evaluó, mantenimiento y servicios realizados. El contenido extenso continúa en páginas adicionales sin recortarse. Las cotizaciones conservan importes, estado y revisión, con encabezados de continuación.
 
-`assets/pagina-1.jpg` y `pagina-2.jpg` siguen leídos por la ruta interna de compatibilidad `buildDocument(true)`; se conservan aunque el generador oficial use el diseño vectorial actual. No se elimina código para forzar su retirada. El SVG antiguo del toro no tenía consumidor de lectura y se retira; el wildcard de embed no era una referencia de uso.
+La ruta de compatibilidad `buildDocument(true)` utiliza `assets/pagina-1.jpg` y `assets/pagina-2.jpg`. El generador oficial utiliza el diseño vectorial.
 
-PostgreSQL entrega primero los bytes de `ficha_pdf` ya archivados, incluso con snapshot. Una ficha emitida no cambia al actualizar el generador. [Contrato, pruebas y capturas aprobadas](../../../../docs/backend/CONSOLIDACION_PDF_DISENO19.md).
+PostgreSQL entrega primero los bytes de `ficha_pdf` ya archivados, incluso con snapshot. Una ficha emitida no cambia al actualizar el generador. La descarga mantiene los permisos de la entrega. Si falta el PDF archivado, el sistema puede generarlo a partir del snapshot disponible.
 
-No se requiere Poppler/Python para ejecución: solo para inspección externa de PDF en QA. No se modifica diseño ni paginación en la limpieza.
+Poppler y Python se utilizan para la inspección externa de PDF en QA.
