@@ -1,8 +1,13 @@
 -- Ejecutar una vez con sqlcmd -b en una base QA recién creada con esquema_entrega.sql.
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
+-- Las escrituras sobre índices filtrados requieren estas opciones de sesión.
+SET ANSI_NULLS ON;
+SET ANSI_PADDING ON;
 SET ANSI_WARNINGS ON;
 SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET QUOTED_IDENTIFIER ON;
 SET NUMERIC_ROUNDABORT OFF;
 
 IF DB_NAME() <> N'elbravodeljac_sqlserver_qa'
