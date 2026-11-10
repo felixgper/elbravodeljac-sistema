@@ -5,8 +5,8 @@ pgxpool y transacciones. Las demás operaciones de este documento son el plan
 para fases posteriores. No se ejecuta SQL de inicialización desde el servidor.
 
 Implementar pool, consultas parametrizadas, repositorios y unidad transaccional.
-Esquema de referencia: database/postgresql/esquema_actual.sql, solo lectura.
-No ejecutar ese dump al arrancar ni instalar migraciones automáticamente.
+Modelo físico único: database/postgresql/esquema_entrega.sql.
+Docker lo utiliza solo para bases nuevas. Las bases ya existentes siguen su ruta histórica de migraciones; la API no ejecuta el esquema final sobre ellas.
 Conectar a ElBravoDelJac solo mediante configuración privada y usuario de mínimo
 privilegio. Las pruebas de integración usarán otra base vacía y descartable.
 

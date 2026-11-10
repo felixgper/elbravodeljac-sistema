@@ -46,7 +46,7 @@ func TestPhaseCRelationalHTTP(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
-	schema, err := os.ReadFile("../../database/postgresql/esquema_actual.sql")
+	schema, err := os.ReadFile("../internal/platform/postgres/migrations/000_base_legacy.sql")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -46,7 +46,7 @@ func TestCatalogRolesMigrationAndHTTP(t *testing.T) {
 	}
 	defer pool.Close()
 	h := workshopHarness{pool: pool, ctx: ctx, password: rand.Text(), suffix: rand.Text()[:8]}
-	schema, err := os.ReadFile("../../database/postgresql/esquema_actual.sql")
+	schema, err := os.ReadFile("../internal/platform/postgres/migrations/000_base_legacy.sql")
 	if err != nil {
 		t.Fatal(err)
 	}

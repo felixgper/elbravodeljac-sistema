@@ -12,7 +12,7 @@ Desde la raíz, con Docker Desktop Linux y PowerShell 7:
 
 Abrir http://localhost:8080/. Las credenciales iniciales son privadas (`backend/.cache/acceso-desarrollo.txt`); una base ya provisionada conserva sus cuentas. El comando `dev-bootstrap` solo permite `elbravodeljac_dev`, confirmación explícita y ausencia de usuarios.
 
-La ruta técnica de instalación nueva es `database/postgresql/esquema_actual.sql` → migraciones embebidas 001–009 → inicialización MongoDB → provisión autorizada → API. Los runners aplican cada migración una vez, mediante Compose o `cmd/db-migrate` según el entorno. El SQL académico `esquema_entrega.sql` es una exportación estructural independiente, no reemplaza ese procedimiento. No ejecutar restauraciones sobre bases existentes.
+La ruta técnica de instalación nueva es `database/postgresql/esquema_entrega.sql` (único esquema físico consolidado) → catálogo documental por el migrador → inicialización MongoDB → provisión autorizada → API. Su marca evita reaplicar migraciones históricas. Las migraciones embebidas 001–009 y `000_base_legacy.sql` se conservan únicamente para actualizar/probar bases anteriores. Nunca ejecutar el esquema final sobre bases existentes ni recrear volúmenes.
 
 `compose.dev.yaml` conserva volúmenes de desarrollo; `compose.test.yaml` utiliza `tmpfs` y red aislada. Los overrides QA históricos se conservan por compatibilidad y propiedad de recursos; no constituyen otro esquema ni son la entrada recomendada.
 

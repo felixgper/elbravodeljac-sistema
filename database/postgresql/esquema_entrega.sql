@@ -2578,6 +2578,9 @@ ALTER TABLE ONLY public.usuarios
 
 
 --
+-- Marca de instalacion COMPLETA desde el SQL consolidado; no es una migracion.
+COMMENT ON SCHEMA public IS 'elbravodeljac:esquema_entrega:v1';
+
 -- PostgreSQL database dump complete
 --
 
