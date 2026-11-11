@@ -38,6 +38,7 @@ type Report struct {
 	Sequences int            `json:"sequences"`
 	Scans     int            `json:"scans"`
 	Evidence  int            `json:"evidence"`
+	Balances  int            `json:"balances"`
 }
 
 type column struct{ name, kind string }
@@ -175,6 +176,10 @@ func Run(ctx context.Context, c Config) (Report, error) {
 	if err = verifyIntegrity(ctx, dst); err != nil {
 		return Report{}, err
 	}
+	report.Balances, err = verifyBalances(ctx, pg, dst)
+	if err != nil {
+		return Report{}, err
+	}
 	report.Scans, report.Evidence, err = verifyMongo(ctx, c, pg, dst)
 	if err != nil {
 		return Report{}, err
@@ -187,6 +192,46 @@ func Run(ctx context.Context, c Config) (Report, error) {
 		return Report{}, fmt.Errorf("confirmación del destino no verificable: descarta la copia y vuelve a ensayar")
 	}
 	return report, nil
+}
+
+// Compare the business-facing amount, net payments and outstanding balance as
+// decimals on both engines. Row equality alone cannot catch divergent functions.
+func verifyBalances(ctx context.Context, pg pgx.Tx, dst *sql.Tx) (int, error) {
+	source, err := pg.Query(ctx, `SELECT o.id_orden::text,
+  x.amount::numeric(38,2)::text,x.paid::numeric(38,2)::text,(x.amount-x.paid)::numeric(38,2)::text
+ FROM public.ordenes_trabajo o
+ CROSS JOIN LATERAL (SELECT public.jac_importe_orden(o.id_orden) amount,
+   COALESCE((SELECT SUM(p.monto) FROM public.pagos p WHERE p.id_orden=o.id_orden AND p.revertido_en IS NULL),0) paid) x
+ ORDER BY o.id_orden`)
+	if err != nil {
+		return 0, fmt.Errorf("no se pudo calcular saldos de origen")
+	}
+	defer source.Close()
+	target, err := dst.QueryContext(ctx, `SELECT CONVERT(varchar(20),o.id_orden),
+  CONVERT(varchar(42),CAST(x.amount AS decimal(38,2))),
+  CONVERT(varchar(42),CAST(x.paid AS decimal(38,2))),
+  CONVERT(varchar(42),CAST(x.amount AS decimal(37,2))-CAST(x.paid AS decimal(37,2)))
+ FROM dbo.ordenes_trabajo o
+ CROSS APPLY (SELECT dbo.jac_importe_orden(o.id_orden) amount,
+   COALESCE((SELECT SUM(p.monto) FROM dbo.pagos p WHERE p.id_orden=o.id_orden AND p.revertido_en IS NULL),0) paid) x
+ ORDER BY o.id_orden`)
+	if err != nil {
+		return 0, fmt.Errorf("no se pudo calcular saldos de destino")
+	}
+	defer target.Close()
+	count := 0
+	for source.Next() {
+		var a, b [4]string
+		if !target.Next() || source.Scan(&a[0], &a[1], &a[2], &a[3]) != nil ||
+			target.Scan(&b[0], &b[1], &b[2], &b[3]) != nil || a != b {
+			return 0, fmt.Errorf("los saldos difieren en la orden de posición %d", count+1)
+		}
+		count++
+	}
+	if target.Next() || source.Err() != nil || target.Err() != nil {
+		return 0, fmt.Errorf("la verificación de saldos no fue completa")
+	}
+	return count, nil
 }
 
 func fields(t table, target bool) string {

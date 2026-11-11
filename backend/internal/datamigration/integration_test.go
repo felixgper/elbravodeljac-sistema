@@ -119,6 +119,19 @@ func TestMigrationQA(t *testing.T) {
 	}
 	t.Log("PASS: SQL Server collation collision is rejected without partial imports")
 
+	evidence := md.Collection("evidencias_tecnicas")
+	if _, err := evidence.UpdateOne(ctx, bson.M{"_id": evidenceID}, bson.M{"$set": bson.M{"sha256": strings.Repeat("0", 64)}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Run(ctx, c); err == nil || !strings.Contains(err.Error(), "archivo GridFS alterado") {
+		t.Fatalf("expected rejection of corrupt GridFS checksum: %v", err)
+	}
+	assertEmpty()
+	if _, err := evidence.UpdateOne(ctx, bson.M{"_id": evidenceID}, bson.M{"$set": bson.M{"sha256": hex.EncodeToString(checksum[:])}}); err != nil {
+		t.Fatal(err)
+	}
+	t.Log("PASS: GridFS checksum mismatch rolls back the relational import")
+
 	const password = "Only synthetic QA migration"
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	if err != nil {
@@ -131,7 +144,7 @@ func TestMigrationQA(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(report.Rows) != 28 || report.Sequences != 26 || report.Scans != 1 || report.Evidence != 1 {
+	if len(report.Rows) != 28 || report.Sequences != 26 || report.Scans != 1 || report.Evidence != 1 || report.Balances != 2 {
 		t.Fatalf("unexpected report: %+v", report)
 	}
 	for table, n := range report.Rows {
@@ -144,11 +157,31 @@ func TestMigrationQA(t *testing.T) {
 	}
 	t.Logf("PASS: 28 tables, 208 columns, 50 trusted FKs, 26 sequences, 1 scan and 1 GridFS file; counts %+v", report.Rows)
 
-	for table, next := range map[string]int64{"pagos_id_pago_seq": 1001, "servicios_id_servicio_seq": 400, "usuarios_id_usuario_seq": 103, "diagnosticos_id_diagnostico_seq": 9007199254740994} {
+	// The fixture uses explicit IDs, plus both forms of PostgreSQL setval.
+	wantNext := map[string]int64{
+		"asignaciones_ot_id_asignacion_seq": 94, "auxilios_id_auxilio_seq": 115,
+		"avances_ot_id_avance_seq": 95, "clientes_id_cliente_seq": 43,
+		"contactos_cliente_id_contacto_seq": 44, "cotizaciones_id_cotizacion_seq": 84,
+		"detalle_cotizacion_id_detalle_seq": 86, "diagnosticos_id_diagnostico_seq": 9007199254740994,
+		"empleados_id_empleado_seq": 22, "entregas_id_entrega_seq": 112,
+		"historial_estados_ot_id_historial_seq": 97, "historial_propietarios_id_historial_seq": 54,
+		"ordenes_trabajo_id_orden_seq": 92, "pagos_id_pago_seq": 1001,
+		"permisos_id_permiso_seq": 36, "proveedores_id_proveedor_seq": 74,
+		"pruebas_ot_id_prueba_seq": 96, "recepciones_id_recepcion_seq": 63,
+		"repuesto_proveedor_id_seq": 75, "repuestos_id_repuesto_seq": 73,
+		"roles_id_rol_seq": 34, "servicios_id_servicio_seq": 400,
+		"tipos_documento_id_tipo_documento_seq": 32, "unidades_auxilio_id_unidad_auxilio_seq": 114,
+		"usuarios_id_usuario_seq": 103,
+	}
+	for sequence, next := range wantNext {
 		var actual int64
-		if err := dst.QueryRowContext(ctx, "SELECT NEXT VALUE FOR dbo."+table).Scan(&actual); err != nil || actual != next {
-			t.Fatalf("wrong next value for %s: %d", table, actual)
+		if err := dst.QueryRowContext(ctx, "SELECT NEXT VALUE FOR dbo."+sequence).Scan(&actual); err != nil || actual != next {
+			t.Fatalf("wrong next value for %s: %d", sequence, actual)
 		}
+	}
+	var newVehicle int64
+	if err := dst.QueryRowContext(ctx, "INSERT dbo.vehiculos(id_cliente,placa) OUTPUT inserted.id_vehiculo VALUES(41,N'QA-NEW')").Scan(&newVehicle); err != nil || newVehicle != 52 {
+		t.Fatalf("new vehicle failed to use its reconciled ID: %d", newVehicle)
 	}
 	store, err := sqlserver.Open(c.Target)
 	if err != nil {

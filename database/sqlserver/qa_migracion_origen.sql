@@ -36,7 +36,7 @@ INSERT INTO proveedores(id_proveedor,nombre,documento) VALUES (73,'Proveedor QA'
 INSERT INTO repuesto_proveedor(id,id_repuesto,id_proveedor,costo_referencia) VALUES (74,72,73,2.15);
 INSERT INTO cotizaciones(id_cotizacion,id_diagnostico,id_recepcion,estado,total,version,aprobacion,historial_revision)
 VALUES (81,9007199254740993,61,'aprobada',100.25,3,'{"by":"102","version":3}','[{"version":2,"total":90.12}]'),
-       (82,NULL,62,'pendiente',5.75,1,NULL,'[]');
+       (82,NULL,62,'aprobada',5.75,1,'{"by":"102","version":1}','[]');
 INSERT INTO cotizaciones(id_cotizacion,id_diagnostico,id_recepcion,estado,total,id_cotizacion_base)
 VALUES (83,9007199254740993,61,'pendiente',5.75,81);
 INSERT INTO detalle_cotizacion(id_detalle,id_cotizacion,id_servicio,id_repuesto,descripcion,cantidad,precio_unitario,subtotal,tipo_concepto)
@@ -44,6 +44,8 @@ VALUES (84,81,71,NULL,'Servicio autorizado QA',1,100.25,100.25,'Servicio'),
        (85,82,NULL,72,'Repuesto QA',1,5.75,5.75,'Repuesto');
 INSERT INTO ordenes_trabajo(id_orden,id_cotizacion,codigo_ot,estado,id_usuario_creacion,control_tecnico,control_autor,control_historial)
 VALUES (91,81,'OT-91','finalizada',102,'{"performedItems":["84"]}',101,'[{"version":1}]');
+INSERT INTO ordenes_trabajo(id_orden,id_cotizacion,codigo_ot,id_usuario_creacion,control_tecnico,flujo_version)
+VALUES (90,82,'OT-90',102,'{"execution":{"85":{"status":"No realizado"}},"reconciliation":{"reason":"No se usó"}}',1);
 INSERT INTO asignaciones_ot(id_asignacion,id_orden,id_usuario,rol_en_trabajo) VALUES (92,91,101,'MECANICO');
 -- Registro permitido en una versión anterior. El trigger actual debe quedar activo.
 ALTER TABLE asignaciones_ot DISABLE TRIGGER jac_sin_auxiliar_nuevo;
