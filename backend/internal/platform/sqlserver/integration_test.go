@@ -20,6 +20,10 @@ func TestSQLServer2025(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
+	token := os.Getenv("SQLSERVER_QA_BROWSER_TOKEN")
+	if token != "" {
+		dsn = browserTraceDSN(t, dsn, token)
+	}
 	s, err := Open(dsn)
 	if err != nil {
 		t.Fatal(err)
@@ -34,7 +38,6 @@ func TestSQLServer2025(t *testing.T) {
 	if db != "elbravodeljac_sqlserver_qa" || version != 17 || edition != -1785266663 {
 		t.Fatal("expected isolated SQL Server 2025 Standard Developer database")
 	}
-	token := os.Getenv("SQLSERVER_QA_BROWSER_TOKEN")
 	if token != "" {
 		requireBrowserDatabase(t, s, dsn, token)
 	}

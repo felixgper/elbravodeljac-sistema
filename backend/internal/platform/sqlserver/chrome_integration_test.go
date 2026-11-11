@@ -12,15 +12,27 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/httpapi"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/mongodb"
+	mssql "github.com/microsoft/go-mssqldb"
+	"github.com/microsoft/go-mssqldb/msdsn"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func requireBrowserDatabase(t *testing.T, s *Store, dsn, token string) {
+type browserRequestKey struct{}
+type browserSQLTrace struct{ t *testing.T }
+
+func (l browserSQLTrace) Log(ctx context.Context, category msdsn.Log, msg string) {
+	if path, ok := ctx.Value(browserRequestKey{}).(string); ok && category == msdsn.LogErrors && ctx.Err() == nil {
+		l.t.Logf("SQL de Chrome %s: %s", path, msg)
+	}
+}
+
+func browserTraceDSN(t *testing.T, dsn, token string) string {
 	t.Helper()
 	u, err := url.Parse(dsn)
 	if err != nil || u.Hostname() != "127.0.0.1" || u.Port() == "" {
@@ -29,10 +41,20 @@ func requireBrowserDatabase(t *testing.T, s *Store, dsn, token string) {
 	if decoded, err := hex.DecodeString(token); err != nil || len(decoded) != 32 {
 		t.Fatal("Chrome requires a valid QA run marker")
 	}
+	q := u.Query()
+	q.Set("log", "1")
+	u.RawQuery = q.Encode()
+	mssql.SetContextLogger(browserSQLTrace{t})
+	t.Cleanup(func() { mssql.SetContextLogger(nil) })
+	return u.String()
+}
+
+func requireBrowserDatabase(t *testing.T, s *Store, _ string, token string) {
+	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	var actual string
-	err = s.db.QueryRowContext(ctx, `SELECT CONVERT(varchar(64),value) FROM sys.extended_properties
+	err := s.db.QueryRowContext(ctx, `SELECT CONVERT(varchar(64),value) FROM sys.extended_properties
 WHERE class=0 AND name=N'jac.qa_run_token'`).Scan(&actual)
 	if err != nil || actual != token {
 		t.Fatal("SQL Server has no matching QA run marker")
@@ -106,7 +128,11 @@ FROM GENERATE_SERIES(1,1200) g`, suffix); err != nil {
 		if r.Method == "GET" && r.URL.Path == "/healthz" {
 			w.Header().Set("X-Bravo-Test-Run", token)
 		}
-		handler.ServeHTTP(w, r)
+		path := r.Method + " " + r.URL.Path
+		if r.URL.Path == "/api/v1/frontend/opciones" {
+			path += " " + strings.Join([]string{r.URL.Query().Get("module"), r.URL.Query().Get("resource")}, "/")
+		}
+		handler.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), browserRequestKey{}, path)))
 	}))
 	api.Listener.Close()
 	api.Listener = ln
@@ -134,6 +160,7 @@ FROM GENERATE_SERIES(1,1200) g`, suffix); err != nil {
 		Checks        []string
 		OrderID       string
 		DirectOrderID string
+		ServerErrors  [][]any
 	}
 	if readErr == nil {
 		readErr = json.Unmarshal(raw, &result)
@@ -142,7 +169,7 @@ FROM GENERATE_SERIES(1,1200) g`, suffix); err != nil {
 		t.Log("PASS:", check)
 	}
 	if err != nil || readErr != nil || !result.Passed {
-		t.Fatalf("Chrome: %v, informe: %v\n%s", err, readErr, out)
+		t.Fatalf("Chrome: %v, informe: %v, errores HTTP: %v\n%s", err, readErr, result.ServerErrors, bytes.ReplaceAll(out, []byte(password), []byte("[QA]")))
 	}
 	for _, order := range []string{result.OrderID, result.DirectOrderID} {
 		var archived []byte
