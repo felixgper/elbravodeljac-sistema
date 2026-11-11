@@ -2,6 +2,7 @@ package sqlserver
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"os"
 	"sync"
@@ -33,7 +34,11 @@ func TestSQLServer2025(t *testing.T) {
 	if db != "elbravodeljac_sqlserver_qa" || version != 17 || edition != -1785266663 {
 		t.Fatal("expected isolated SQL Server 2025 Standard Developer database")
 	}
-	const password = "Synthetic-QA-only-Pass9!"
+	token := os.Getenv("SQLSERVER_QA_BROWSER_TOKEN")
+	if token != "" {
+		requireBrowserDatabase(t, s, dsn, token)
+	}
+	password := rand.Text()
 	if err := s.Provision(ctx, db, "gerente_qa", password); err != nil {
 		t.Fatal(err)
 	}
@@ -131,5 +136,11 @@ func TestSQLServer2025(t *testing.T) {
 	if err := s.DeleteVehicle(ctx, v.ID); !errors.Is(err, domain.ErrConflict) {
 		t.Fatalf("expected ownership history conflict: %v", err)
 	}
-	exerciseWorkshopHTTP(t, s, password, b.ID, v.ID)
+	t.Run("HTTP", func(t *testing.T) { exerciseWorkshopHTTP(t, s, password, b.ID, v.ID) })
+	t.Run("Chrome", func(t *testing.T) {
+		if token == "" {
+			t.Skip("requires accredited SQL Server and MongoDB runner with Chrome")
+		}
+		exerciseWorkshopChrome(t, s, password, user.ID, token)
+	})
 }

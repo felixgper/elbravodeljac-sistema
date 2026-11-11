@@ -50,6 +50,10 @@ jobs:
           sqlcmd -Q "CREATE DATABASE [$SQL_DATABASE]"
           sqlcmd -Q "ALTER DATABASE [$SQL_DATABASE] SET COMPATIBILITY_LEVEL = 170"
           sqlcmd -f 65001 -d "$SQL_DATABASE" -i /dev/stdin < database/sqlserver/esquema_entrega.sql
+          token="$(openssl rand -hex 32)"
+          printf '::add-mask::%s\n' "$token"
+          sqlcmd -d "$SQL_DATABASE" -Q "EXEC sys.sp_addextendedproperty @name=N'jac.qa_run_token',@value=N'$token'"
+          printf 'SQLSERVER_QA_BROWSER_TOKEN=%s\n' "$token" >> "$GITHUB_ENV"
           port="$(docker port "$SQL_CONTAINER" 1433/tcp)"
           dsn="sqlserver://sa:$MSSQL_SA_PASSWORD@$port?database=$SQL_DATABASE&encrypt=true&TrustServerCertificate=true"
           printf '::add-mask::%s\n' "$dsn"
@@ -68,7 +72,14 @@ jobs:
             sleep 2
           done
           printf 'SQLSERVER_QA_MONGO_URI=mongodb://%s/?directConnection=true\n' "$(docker port "$MONGO_CONTAINER" 27017/tcp)" >> "$GITHUB_ENV"
-      - name: Probar Go con SQL Server 2025
+      - name: Preparar Chrome y Playwright del runner
+        run: |
+          chrome="$(command -v google-chrome)"
+          "$chrome" --version
+          npm install --prefix "$RUNNER_TEMP/bravo-playwright" --no-audit --no-fund playwright@1.56.1
+          printf 'BRAVO_BROWSER=%s\n' "$chrome" >> "$GITHUB_ENV"
+          printf 'PLAYWRIGHT_MODULE=%s\n' "$RUNNER_TEMP/bravo-playwright/node_modules/playwright" >> "$GITHUB_ENV"
+      - name: Probar Go y Chrome con SQL Server 2025
         working-directory: backend
         run: go test -count=1 -v ./internal/platform/sqlserver
       - name: Arrancar el binario Go en modo SQL Server
@@ -103,6 +114,7 @@ jobs:
         env:
           SQLSERVER_QA_DSN: ''
           SQLSERVER_QA_MONGO_URI: ''
+          SQLSERVER_QA_BROWSER_TOKEN: ''
       - name: Probar suites JavaScript
         run: node checks/run.mjs
       - name: Retirar contenedor de QA
