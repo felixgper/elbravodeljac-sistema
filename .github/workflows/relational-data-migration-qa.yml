@@ -1,0 +1,85 @@
+name: Ensayo de migración relacional
+
+on:
+  push:
+    branches: [codex/migracion-datos-sql-server]
+
+permissions:
+  contents: read
+
+jobs:
+  migration:
+    if: github.repository == 'felixgper/elbravodeljac-sistema'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Iniciar motores aislados y cargar solo datos sintéticos
+        shell: bash
+        run: |
+          token="$(openssl rand -hex 32)"
+          export POSTGRES_PASSWORD="Pg9$(openssl rand -hex 24)"
+          export MSSQL_SA_PASSWORD="Qa9$(openssl rand -hex 24)"
+          printf '::add-mask::%s\n' "$token" "$POSTGRES_PASSWORD" "$MSSQL_SA_PASSWORD"
+          pg_db=elbravodeljac_pg_migration
+          sql_db=elbravodeljac_sqlserver_migration
+          mongo_db=elbravodeljac_tecnico_migration
+          docker run -d --name bravo-migration-pg -p 127.0.0.1::5432 \
+            -e POSTGRES_PASSWORD -e POSTGRES_DB="$pg_db" postgres:18.6
+          docker run -d --name bravo-migration-mongo -p 127.0.0.1::27017 mongo:9.0.4
+          docker run -d --name bravo-migration-sql -p 127.0.0.1::1433 \
+            --memory 4g --memory-swap 4g -e MSSQL_MEMORY_LIMIT_MB=3072 \
+            -e ACCEPT_EULA=Y -e MSSQL_PID=StandardDeveloper -e MSSQL_SA_PASSWORD \
+            mcr.microsoft.com/mssql/server@sha256:21cba63f9e5f93ae72d211e50bceca8f047a6233da18ed5ecb497152f97eca7b
+          pg() {
+            docker exec -i -e PGPASSWORD="$POSTGRES_PASSWORD" bravo-migration-pg \
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d "$pg_db" "$@"
+          }
+          sql() {
+            docker exec -i -e SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" bravo-migration-sql \
+              /opt/mssql-tools18/bin/sqlcmd -b -l 2 -S 127.0.0.1 -U sa -C "$@"
+          }
+          mg() { docker exec bravo-migration-mongo mongosh --quiet --eval "$1"; }
+          wait_for() {
+            local name="$1"; shift
+            for attempt in {1..35}; do
+              if "$@" >/dev/null 2>&1; then return 0; fi
+              sleep 3
+            done
+            printf 'Motor %s no disponible\n' "$name" >&2
+            return 1
+          }
+          wait_for postgres pg -c 'SELECT 1'
+          wait_for sqlserver sql -Q 'SELECT 1'
+          wait_for mongo mg 'if(db.adminCommand({ping:1}).ok!==1) quit(1)'
+          pg -c "COMMENT ON DATABASE $pg_db IS '$token'"
+          pg -f /dev/stdin < database/postgresql/esquema_entrega.sql >/dev/null
+          pg -f /dev/stdin < database/sqlserver/qa_migracion_origen.sql >/dev/null
+          sql -Q "IF CONVERT(int,SERVERPROPERTY('ProductMajorVersion'))<>17 OR CONVERT(bigint,SERVERPROPERTY('EditionID'))<>-1785266663 THROW 52090,N'Se requiere SQL Server 2025 Standard Developer',1;"
+          sql -Q "CREATE DATABASE [$sql_db]"
+          sql -Q "ALTER DATABASE [$sql_db] SET COMPATIBILITY_LEVEL = 170"
+          sql -d "$sql_db" -f 65001 -i /dev/stdin < database/sqlserver/esquema_entrega.sql
+          sql -d "$sql_db" -Q "EXEC sys.sp_addextendedproperty @name=N'jac.migration_run',@value=N'$token'"
+          mg "db.getSiblingDB('$mongo_db').migration_control.insertOne({_id:'$token'})" >/dev/null
+          p="postgres://postgres:$POSTGRES_PASSWORD@$(docker port bravo-migration-pg 5432/tcp)/$pg_db?sslmode=disable"
+          s="sqlserver://sa:$MSSQL_SA_PASSWORD@$(docker port bravo-migration-sql 1433/tcp)?database=$sql_db&encrypt=true&TrustServerCertificate=true"
+          m="mongodb://$(docker port bravo-migration-mongo 27017/tcp)/$mongo_db?directConnection=true"
+          printf '::add-mask::%s\n' "$p" "$s"
+          printf 'MIGRATION_POSTGRES_DSN=%s\nMIGRATION_SQLSERVER_DSN=%s\nMIGRATION_MONGODB_URI=%s\nMIGRATION_RUN_TOKEN=%s\n' "$p" "$s" "$m" "$token" >> "$GITHUB_ENV"
+      - name: Verificar migración, rollback e integridad
+        working-directory: backend
+        run: go test -count=1 -v ./internal/datamigration ./cmd/migrate-relational-data
+      - name: Retirar los tres contenedores de este ensayo
+        if: always()
+        run: |
+          for c in bravo-migration-pg bravo-migration-mongo bravo-migration-sql; do
+            if docker container inspect "$c" >/dev/null 2>&1; then
+              docker rm -f -v "$c"
+            fi
+          done
