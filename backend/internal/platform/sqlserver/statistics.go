@@ -53,8 +53,8 @@ func (s *Store) Statistics(ctx context.Context, dashboard bool, start, end time.
 'income':JSON_QUERY((SELECT CONVERT(char(7),bucket,23) AS month,CONVERT(varchar(32),amount) AS amount,
  CONVERT(varchar(32),CAST(amount*100 AS bigint)) AS cents FROM income ORDER BY bucket FOR JSON PATH)),
 'states':JSON_QUERY((SELECT [key],label,color,count FROM states ORDER BY pos FOR JSON PATH)),
-'mechanics':JSON_QUERY((SELECT CONVERT(varchar(20),id_usuario) AS id,label,count FROM staff ORDER BY count DESC,id_usuario FOR JSON PATH)),
-'services':JSON_QUERY((SELECT TOP (4) id,label,count FROM services ORDER BY count DESC,label FOR JSON PATH, INCLUDE_NULL_VALUES)),
+'mechanics':JSON_QUERY(COALESCE((SELECT CONVERT(varchar(20),id_usuario) AS id,label,count FROM staff ORDER BY count DESC,id_usuario FOR JSON PATH),N'[]')),
+'services':JSON_QUERY(COALESCE((SELECT TOP (4) id,label,count FROM services ORDER BY count DESC,label FOR JSON PATH, INCLUDE_NULL_VALUES),N'[]')),
 'currentMonth':(SELECT CONVERT(char(7),last,23) FROM limits),
 'dashboard':CONVERT(bit,@p3),'from':@p1,'until':@p2,
 'counts':JSON_QUERY(JSON_OBJECT(
@@ -66,9 +66,9 @@ func (s *Store) Statistics(ctx context.Context, dashboard bool, start, end time.
  'deliveries':(SELECT COUNT(*) FROM dbo.entregas WHERE fecha_entrega>=@p1 AND fecha_entrega<@p2))))`
 	if !dashboard {
 		projection = `JSON_OBJECT(
-'services':JSON_QUERY((SELECT id,label,count FROM (
+'services':JSON_QUERY(COALESCE((SELECT id,label,count FROM (
  SELECT id,label,count FROM services UNION ALL SELECT NULL,N'Auxilio mecánico',count FROM rescues WHERE count>0
- ) x ORDER BY label FOR JSON PATH, INCLUDE_NULL_VALUES)),
+ ) x ORDER BY label FOR JSON PATH, INCLUDE_NULL_VALUES),N'[]')),
 'months':JSON_QUERY((SELECT CONVERT(char(7),bucket,23) AS label,CONVERT(varchar(32),amount) AS amount,
  CONVERT(varchar(32),CAST(amount*100 AS bigint)) AS cents FROM income ORDER BY bucket FOR JSON PATH)),
 'orders':(SELECT COUNT(*) FROM dbo.ordenes_trabajo WHERE estado=N'finalizada' AND fecha_fin>=@p1 AND fecha_fin<@p2),

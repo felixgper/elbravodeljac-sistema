@@ -25,9 +25,9 @@ func (s *Store) Clients(ctx context.Context, p domain.Page) (domain.List[domain.
 	if err != nil {
 		return out, translate(err)
 	}
-	rows, err := s.db.QueryContext(ctx, `SELECT `+clientCols+`,(SELECT CONVERT(varchar(20),v.id_vehiculo) AS id, CONVERT(varchar(20),v.id_cliente) AS clientId,
+	rows, err := s.db.QueryContext(ctx, `SELECT `+clientCols+`,COALESCE((SELECT CONVERT(varchar(20),v.id_vehiculo) AS id, CONVERT(varchar(20),v.id_cliente) AS clientId,
     v.placa AS plate,v.marca AS brand,v.modelo AS model FROM dbo.vehiculos v WHERE v.id_cliente=clientes.id_cliente
-    ORDER BY v.id_vehiculo FOR JSON PATH, INCLUDE_NULL_VALUES) FROM dbo.clientes`+where+` ORDER BY id_cliente OFFSET @p3 ROWS FETCH NEXT @p2 ROWS ONLY`, "%"+p.Query+"%", p.Size, (p.Number-1)*p.Size)
+    ORDER BY v.id_vehiculo FOR JSON PATH, INCLUDE_NULL_VALUES),N'[]') FROM dbo.clientes`+where+` ORDER BY id_cliente OFFSET @p3 ROWS FETCH NEXT @p2 ROWS ONLY`, "%"+p.Query+"%", p.Size, (p.Number-1)*p.Size)
 	if err != nil {
 		return out, translate(err)
 	}

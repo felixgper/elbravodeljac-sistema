@@ -342,5 +342,9 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 	if income := qaData(t, manager.call(t, "GET", "/reportes", nil, 200))["income"]; income != "200.50" {
 		t.Fatalf("report duplicated or missed payments: %v", income)
 	}
+	empty := qaData(t, manager.call(t, "GET", "/reportes?period=Semana&desde=2000-01-03T05:00:00Z&hasta=2000-01-10T05:00:00Z", nil, 200))
+	if services, ok := empty["services"].([]any); !ok || len(services) != 0 {
+		t.Fatalf("historical report requires an empty services array: %v", empty)
+	}
 	admin.call(t, "GET", "/dashboard", nil, 200)
 }

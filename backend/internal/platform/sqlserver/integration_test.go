@@ -77,6 +77,10 @@ func TestSQLServer2025(t *testing.T) {
 	if err != nil || b.DocumentType != "CE" {
 		t.Fatalf("client=%+v err=%v", b, err)
 	}
+	emptyGarage, err := s.Clients(ctx, domain.Page{Number: 1, Size: 10, Query: b.DocumentNumber})
+	if err != nil || len(emptyGarage.Data) != 1 || len(emptyGarage.Data[0].Vehicles) != 0 {
+		t.Fatalf("expected to list client without vehicles: %v (%v)", emptyGarage, err)
+	}
 	if _, err := s.CreateClient(ctx, a.ClientInput); !errors.Is(err, domain.ErrConflict) {
 		t.Fatalf("expected duplicate conflict, got %v", err)
 	}
