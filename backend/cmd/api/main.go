@@ -15,6 +15,7 @@ import (
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/httpapi"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/mongodb"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/postgres"
+	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/sqlserver"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -25,23 +26,34 @@ func main() {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	pc, err := pgxpool.ParseConfig(cfg.DSN)
-	if err != nil {
-		log.Fatal("Configuración PostgreSQL inválida")
+	var store application.Store
+	if cfg.SQLServer {
+		sqlStore, err := sqlserver.Open(cfg.DSN)
+		if err != nil {
+			log.Fatal("No se pudo preparar la conexión SQL Server")
+		}
+		defer sqlStore.Close()
+		store = sqlStore
+	} else {
+		pc, err := pgxpool.ParseConfig(cfg.DSN)
+		if err != nil {
+			log.Fatal("Configuración PostgreSQL inválida")
+		}
+		pc.MaxConns = 10
+		pc.ConnConfig.RuntimeParams["timezone"] = "UTC"
+		pc.ConnConfig.ConnectTimeout = 5 * time.Second
+		pool, err := pgxpool.NewWithConfig(ctx, pc)
+		if err != nil {
+			log.Fatal("No se pudo crear el pool")
+		}
+		defer pool.Close()
+		store = &postgres.Store{Pool: pool}
 	}
-	pc.MaxConns = 10
-	pc.ConnConfig.RuntimeParams["timezone"] = "UTC"
-	pc.ConnConfig.ConnectTimeout = 5 * time.Second
-	pool, err := pgxpool.NewWithConfig(ctx, pc)
-	if err != nil {
-		log.Fatal("No se pudo crear el pool")
-	}
-	defer pool.Close()
 	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	err = pool.Ping(pingCtx)
+	err = store.Ping(pingCtx)
 	cancel()
 	if err != nil {
-		log.Fatal("PostgreSQL no disponible; comprueba el entorno de pruebas")
+		log.Fatal("Base relacional no disponible; comprueba el entorno de pruebas")
 	}
 	var technical application.Technical
 	if uri := os.Getenv("MONGODB_URI"); uri != "" {
@@ -61,7 +73,7 @@ func main() {
 	if frontendDir == "" {
 		frontendDir = "../dist"
 	}
-	handler, err := httpapi.New(&postgres.Store{Pool: pool}, httpapi.Options{FrontendDir: frontendDir, Origin: cfg.Origin, Key: cfg.Key, SecureCookies: cfg.SecureCookies, Technical: technical})
+	handler, err := httpapi.New(store, httpapi.Options{FrontendDir: frontendDir, Origin: cfg.Origin, Key: cfg.Key, SecureCookies: cfg.SecureCookies, Technical: technical, SQLServer: cfg.SQLServer})
 	if err != nil {
 		log.Fatal("No se pudo preparar HTTP")
 	}

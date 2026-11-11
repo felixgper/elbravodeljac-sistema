@@ -1,0 +1,127 @@
+name: Backend SQL Server QA
+
+on:
+  push:
+    branches: [codex/backend-sql-server]
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    if: github.repository == 'felixgper/elbravodeljac-sistema'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      SQL_CONTAINER: bravo-backend-qa
+      SQL_IMAGE: mcr.microsoft.com/mssql/server@sha256:21cba63f9e5f93ae72d211e50bceca8f047a6233da18ed5ecb497152f97eca7b
+      SQL_DATABASE: elbravodeljac_sqlserver_qa
+      MONGO_CONTAINER: bravo-backend-mongo-qa
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Preparar SQL Server 2025 Standard Developer
+        run: |
+          export MSSQL_SA_PASSWORD="Qa9$(openssl rand -hex 24)"
+          printf '::add-mask::%s\n' "$MSSQL_SA_PASSWORD"
+          docker run -d --name "$SQL_CONTAINER" -p 127.0.0.1::1433 \
+            --memory 4g --memory-swap 4g --env MSSQL_MEMORY_LIMIT_MB=3072 \
+            --env ACCEPT_EULA=Y --env MSSQL_PID=StandardDeveloper \
+            --env MSSQL_SA_PASSWORD "$SQL_IMAGE"
+          sqlcmd() {
+            docker exec -i -e SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" "$SQL_CONTAINER" \
+              /opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -C -b -l 2 "$@"
+          }
+          for attempt in {1..36}; do
+            if sqlcmd -Q 'SELECT 1' >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "$(docker inspect --format '{{.State.Running}}' "$SQL_CONTAINER")" != true || "$attempt" == 36 ]]; then
+              docker logs --tail 35 "$SQL_CONTAINER" >&2
+              exit 1
+            fi
+            sleep 3
+          done
+          sqlcmd -Q "CREATE DATABASE [$SQL_DATABASE]"
+          sqlcmd -Q "ALTER DATABASE [$SQL_DATABASE] SET COMPATIBILITY_LEVEL = 170"
+          sqlcmd -f 65001 -d "$SQL_DATABASE" -i /dev/stdin < database/sqlserver/esquema_entrega.sql
+          token="$(openssl rand -hex 32)"
+          printf '::add-mask::%s\n' "$token"
+          sqlcmd -d "$SQL_DATABASE" -Q "EXEC sys.sp_addextendedproperty @name=N'jac.qa_run_token',@value=N'$token'"
+          printf 'SQLSERVER_QA_BROWSER_TOKEN=%s\n' "$token" >> "$GITHUB_ENV"
+          port="$(docker port "$SQL_CONTAINER" 1433/tcp)"
+          dsn="sqlserver://sa:$MSSQL_SA_PASSWORD@$port?database=$SQL_DATABASE&encrypt=true&TrustServerCertificate=true"
+          printf '::add-mask::%s\n' "$dsn"
+          printf 'SQLSERVER_QA_DSN=%s\n' "$dsn" >> "$GITHUB_ENV"
+      - name: Preparar MongoDB aislado para evidencias
+        run: |
+          docker run -d --name "$MONGO_CONTAINER" -p 127.0.0.1::27017 mongo:9.0
+          for attempt in {1..20}; do
+            if docker exec "$MONGO_CONTAINER" mongosh --quiet --eval 'if (db.adminCommand({ping:1}).ok !== 1) quit(1)' >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "$attempt" == 20 ]]; then
+              docker logs --tail 35 "$MONGO_CONTAINER" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+          printf 'SQLSERVER_QA_MONGO_URI=mongodb://%s/?directConnection=true\n' "$(docker port "$MONGO_CONTAINER" 27017/tcp)" >> "$GITHUB_ENV"
+      - name: Preparar Chrome y Playwright del runner
+        run: |
+          chrome="$(command -v google-chrome)"
+          "$chrome" --version
+          npm install --prefix "$RUNNER_TEMP/bravo-playwright" --no-audit --no-fund playwright@1.56.1
+          printf 'BRAVO_BROWSER=%s\n' "$chrome" >> "$GITHUB_ENV"
+          printf 'PLAYWRIGHT_MODULE=%s\n' "$RUNNER_TEMP/bravo-playwright/node_modules/playwright" >> "$GITHUB_ENV"
+      - name: Probar Go y Chrome con SQL Server 2025
+        working-directory: backend
+        run: go test -count=1 -v ./internal/platform/sqlserver
+      - name: Arrancar el binario Go en modo SQL Server
+        working-directory: backend
+        run: |
+          go build -o "$RUNNER_TEMP/bravo-api-qa" ./cmd/api
+          export SQLSERVER_DSN="$SQLSERVER_QA_DSN"
+          export MONGODB_URI="$SQLSERVER_QA_MONGO_URI" MONGODB_DATABASE=elbravodeljac_tecnico_test
+          export HTTP_ADDR=127.0.0.1:18080 APP_ORIGIN=http://127.0.0.1:18080 COOKIE_SECURE=false FRONTEND_DIR=../dist
+          export JWT_SECRET_BASE64="$(openssl rand -base64 48 | tr -d '\n')"
+          printf '::add-mask::%s\n' "$JWT_SECRET_BASE64"
+          unset POSTGRES_DSN
+          "$RUNNER_TEMP/bravo-api-qa" &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true' EXIT
+          for attempt in {1..15}; do
+            if ready="$(curl -fsS --max-time 2 "$APP_ORIGIN/readyz" 2>/dev/null)"; then
+              break
+            fi
+            kill -0 "$pid"
+            sleep 1
+          done
+          jq -e '.status == "ready" and .technicalConfigured == true' <<< "$ready"
+          curl -fsS --max-time 2 "$APP_ORIGIN/healthz" | jq -e '.status == "ok"'
+          curl -fsS --max-time 2 "$APP_ORIGIN/" -o "$RUNNER_TEMP/bravo-index-qa.html"
+          grep -q 'name="bravo-mode" content="real"' "$RUNNER_TEMP/bravo-index-qa.html"
+      - name: Probar suites Go
+        working-directory: backend
+        run: |
+          go test -count=1 ./...
+          go vet ./...
+        env:
+          SQLSERVER_QA_DSN: ''
+          SQLSERVER_QA_MONGO_URI: ''
+          SQLSERVER_QA_BROWSER_TOKEN: ''
+      - name: Probar suites JavaScript
+        run: node checks/run.mjs
+      - name: Retirar contenedor de QA
+        if: always()
+        run: |
+          for container in "$SQL_CONTAINER" "$MONGO_CONTAINER"; do
+            if docker container inspect "$container" >/dev/null 2>&1; then
+              docker rm -f -v "$container"
+            fi
+          done

@@ -8,10 +8,12 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/microsoft/go-mssqldb/msdsn"
 )
 
 type Config struct {
 	Addr, DSN, Origin string
+	SQLServer         bool
 	Key               []byte
 	SecureCookies     bool
 }
@@ -36,7 +38,17 @@ func Load() (Config, error) {
 	if c.Addr == "" {
 		c.Addr = "127.0.0.1:8080"
 	}
-	if err := ValidateDSN(c.DSN); err != nil {
+	if dsn := os.Getenv("SQLSERVER_DSN"); dsn != "" {
+		if c.DSN != "" {
+			return c, errors.New("Configura un solo motor relacional por instancia")
+		}
+		target, err := msdsn.Parse(dsn)
+		if err != nil || !strings.HasPrefix(dsn, "sqlserver://") || target.Host == "" ||
+			(target.Database != "elbravodeljac_sqlserver_dev" && target.Database != "elbravodeljac_sqlserver_qa") {
+			return c, errors.New("SQLSERVER_DSN requiere una URL explícita a la base SQL Server de desarrollo o QA")
+		}
+		c.DSN, c.SQLServer = dsn, true
+	} else if err := ValidateDSN(c.DSN); err != nil {
 		return c, err
 	}
 	u, err := url.Parse(c.Origin)
