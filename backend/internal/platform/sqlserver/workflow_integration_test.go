@@ -250,6 +250,10 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 			worker.call(t, "PATCH", orderPath, map[string]string{"state": "Finalizada", "note": "Prueba QA", "test": "Ruta", "result": "Satisfactoria"}, 200)
 			delivery := map[string]any{"kind": "Titular / representante", "recipientKind": "Propietario o titular", "method": "Documento", "verified": true, "conformity": true}
 			manager.call(t, "POST", orderPath+"/entrega", delivery, 422)
+			unpaid := qaData(t, manager.call(t, "GET", orderPath+"/pagos", nil, 200))
+			if payments, ok := unpaid["payments"].([]any); !ok || len(payments) != 0 || unpaid["balance"] != "100.25" {
+				t.Fatalf("payment form requires an empty array and the full balance: %v", unpaid)
+			}
 			payment := func(id, amount string) map[string]string {
 				return map[string]string{"requestId": id, "amount": amount, "method": "Efectivo"}
 			}

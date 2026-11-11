@@ -49,7 +49,7 @@ func browserTraceDSN(t *testing.T, dsn, token string) string {
 	return u.String()
 }
 
-func requireBrowserDatabase(t *testing.T, s *Store, _ string, token string) {
+func requireBrowserDatabase(t *testing.T, s *Store, token string) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

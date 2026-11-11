@@ -39,7 +39,7 @@ func TestSQLServer2025(t *testing.T) {
 		t.Fatal("expected isolated SQL Server 2025 Standard Developer database")
 	}
 	if token != "" {
-		requireBrowserDatabase(t, s, dsn, token)
+		requireBrowserDatabase(t, s, token)
 	}
 	password := rand.Text()
 	if err := s.Provision(ctx, db, "gerente_qa", password); err != nil {

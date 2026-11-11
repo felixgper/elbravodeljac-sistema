@@ -145,7 +145,7 @@ func (s *Store) WorkshopItem(ctx context.Context, resource, id string, u domain.
 		return readJSON(ctx, s.db, `SELECT JSON_OBJECT('orderId':CONVERT(varchar(20),o.id_orden),
 'total':CONVERT(varchar(42),dbo.jac_importe_orden(o.id_orden)),'paid':CONVERT(varchar(32),CAST(x.paid AS decimal(14,2))),
 'balance':CONVERT(varchar(32),CAST(CAST(dbo.jac_importe_orden(o.id_orden) AS decimal(14,2))-CAST(x.paid AS decimal(14,2)) AS decimal(14,2))),
-'payments':JSON_QUERY((SELECT `+paymentColumns+` FROM dbo.pagos p WHERE p.id_orden=o.id_orden ORDER BY p.id_pago FOR JSON PATH, INCLUDE_NULL_VALUES)))
+'payments':JSON_QUERY(COALESCE((SELECT `+paymentColumns+` FROM dbo.pagos p WHERE p.id_orden=o.id_orden ORDER BY p.id_pago FOR JSON PATH, INCLUDE_NULL_VALUES),N'[]')))
 FROM dbo.ordenes_trabajo o CROSS APPLY(SELECT COALESCE(SUM(monto),0) AS paid FROM dbo.pagos WHERE id_orden=o.id_orden AND revertido_en IS NULL)x
 WHERE o.id_orden=@p1`, id)
 	case "entrega":
