@@ -1,5 +1,7 @@
 # Esquema físico de El Bravo del JAC en SQL Server
 
+Para preparar una copia histórica desde PostgreSQL, consulta el [procedimiento de migración de datos](MIGRACION_DATOS.md).
+
 El esquema prepara una instalación vacía en SQL Server 2025 Standard o Standard Developer. No usa características exclusivas de Enterprise. La validación automatizada del adaptador Go utiliza Standard Developer. El entorno habitual puede seguir usando PostgreSQL durante la transición.
 
 Ejecutar desde un cliente compatible con lotes `GO` y detenerse ante cualquier error. Para probar, crear previamente una base desechable llamada `elbravodeljac_sqlserver_qa` en una instancia aislada con nivel de compatibilidad 170. Con una sesión de cliente configurada para esa base:
