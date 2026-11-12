@@ -1,24 +1,11 @@
 import {getDashboard,getActiveOrders,getReport,reportRange} from '../services/dashboard-service.js';
 import {permissionChecker} from '../services/permissions.js';
-import {realMode,request} from '../services/api-service.js';
-import {getContext,getStore} from '../services/workshop-service.js';
+import {realMode} from '../services/api-service.js';
 import {dashboardSummary} from './dashboard-summary.js';
 import {mountDiagnosisDashboard} from '../components/diagnosis-inbox.js';
 import {renderReports} from './administration.js';
 import {e,money,field,select,form,submit,bindForm} from '../components/ui.js';
 import {icon} from '../components/icons.js';
-async function recentOrders(){
- if(realMode){
-  const {data}=await request('/ordenes?page=1&pageSize=4');
-  return data.map(order=>({...order,state:order.delivered?'Entregado':order.state}));
- }
- const store=getStore();
- return store.orders.slice().sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,4).map(order=>{
-  const {client,vehicle}=getContext(store,order);
-  return {...order,clientName:client?.name,vehiclePlate:vehicle?.plate,state:order.delivery?'Entregado':order.state};
- });
-}
-
 export async function renderIntegratedDashboard({root,session,period='Mes',reference,tab,isCurrent=()=>true}) {
  const can=permissionChecker(session.role),summaryAllowed=can('inicio','ver'),financeAllowed=can('reportes','ver');
  reference ||= new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'America/Lima'}).format(new Date());
@@ -49,10 +36,7 @@ export async function renderIntegratedDashboard({root,session,period='Mes',refer
     await renderReports({root:analysis,period,reference,embedded:true,reportData:data});loadedAnalysis=ownKey;
    }else{
     if(!summaryAllowed)throw Error('Tu cuenta no tiene permiso de resumen operativo.');
-    const [data,recent]=await Promise.all([
-     cached('summary',()=>getDashboard(period,reference)),
-     can('ordenes','ver')?cached('orders',recentOrders).then(orders=>({orders}),()=>({error:true})):null
-    ]);
+    const data=await cached('summary',()=>getDashboard(period,reference));
     if(!fresh()||key()!==ownKey)return;
     const showIncome=financeAllowed&&data.financialVisible!==false;
     const cards=[
@@ -64,7 +48,7 @@ export async function renderIntegratedDashboard({root,session,period='Mes',refer
     const formatDate=value=>new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeZone:'America/Lima'}).format(value);
     const displayedPeriod=realMode?data.period:`${period} · ${formatDate(range.start)}–${formatDate(range.end.getTime()-1)}`;
     snapshot={period:displayedPeriod,reference,demo:!realMode,cards,states:data.states??[],mechanics:(data.mechanics??[]).filter(item=>item.count>0),
-     recent,canEditOrders:can('ordenes','editar'),
+     canViewOrders:can('ordenes','ver'),
      services:(data.services??[]).filter(item=>item.count>0).sort((a,b)=>b.count-a.count).slice(0,4),
      income:showIncome?data.income??[]:null,activity:[['Auxilios registrados',data.rescuesToday],['Recepciones registradas',data.counts?.receptions??0],['Diagnósticos registrados',data.counts?.diagnoses??0],['Entregas registradas',data.counts?.deliveries??0]]};
     summary.innerHTML=dashboardSummary(snapshot,financeAllowed);
@@ -91,7 +75,8 @@ export async function renderIntegratedDashboard({root,session,period='Mes',refer
   exportStatus.hidden=false;exportStatus.textContent='Preparando descarga…';
   try{
    const {downloadDashboard}=await import('./dashboard-export.js');
-   await downloadDashboard(format,data);
+   if(!fresh()||snapshot!==data||summary.hidden)return;
+   await downloadDashboard(format,data,summary,()=>fresh()&&snapshot===data&&!summary.hidden);
    exportMenu.open=false;exportMenu.querySelector('summary').focus();
    exportStatus.textContent='Descarga preparada.';
   }catch{
