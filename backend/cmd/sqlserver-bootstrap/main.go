@@ -18,9 +18,10 @@ func main() {
 		log.Fatal(err)
 	}
 	defer store.Close()
-	if err := store.Provision(ctx, os.Getenv("SQLSERVER_BOOTSTRAP_CONFIRM"),
-		os.Getenv("DEV_ADMIN_USERNAME"), os.Getenv("DEV_ADMIN_PASSWORD")); err != nil {
+	if err := store.ProvisionInstallation(ctx, os.Getenv("SQLSERVER_BOOTSTRAP_CONFIRM"),
+		os.Getenv("DEV_ADMIN_USERNAME"), os.Getenv("DEV_ADMIN_PASSWORD"),
+		os.Getenv("JAC_ADMIN_PASSWORD"), os.Getenv("JAC_MECHANIC_PASSWORD")); err != nil {
 		log.Fatal("La provisión SQL Server falló: ", err)
 	}
-	log.Print("Catálogos y cuenta inicial de QA preparados.")
+	log.Print("Catálogos, permisos y tres cuentas iniciales preparados.")
 }

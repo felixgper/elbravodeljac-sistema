@@ -1,67 +1,70 @@
-﻿param([switch]$SkipBuild)
+param([switch]$Restart)
+
 $ErrorActionPreference = 'Stop'
-$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$privatePath = Join-Path $repoRoot '.env.fase-e.local'
-$accessPath = Join-Path $repoRoot 'backend/.cache/acceso-desarrollo.txt'
-$projectName = 'elbravodeljac-fase-e-dev'
-function New-DevelopmentSecret {
-    $randomBytes = New-Object byte[] 32
-    [System.Security.Cryptography.RandomNumberGenerator]::Fill($randomBytes)
-    return [Convert]::ToHexString($randomBytes).ToLowerInvariant()
+$project = 'elbravodeljac-sqlserver-dev'
+
+function Invoke-Docker {
+    & docker @args
+    if ($LASTEXITCODE -ne 0) { throw "Docker falló al ejecutar $($args[0])." }
 }
-function Invoke-DevelopmentCompose([string[]]$Arguments) {
-    & docker compose --env-file $privatePath -p $projectName -f (Join-Path $repoRoot 'compose.dev.yaml') @Arguments
-    if ($LASTEXITCODE -ne 0) { throw 'Falló Docker Compose del entorno aislado. Revisa el error anterior.' }
-}
-Push-Location $repoRoot
-try {
-    & docker info --format '{{.ServerVersion}}'
-    if ($LASTEXITCODE -ne 0) { throw 'Docker no está accesible desde esta terminal.' }
-    $projects = & docker compose ls -a --format json | ConvertFrom-Json
-    if ($LASTEXITCODE -ne 0) { throw 'No se pudo inventariar Compose.' }
-    $existingProject = @($projects | Where-Object { $_.Name -eq $projectName })
-    if ($existingProject.Count -gt 0 -and $existingProject[0].ConfigFiles -ne (Join-Path $repoRoot 'compose.dev.yaml')) {
-        throw 'El nombre reservado pertenece a otra configuración Compose; no se modifica.'
+
+$containers = @{}
+foreach ($service in 'sqlserver', 'mongo', 'api') {
+    $name = "$project-$service-1"
+    $match = @(Invoke-Docker ps -a --filter "name=^/$name$" --format '{{.Names}}')
+    if ($match.Count -ne 1 -or $match[0] -ne $name) {
+        throw "Falta $name. Para una instalación nueva consulta database/sqlserver/README.md."
     }
-    if (!(Test-Path -LiteralPath $privatePath)) {
-        $signingBytes = New-Object byte[] 32
-        [System.Security.Cryptography.RandomNumberGenerator]::Fill($signingBytes)
-        $settings = @{
-            DEV_POSTGRES_PASSWORD = (New-DevelopmentSecret)
-            DEV_MONGO_PASSWORD = (New-DevelopmentSecret)
-            TEST_POSTGRES_PASSWORD = (New-DevelopmentSecret)
-            JWT_SECRET_BASE64 = [Convert]::ToBase64String($signingBytes)
-            DEV_ADMIN_USERNAME = 'admin_pruebas'
-            DEV_ADMIN_PASSWORD = (New-DevelopmentSecret)
+    $identity = Invoke-Docker inspect --format '{{index .Config.Labels "com.docker.compose.project"}}/{{index .Config.Labels "com.docker.compose.service"}}' $name
+    if ($identity -ne "$project/$service") { throw "Identidad Compose inesperada para $name." }
+    $containers[$service] = Invoke-Docker inspect --format '{{.Id}}' $name
+}
+
+$mounts = @{
+    sqlserver = @("$($project)_sql-data:/var/opt/mssql")
+    mongo = @("$($project)_mongo-data:/data/db", "$($project)_mongo-config:/data/configdb")
+}
+foreach ($service in $mounts.Keys) {
+    $actual = @(Invoke-Docker inspect --format '{{range .Mounts}}{{if eq .Type "volume"}}{{println (printf "%s:%s" .Name .Destination)}}{{end}}{{end}}' $containers[$service])
+    foreach ($mount in $mounts[$service]) {
+        if ($mount -notin $actual) { throw "Falta el montaje $mount en $service." }
+        $volume = ($mount -split ':', 2)[0]
+        $owner = Invoke-Docker volume inspect --format '{{index .Labels "com.docker.compose.project"}}' $volume
+        if ($owner -ne $project) { throw "El volumen $volume no pertenece a $project." }
+    }
+}
+
+$keys = @(Invoke-Docker inspect --format '{{range .Config.Env}}{{println (index (split . "=") 0)}}{{end}}' $containers.api)
+if ('SQLSERVER_DSN' -notin $keys -or 'MONGODB_URI' -notin $keys -or 'POSTGRES_DSN' -in $keys) {
+    throw 'La API existente no está configurada para SQL Server y MongoDB.'
+}
+
+if ($Restart) {
+    Invoke-Docker stop $containers.api | Out-Null
+    Invoke-Docker stop $containers.sqlserver $containers.mongo | Out-Null
+}
+
+Invoke-Docker start $containers.sqlserver $containers.mongo | Out-Null
+$deadline = (Get-Date).AddSeconds(150)
+do {
+    $health = @(Invoke-Docker inspect --format '{{.State.Status}}/{{.State.Health.Status}}' $containers.sqlserver $containers.mongo)
+    if (($health -join ',') -eq 'running/healthy,running/healthy') { break }
+    if ($health -match '^(exited|dead)/' -or (Get-Date) -ge $deadline) { throw 'SQL Server o MongoDB no está saludable.' }
+    Start-Sleep -Seconds 2
+} while ($true)
+
+Invoke-Docker start $containers.api | Out-Null
+$deadline = (Get-Date).AddSeconds(60)
+do {
+    try {
+        $ready = Invoke-RestMethod 'http://localhost:8080/readyz' -TimeoutSec 3
+        if ($ready.status -eq 'ready' -and $ready.technicalConfigured) {
+            Write-Host 'Aplicación REAL disponible en http://localhost:8080/ con SQL Server y MongoDB.'
+            return
         }
-        $lines = foreach ($key in $settings.Keys) { '{0}={1}' -f $key, $settings[$key] }
-        [IO.File]::WriteAllLines($privatePath, $lines, [Text.UTF8Encoding]::new($false))
+    } catch {
+        # Esperar a que la API abra el puerto y compruebe los dos motores.
     }
-    $settings = @{}
-    foreach ($line in [IO.File]::ReadAllLines($privatePath)) {
-        if ($line -match '^([A-Z0-9_]+)=(.*)$') { $settings[$Matches[1]] = $Matches[2] }
-    }
-    foreach ($key in @('DEV_POSTGRES_PASSWORD','DEV_MONGO_PASSWORD','JWT_SECRET_BASE64','DEV_ADMIN_USERNAME','DEV_ADMIN_PASSWORD')) {
-        if (!$settings[$key]) { throw "Falta $key en el archivo privado; no se regeneran credenciales existentes." }
-    }
-    Invoke-DevelopmentCompose @('config','--quiet')
-    if (!$SkipBuild) { Invoke-DevelopmentCompose @('build','api','mongo-init','dev-bootstrap','db-migrate') }
-    Invoke-DevelopmentCompose @('up','-d','--wait','postgres-dev','mongo-dev')
-    Invoke-DevelopmentCompose @('run','--rm','--no-deps','db-migrate')
-    Invoke-DevelopmentCompose @('run','--rm','--no-deps','dev-bootstrap')
-    Invoke-DevelopmentCompose @('run','--rm','--no-deps','mongo-init')
-    Invoke-DevelopmentCompose @('up','-d','api')
-    $ready = $false
-    for ($attempt = 0; $attempt -lt 120; $attempt++) {
-        try { $status = Invoke-RestMethod 'http://localhost:8080/readyz' -TimeoutSec 3; $ready = $status.status -eq 'ready' -and $status.technicalConfigured } catch {}
-        if ($ready) { break }
-        Start-Sleep -Seconds 1
-    }
-    if (!$ready) { throw 'La aplicación no confirmó PostgreSQL y MongoDB en /readyz.' }
-    New-Item -ItemType Directory -Path (Split-Path $accessPath) -Force | Out-Null
-    $accessLines = @('ENTORNO AISLADO DE DESARROLLO - NO COMPARTIR', 'URL: http://localhost:8080/', ('Usuario: '+$settings.DEV_ADMIN_USERNAME), ('Contraseña: '+$settings.DEV_ADMIN_PASSWORD), '', 'Archivo local excluido de Git. La cuenta inicial no se restablece si ya existen usuarios.')
-    [IO.File]::WriteAllLines($accessPath, $accessLines, [Text.UTF8Encoding]::new($false))
-    Write-Host 'Aplicación REAL disponible: http://localhost:8080/'
-    Write-Host "Acceso privado guardado en: $accessPath"
-    Write-Host 'PostgreSQL y MongoDB no publican puertos. Otros proyectos Docker permanecen intactos.'
-} finally { Pop-Location }
+    Start-Sleep -Seconds 2
+} while ((Get-Date) -lt $deadline)
+throw 'La API no confirmó SQL Server y MongoDB en /readyz.'

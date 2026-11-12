@@ -42,11 +42,33 @@ func TestSQLServer2025(t *testing.T) {
 		requireBrowserDatabase(t, s, token)
 	}
 	password := rand.Text()
-	if err := s.Provision(ctx, db, "gerente_qa", password); err != nil {
+	adminPassword, mechanicPassword := rand.Text(), rand.Text()
+	if err := s.ProvisionInstallation(ctx, db, "gerente_qa", password, adminPassword, mechanicPassword); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.Provision(ctx, db, "gerente_otro", password); err == nil {
+	if err := s.ProvisionInstallation(ctx, db, "gerente_otro", password, adminPassword, mechanicPassword); err == nil {
 		t.Fatal("provisioning accepted an occupied database")
+	}
+	var accounts int
+	if err := s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM dbo.usuarios").Scan(&accounts); err != nil || accounts != 3 {
+		t.Fatalf("initial accounts=%d err=%v", accounts, err)
+	}
+	for _, account := range []struct{ username, role, password string }{
+		{"administradora", "Administrador", adminPassword},
+		{"mecanico", "Mecánico", mechanicPassword},
+	} {
+		u, err := s.FindLogin(ctx, account.username)
+		if err != nil || !u.Active || len(u.Roles) != 1 || u.Roles[0] != account.role {
+			t.Fatalf("initial account %s has incorrect access: %v", account.username, err)
+		}
+		if err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(account.password)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var employeeType string
+	if err := s.db.QueryRowContext(ctx, `SELECT e.tipo_empleado FROM dbo.empleados e
+JOIN dbo.usuarios u ON u.id_empleado=e.id_empleado WHERE u.usuario=N'mecanico' AND e.activo=1`).Scan(&employeeType); err != nil || employeeType != "Mecánico" {
+		t.Fatalf("initial mechanic employee type=%q err=%v", employeeType, err)
 	}
 	user, err := s.FindLogin(ctx, "gerente_qa")
 	if err != nil {

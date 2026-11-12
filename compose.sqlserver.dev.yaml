@@ -1,0 +1,103 @@
+name: elbravodeljac-sqlserver-dev
+
+x-go: &go
+  image: elbravodeljac-sqlserver-go:local
+  build:
+    context: .
+    dockerfile: backend/Dockerfile.sqlserver
+  networks: [data]
+
+x-mongo: &mongo
+  MONGODB_URI: mongodb://jac_app:${JAC_MONGO_APP_PASSWORD:?Use the private SQL Server env file}@mongo:27017/?authSource=elbravodeljac_tecnico_dev
+  MONGODB_DATABASE: elbravodeljac_tecnico_dev
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server@sha256:21cba63f9e5f93ae72d211e50bceca8f047a6233da18ed5ecb497152f97eca7b
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: StandardDeveloper
+      MSSQL_SA_PASSWORD: ${JAC_SQL_SA_PASSWORD:?Use the private SQL Server env file}
+      MSSQL_MEMORY_LIMIT_MB: "2560"
+      JAC_SQL_APP_PASSWORD: ${JAC_SQL_APP_PASSWORD:?Use the private SQL Server env file}
+    mem_limit: 3g
+    memswap_limit: 3g
+    volumes:
+      - sql-data:/var/opt/mssql
+      - ./database/sqlserver/esquema_entrega.sql:/setup/esquema_entrega.sql:ro
+      - ./backend/scripts/sqlserver-init-clean.sh:/setup/init-clean.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "SQLCMDPASSWORD=\"$$MSSQL_SA_PASSWORD\" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b -l 3 -Q 'SET NOCOUNT ON; SELECT 1' >/dev/null"]
+      interval: 5s
+      timeout: 6s
+      retries: 30
+    networks: [data]
+
+  mongo:
+    image: mongo:9.0.4
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.256"]
+    mem_limit: 768m
+    memswap_limit: 768m
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: jac_root
+      MONGO_INITDB_ROOT_PASSWORD: ${JAC_MONGO_ROOT_PASSWORD:?Use the private SQL Server env file}
+      JAC_MONGO_APP_PASSWORD: ${JAC_MONGO_APP_PASSWORD:?Use the private SQL Server env file}
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+      - ./backend/scripts/mongo-sqlserver-user.js:/docker-entrypoint-initdb.d/001-app-user.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--host", "mongo", "elbravodeljac_tecnico_dev", "--eval", "db.auth('jac_app', process.env.JAC_MONGO_APP_PASSWORD); if (!db.runCommand({connectionStatus: 1}).authInfo.authenticatedUsers.some(user => user.user === 'jac_app' && user.db === db.getName())) quit(1)"]
+      interval: 5s
+      timeout: 6s
+      retries: 30
+    networks: [data]
+
+  sqlserver-bootstrap:
+    <<: *go
+    profiles: [setup]
+    command: ["/app/sqlserver-bootstrap"]
+    environment:
+      SQLSERVER_DSN: sqlserver://sa:${JAC_SQL_SA_PASSWORD}@sqlserver:1433?database=elbravodeljac_sqlserver_dev&encrypt=true&TrustServerCertificate=true
+      SQLSERVER_BOOTSTRAP_CONFIRM: elbravodeljac_sqlserver_dev
+      DEV_ADMIN_USERNAME:
+      DEV_ADMIN_PASSWORD:
+      JAC_ADMIN_PASSWORD:
+      JAC_MECHANIC_PASSWORD:
+
+  mongo-init:
+    <<: *go
+    profiles: [setup]
+    command: ["/app/mongo-init"]
+    environment: *mongo
+
+  api:
+    <<: *go
+    command: ["/app/api"]
+    mem_limit: 384m
+    memswap_limit: 384m
+    environment:
+      <<: *mongo
+      SQLSERVER_DSN: sqlserver://jac_app:${JAC_SQL_APP_PASSWORD:?Use the private SQL Server env file}@sqlserver:1433?database=elbravodeljac_sqlserver_dev&encrypt=true&TrustServerCertificate=true
+      JWT_SECRET_BASE64: ${JAC_JWT_SECRET_BASE64:?Use the private SQL Server env file}
+      HTTP_ADDR: 0.0.0.0:8080
+      APP_ORIGIN: http://${JAC_HTTP_HOST:-127.0.0.1}:${JAC_HTTP_PORT:-18080}
+      COOKIE_SECURE: "false"
+      FRONTEND_DIR: /app/dist
+    ports: ["127.0.0.1:${JAC_HTTP_PORT:-18080}:8080"]
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    networks: [data, web]
+
+volumes:
+  sql-data:
+  mongo-data:
+  mongo-config:
+
+networks:
+  data:
+    internal: true
+  web:
