@@ -22,6 +22,6 @@ La relación de `cotizaciones.id_cotizacion_base` con `cotizaciones.id_cotizacio
 
 ## Archivos PDF y PNG anteriores
 
-Los PDF y PNG V24 existentes fueron exportados antes de esta revisión y aún muestran los tipos de PostgreSQL. **No son la versión vigente para SQL Server 2025**. Para generar PDF y PNG actuales, abre el `.drawio` y usa Archivo → Exportar como, manteniendo la página completa.
+Los PDF y PNG V24 antiguos **se retiraron de esta rama** porque seguían mostrando PostgreSQL. Sus versiones originales se pueden recuperar desde el historial Git. Para obtener PDF y PNG actualizados, abre el `.drawio` y usa Archivo → Exportar como, manteniendo la página completa.
 
 **No ejecutar scripts SQL del repositorio para “aplicar” cambios del dibujo:** esta revisión es exclusivamente documental.
