@@ -12,4 +12,4 @@ Se conserva **la misma disposición y relaciones del V24 original**, sin inventa
 
 [Modelo físico de SQL Server 2025, sobre el mismo V24](../V24_Logico_CrowsFoot/El_Bravo_del_JAC_V24_Logico_Completo.drawio)
 
-> Las imágenes y PDF exportados anteriormente representan el estado histórico PostgreSQL. El archivo editable es la fuente vigente para esta revisión. No se cambiaron la base, los datos, ni el sistema.
+> Las imágenes y PDF V24 antiguos se retiraron de esta rama para evitar confundirlos con el modelo actual; siguen recuperables desde el historial Git. El archivo `.drawio` editable es la fuente vigente de esta revisión. No se cambiaron la base, los datos, ni el sistema.
