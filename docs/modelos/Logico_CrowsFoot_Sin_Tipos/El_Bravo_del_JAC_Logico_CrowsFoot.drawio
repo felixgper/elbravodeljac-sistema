@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <mxfile host="app.diagrams.net" type="device">
-  <diagram id="logico-crowsfoot-sin-tipos" name="Lógico Crow’s Foot · sin tipos">
+  <diagram id="logico-crowsfoot-sin-tipos" name="V24 · Lógico Crow’s Foot · sin tipos">
     <mxGraphModel page="1" pageWidth="8080" pageHeight="5520" pageScale="1" grid="1" gridSize="20" background="#ffffff">
       <root>
         <mxCell id="0" />
@@ -8,7 +8,7 @@
         <mxCell id="title" value="EL BRAVO DEL JAC / MODELO LÓGICO CROW’S FOOT SIN TIPOS" style="text;html=0;whiteSpace=wrap;overflow=hidden;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Arial;fontColor=#244563;fontSize=48;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="80" y="40" width="7850" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="subtitle" value="28 tablas · 208 atributos · 50 FK · Estructura y distribución del último modelo detallado · Sin tipos de datos" style="text;html=0;whiteSpace=wrap;overflow=hidden;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Arial;fontColor=#244563;fontSize=28;" vertex="1" parent="1">
+        <mxCell id="subtitle" value="V24 ACTUALIZADO · MISMAS 28 ENTIDADES · 208 ATRIBUTOS · 50 FK · SIN TIPOS DE DATOS" style="text;html=0;whiteSpace=wrap;overflow=hidden;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Arial;fontColor=#244563;fontSize=28;" vertex="1" parent="1">
           <mxGeometry x="80" y="130" width="7850" height="55" as="geometry" />
         </mxCell>
         <mxCell id="area-0" value="" style="rounded=1;arcSize=1;fillColor=#ffffff;strokeColor=#dce5ee;strokeWidth=2;connectable=0;" vertex="1" parent="1">
