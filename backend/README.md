@@ -1,26 +1,21 @@
 # Backend Go vigente
 
-Monolito modular: Go sirve `dist/` y `/api/v1` en el mismo origen. PostgreSQL mantiene transacciones, cuentas y permisos; MongoDB guarda resultados de escáner y evidencias/GridFS vinculados a diagnósticos SQL. Dependencias fijadas en `go.mod`/`go.sum`; Go 1.26 o superior (verificado con 1.27.1).
+Go sirve `dist/` y `/api/v1` en el mismo origen. SQL Server 2025 mantiene transacciones, cuentas y permisos. MongoDB guarda resultados de escáner y evidencias en GridFS vinculados a diagnósticos SQL. Las dependencias están fijadas en `go.mod` y `go.sum`. Usa Go 1.26 o superior.
 
 ## Ejecutar
 
-Desde la raíz, con Docker Desktop Linux y PowerShell 7:
+Para instalar desde cero, sigue la [guía de SQL Server y MongoDB](../database/sqlserver/README.md#instalación-local-con-docker-compose). Para reanudar una instalación existente, usa PowerShell 7 y Docker Desktop con motor Linux. Ejecuta desde la raíz:
 
 ```powershell
 ./backend/scripts/start-dev.ps1
+./backend/scripts/start-dev.ps1 -Restart
 ```
 
-Abrir http://localhost:8080/. Las credenciales iniciales son privadas (`backend/.cache/acceso-desarrollo.txt`); una base ya provisionada conserva sus cuentas. El comando `dev-bootstrap` solo permite `elbravodeljac_dev`, confirmación explícita y ausencia de usuarios.
-
-La ruta técnica de instalación nueva es `database/postgresql/esquema_entrega.sql` (único esquema físico consolidado) → catálogo documental por el migrador → inicialización MongoDB → provisión autorizada → API. Su marca evita reaplicar migraciones históricas. Las migraciones embebidas 001–009 y `000_base_legacy.sql` se conservan únicamente para actualizar/probar bases anteriores. Nunca ejecutar el esquema final sobre bases existentes ni recrear volúmenes.
-
-Antes de reiniciar PostgreSQL de una instalación existente, revisa el origen del bind mount con `docker inspect`. Compose puede recrear el contenedor si cambia el montaje. Verifica el volumen y los respaldos antes de programar esa recreación. PostgreSQL solo ejecuta el SQL de inicialización con un directorio de datos vacío.
-
-`compose.dev.yaml` conserva volúmenes de desarrollo; `compose.test.yaml` utiliza `tmpfs` y red aislada. El script manual `scripts/backup-audit.ps1` y sus dos Compose de auditoría se reservan para el procedimiento de respaldo y restauración aislada. El script exige identificar los proyectos y sus archivos Compose antes de leer la fuente o restaurar en QA.
+Abre http://localhost:8080/. El arranque habitual usa los contenedores y volúmenes ya provisionados por `compose.sqlserver.dev.yaml`. Los Compose de PostgreSQL, las migraciones 001–009 y `000_base_legacy.sql` corresponden a pruebas y mantenimiento históricos.
 
 ## Configuración
 
-`.env.example` es documentación; Go no la carga automáticamente. Configurar privadamente `POSTGRES_DSN`, `JWT_SECRET_BASE64`, `APP_ORIGIN` y, para documentos técnicos, `MONGODB_URI`/`MONGODB_DATABASE`. `HTTP_ADDR`, `COOKIE_SECURE` y `FRONTEND_DIR` permiten ajustar escucha, cookies y ubicación del mismo frontend. Las bases admitidas son las separadas `_dev`/`_test` previstas por `internal/config`; no usar `ElBravoDelJac`.
+`compose.sqlserver.dev.yaml` configura `SQLSERVER_DSN`, `JWT_SECRET_BASE64`, `APP_ORIGIN`, `MONGODB_URI` y `MONGODB_DATABASE` a partir de la configuración privada. `HTTP_ADDR`, `COOKIE_SECURE` y `FRONTEND_DIR` ajustan la escucha, las cookies y la ubicación del frontend. Las pruebas usan bases aisladas.
 
 Desde `backend/`, con variables privadas configuradas: `go run ./cmd/api`. `cmd/mongo-init` instala explícitamente validadores e índices del entorno permitido; arrancar la API no los cambia. Sin MongoDB configurado, las operaciones técnicas informan indisponibilidad; no simulan persistencia.
 

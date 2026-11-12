@@ -1,6 +1,6 @@
 # El Bravo del JAC
 
-El Bravo del JAC es un sistema web de gestión automotriz. Administra clientes, vehículos, recepciones, diagnósticos, cotizaciones, órdenes de trabajo, auxilios, pagos, entregas, empleados y permisos. Go sirve el frontend en HTML, CSS y JavaScript. PostgreSQL almacena los datos transaccionales y MongoDB con GridFS conserva los resultados de escáner y las evidencias técnicas.
+El Bravo del JAC es un sistema web de gestión automotriz. Administra clientes, vehículos, recepciones, diagnósticos, cotizaciones, órdenes de trabajo, auxilios, pagos, entregas, empleados y permisos. Go sirve el frontend en HTML, CSS y JavaScript. SQL Server 2025 almacena los datos transaccionales y MongoDB con GridFS conserva los resultados de escáner y las evidencias técnicas.
 
 ## Entregables oficiales
 
@@ -10,21 +10,22 @@ El Bravo del JAC es un sistema web de gestión automotriz. Administra clientes, 
 | Conceptual Chen V24 resumido | [Draw.io](docs/modelos/V24_Chen_Resumido_Exposicion/El_Bravo_del_JAC_V24_Chen_Resumido.drawio) · [PDF](docs/modelos/V24_Chen_Resumido_Exposicion/El_Bravo_del_JAC_V24_Chen_Resumido.pdf) · [PNG](docs/modelos/V24_Chen_Resumido_Exposicion/El_Bravo_del_JAC_V24_Chen_Resumido.png) |
 | Lógico Crow’s Foot, sin tipos | [Draw.io](docs/modelos/Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.drawio) · [PDF](docs/modelos/Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.pdf) · [PNG](docs/modelos/Logico_CrowsFoot_Sin_Tipos/El_Bravo_del_JAC_Logico_CrowsFoot.png) |
 | Referencia física detallada V24, con tipos | [Draw.io](docs/modelos/V24_Logico_CrowsFoot/El_Bravo_del_JAC_V24_Logico_Completo.drawio) · [PDF](docs/modelos/V24_Logico_CrowsFoot/El_Bravo_del_JAC_V24_Logico_Completo.pdf) · [PNG](docs/modelos/V24_Logico_CrowsFoot/El_Bravo_del_JAC_V24_Logico_Completo.png) |
-| PostgreSQL: SQL oficial de entrega | [esquema_entrega.sql](database/postgresql/esquema_entrega.sql) |
+| SQL Server 2025: esquema oficial | [esquema_entrega.sql](database/sqlserver/esquema_entrega.sql) |
 
-La comparación del modelo lógico con el catálogo de PostgreSQL del 5 de noviembre de 2026 verificó 28 tablas, 208 columnas y 50 claves foráneas. El modelo Chen resume el negocio. La referencia física incluye los tipos y el SQL oficial contiene la estructura sin datos.
+El esquema de SQL Server contiene 28 tablas, 208 columnas y 50 claves foráneas. Los diagramas conservan la referencia de diseño original del proyecto.
 
 ## Instalación y ejecución en Windows
 
-Requisitos: PowerShell 7, Git y Docker Desktop con motor Linux activo. Desde una copia del repositorio, para preparar **un entorno de desarrollo nuevo y separado**:
+Usa PowerShell 7, Git y Docker Desktop con motor Linux activo. Para una instalación desde cero, sigue la [guía de SQL Server y MongoDB](database/sqlserver/README.md#instalación-local-con-docker-compose).
+
+Para iniciar o reiniciar una instalación ya provisionada, ejecuta desde la raíz:
 
 ```powershell
 ./backend/scripts/start-dev.ps1
+./backend/scripts/start-dev.ps1 -Restart
 ```
 
-Abrir **http://localhost:8080/** en Chrome. El script genera configuración privada; solo provisiona la cuenta inicial cuando la base de desarrollo está vacía de usuarios. El acceso inicial queda en `backend/.cache/acceso-desarrollo.txt`, ignorado por Git. Una instalación existente conserva sus cuentas y datos; utiliza su acceso propio.
-
-`start-dev.ps1` usa el **único esquema físico oficial**, `database/postgresql/esquema_entrega.sql`, al crear una base nueva. El migrador detecta su marca y no repite migraciones; únicamente prepara el catálogo inicial de documentos. Las migraciones **001–009** se mantienen para actualizar bases históricas; no son otros modelos físicos. **Nunca ejecutar el SQL final sobre una base existente.** No restaurar SQL ni reinicializar volúmenes para reanudar un entorno detenido. Descargar GitHub tampoco actualiza por sí solo un binario/contenedor que ya está ejecutándose; una actualización de la imagen habitual requiere revisión independiente y conserva los volúmenes.
+Abre **http://localhost:8080/** con las credenciales de tu instalación. El script verifica los volúmenes y reanuda los contenedores existentes de SQL Server, MongoDB y Go. Si falta alguno, consulta la guía antes de continuar.
 
 Go sirve UI y API bajo el mismo origen con JWT HttpOnly, CSRF y permisos en servidor. `/demo/` es demostración ficticia separada; Live Server solo sirve esa demostración. No abrir `index.html` con doble clic.
 

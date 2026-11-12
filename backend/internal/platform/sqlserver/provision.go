@@ -3,29 +3,55 @@ package sqlserver
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 	"golang.org/x/crypto/bcrypt"
 )
 
+type initialAccount struct {
+	name, username, password, role string
+}
+
 // Provision creates catalogs and the initial manager in an empty development or QA
 // database. API startup never calls it.
 func (s *Store) Provision(ctx context.Context, target, username, password string) error {
+	return s.provision(ctx, target, []initialAccount{{"Administración de pruebas", username, password, "Gerente"}})
+}
+
+// ProvisionInstallation creates the three installation accounts and the catalogs atomically.
+func (s *Store) ProvisionInstallation(ctx context.Context, target, owner, ownerPassword, adminPassword, mechanicPassword string) error {
+	return s.provision(ctx, target, []initialAccount{
+		{"Dueño", owner, ownerPassword, "Gerente"},
+		{"Administradora", "administradora", adminPassword, "Administrador"},
+		{"Mecánico", "mecanico", mechanicPassword, "Mecánico"},
+	})
+}
+
+func (s *Store) provision(ctx context.Context, target string, accounts []initialAccount) error {
 	if target != "elbravodeljac_sqlserver_dev" && target != "elbravodeljac_sqlserver_qa" {
 		return errors.New("Confirma la base SQL Server de desarrollo o QA por su nombre exacto")
 	}
-	name := "Administración de pruebas"
 	placeholderRole := "1"
-	if len(password) < 12 {
-		return errors.New("La contraseña inicial requiere al menos 12 bytes")
-	}
-	if err := (domain.UserInput{Name: &name, Username: &username, Password: &password, RoleID: &placeholderRole}).Validate(true); err != nil {
-		return err
-	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return err
+	hashes := make([][]byte, len(accounts))
+	usernames := make(map[string]bool, len(accounts))
+	for i, account := range accounts {
+		account.username = strings.TrimSpace(account.username)
+		if err := (domain.UserInput{Name: &account.name, Username: &account.username, Password: &account.password, RoleID: &placeholderRole}).Validate(true); err != nil {
+			return fmt.Errorf("cuenta inicial %s: %w", account.role, err)
+		}
+		username := strings.ToLower(account.username)
+		if usernames[username] {
+			return errors.New("Las cuentas iniciales deben tener usuarios distintos")
+		}
+		usernames[username] = true
+		hash, err := bcrypt.GenerateFromPassword([]byte(account.password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		hashes[i] = hash
+		accounts[i].username = account.username
 	}
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -94,12 +120,21 @@ SELECT @p1,id_permiso FROM dbo.permisos WHERE codigo=@p2`, id, code); err != nil
 			}
 		}
 	}
-	_, err = tx.ExecContext(ctx, `
+	for i, account := range accounts {
+		_, err = tx.ExecContext(ctx, `
+DECLARE @employee bigint = NULL;
+IF @p4=N'Mecánico'
+BEGIN
+    SET @employee = NEXT VALUE FOR dbo.empleados_id_empleado_seq;
+    INSERT dbo.empleados(id_empleado,nombre,tipo_empleado,activo) VALUES(@employee,@p1,@p4,1);
+END;
 DECLARE @user bigint = NEXT VALUE FOR dbo.usuarios_id_usuario_seq;
-INSERT dbo.usuarios(id_usuario,nombre,usuario,password_hash) VALUES(@user,@p1,@p2,@p3);
-INSERT dbo.usuario_roles(id_usuario,id_rol) SELECT @user,id_rol FROM dbo.roles WHERE nombre_rol=N'Gerente';`, name, strings.TrimSpace(username), string(hash))
-	if err != nil {
-		return translate(err)
+INSERT dbo.usuarios(id_usuario,nombre,usuario,password_hash,id_empleado) VALUES(@user,@p1,@p2,@p3,@employee);
+INSERT dbo.usuario_roles(id_usuario,id_rol) SELECT @user,id_rol FROM dbo.roles WHERE nombre_rol=@p4;
+IF @@ROWCOUNT <> 1 THROW 51000, N'Rol inicial no disponible.', 1;`, account.name, account.username, string(hashes[i]), account.role)
+		if err != nil {
+			return translate(err)
+		}
 	}
 	return translate(tx.Commit())
 }
