@@ -8,7 +8,7 @@ export function cents(value) {
   return Number(n);
 }
 export const user=v=>({...v,role:(v.roles||[]).map(r=>typeof r==='string'?r:r.name).join(' / '),roleNames:(v.roles||[]).map(r=>typeof r==='string'?r:r.name)});
-export const quote=v=>({...v,items:(v.items||[]).map(i=>({...i,origin:i.type==='Servicio'?'—':i.origin==='CLIENTE'?'Cliente':'Taller',unitCents:cents(i.unitPrice),discountCents:cents(i.discount||'0.00')}))});
+export const quote=v=>({...v,items:(v.items||[]).map(i=>({...i,origin:i.type==='Servicio'?'—':i.origin==='CLIENTE'?'Cliente':'Taller',...(i.unitPrice===undefined?{}:{unitCents:cents(i.unitPrice),discountCents:cents(i.discount||'0.00')})}))});
 const stateName=v=>({creada:'Pendiente',en_reparacion:'En reparación',en_pruebas:'En pruebas',finalizada:'Finalizada',cancelada:'Cancelada'})[v]||v;
 export function order(v) {
   const assignments=(v.assignments||[]).filter(a=>a.active);

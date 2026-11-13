@@ -96,6 +96,9 @@ func (s *server) workshopList(resource string) func(http.ResponseWriter, *http.R
 			return
 		}
 		out, err := s.store.WorkshopList(r.Context(), resource, f, u)
+		if err == nil {
+			out, err = workshopResponse(out, resource, true, u)
+		}
 		if err != nil {
 			s.failure(w, err)
 			return
@@ -110,6 +113,9 @@ func (s *server) workshopItem(resource string) func(http.ResponseWriter, *http.R
 			return
 		}
 		out, err := s.store.WorkshopItem(r.Context(), resource, id, u)
+		if err == nil {
+			out, err = workshopResponse(out, resource, false, u)
+		}
 		s.result(w, 200, out, err)
 	}
 }
@@ -145,6 +151,9 @@ func (s *server) saveQuote(w http.ResponseWriter, r *http.Request, u domain.User
 		return
 	}
 	out, err := s.store.SaveQuote(r.Context(), id, v, u)
+	if err == nil {
+		out, err = workshopResponse(out, "cotizaciones", false, u)
+	}
 	s.result(w, status, out, err)
 }
 func (s *server) createOrder(w http.ResponseWriter, r *http.Request, u domain.User) {
@@ -153,6 +162,9 @@ func (s *server) createOrder(w http.ResponseWriter, r *http.Request, u domain.Us
 		return
 	}
 	out, err := s.store.CreateOrder(r.Context(), v, u)
+	if err == nil {
+		out, err = workshopResponse(out, "ordenes", false, u)
+	}
 	s.result(w, 201, out, err)
 }
 func (s *server) updateOrder(w http.ResponseWriter, r *http.Request, u domain.User) {
@@ -165,6 +177,9 @@ func (s *server) updateOrder(w http.ResponseWriter, r *http.Request, u domain.Us
 		return
 	}
 	out, err := s.store.UpdateOrder(r.Context(), id, v, u)
+	if err == nil {
+		out, err = workshopResponse(out, "ordenes", false, u)
+	}
 	s.result(w, 200, out, err)
 }
 func (s *server) deleteOrder(w http.ResponseWriter, r *http.Request, u domain.User) {

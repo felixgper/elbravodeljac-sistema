@@ -239,6 +239,7 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 			}
 			order := qaID(t, manager.call(t, "POST", "/ordenes", orderBody, 201))
 			orderPath := "/ordenes/" + order
+			auditAssignedOrderFinancialProjection(t, manager, worker, other, order, qid, "100.25")
 			worker.call(t, "GET", orderPath, nil, 200)
 			other.call(t, "GET", orderPath, nil, 404)
 			worker.call(t, "GET", orderPath+"/pagos", nil, 403)
@@ -247,7 +248,10 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 			control := map[string]any{"version": 0, "execution": map[string]any{line: map[string]string{"status": "Realizado"}}}
 			worker.call(t, "PUT", orderPath+"/control-tecnico", control, 200)
 			worker.call(t, "PUT", orderPath+"/control-tecnico", control, 409)
-			worker.call(t, "PATCH", orderPath, map[string]string{"state": "Finalizada", "note": "Prueba QA", "test": "Ruta", "result": "Satisfactoria"}, 200)
+			updated := qaData(t, worker.call(t, "PATCH", orderPath, map[string]string{"state": "Finalizada", "note": "Prueba QA", "test": "Ruta", "result": "Satisfactoria"}, 200))
+			if _, present := updated["amountDue"]; present {
+				t.Error("restricted amountDue in mechanic update response")
+			}
 			delivery := map[string]any{"kind": "Titular / representante", "recipientKind": "Propietario o titular", "method": "Documento", "verified": true, "conformity": true}
 			manager.call(t, "POST", orderPath+"/entrega", delivery, 422)
 			unpaid := qaData(t, manager.call(t, "GET", orderPath+"/pagos", nil, 200))

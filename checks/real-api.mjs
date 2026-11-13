@@ -29,6 +29,16 @@ state.replaceRealStore({roles:[{id:'10',name:'Mecánico'},{id:'11',name:'Supervi
 ok({data:{id:'2',roles:[{id:'10',name:'Mecánico'},{id:'11',name:'Supervisor'}]}});await workshop.saveUser({name:'Editado',role:'Mecánico',active:true},'2');assert(!calls.at(-1).body.includes('roleId'));assert(!calls.at(-1).body.includes('removeRoleId'));
 await assert.rejects(workshop.saveSupplier({parts:'Texto sin columna'}),/no dispone/);
 ok({data:{id:'3',items:[],total:'90.00'}});await workshop.saveQuote({diagnosisId:'1',status:'Pendiente',items:[{type:'Servicio',concept:'Servicio manual',quantity:'1',unitPrice:'100.00',discount:'10.00'}]});assert(!calls.at(-1).body.includes('serviceId'));assert(calls.at(-1).body.includes('Servicio manual'));
+const technicalQuote=real.quote({id:'4',items:[
+ {type:'Servicio',concept:'Diagnóstico eléctrico',quantity:'1.00',serviceId:'2'},
+ {type:'Repuesto',concept:'Filtro',quantity:'2.00',sparePartId:'3',origin:'CLIENTE'}
+]});
+assert.deepEqual(technicalQuote.items.map(i=>[i.concept,i.quantity,i.origin]),[['Diagnóstico eléctrico','1.00','—'],['Filtro','2.00','Cliente']]);
+assert(technicalQuote.items.every(i=>!('unitCents' in i)&&!('discountCents' in i)));
+const commercialQuote=real.quote({total:'90.00',items:[{type:'Servicio',unitPrice:'100.00',discount:'10.00'}]});
+assert.equal(commercialQuote.items[0].unitCents,10000);
+assert.equal(commercialQuote.items[0].discountCents,1000);
+assert.equal(workshop.balance({payments:[{orderId:'1',amountCents:6000}]},{id:'1',amountDue:'100.25'}),4025);
 assert.equal(real.cents('9999999999.99'),999999999999);assert.throws(()=>real.cents('90071992547409.92'),/rango/);
 ok({data:{monthlyIncomeCents:'12000',currentMonth:'2026-10',from:'2026-10-01T00:00:00-05:00',until:'2026-11-01T00:00:00-05:00',income:[{month:'2026-05',cents:'0'},{month:'2026-10',cents:'12000'}]}});const dashboard=await real.getDashboard();assert.equal(dashboard.currentMonth,'octubre de 2026');assert.equal(dashboard.income.at(-1).month.toLocaleLowerCase('es'),'oct');assert(!dashboard.period.includes('T00:'));
 let page=0;globalThis.fetch=async()=>Response.json({data:[{id:String(++page)}],meta:{total:2}});assert.equal((await api.allPages('/clientes')).length,2);
