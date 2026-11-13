@@ -7,10 +7,14 @@ const fill=color=>`<a:solidFill><a:srgbClr val="${color}"/></a:solidFill>`;
 const style=(color,border='DFE2E8')=>`<c:spPr>${fill(color)}<a:ln>${fill(border)}</a:ln></c:spPr>`;
 const textColor=(size=1000)=>`<c:txPr><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="${size}">${fill('454853')}</a:defRPr></a:pPr><a:endParaRPr/></a:p></c:txPr>`;
 
-function chart(source,xml){
- const {rows,kind,color,head,date,money,title,id}=source;
+function chart(source,letter,xml){
+ const {rows,kind,color,head,col,date,money,title}=source;
  const horizontal=kind==='horizontal';
- const range=index=>`Datos!Serie${id}_${index}`;
+ // Direct cell ranges let Excel track edits and extend the series when its source table grows.
+ const range=index=>{
+  const column=letter(col+index);
+  return `Datos!$${column}$4:$${column}$${3+rows.length}`;
+ };
  const points=(index)=>rows.map((row,i)=>`<c:pt idx="${i}"><c:v>${xml(row[index])}</c:v></c:pt>`).join('');
  const dateFormat=source.monthly?'[$-es-PE]mmm':'dd/mm';
  const categories=date?`<c:numRef><c:f>${range(0)}</c:f><c:numCache><c:formatCode>${dateFormat}</c:formatCode><c:ptCount val="${rows.length}"/>${points(0)}</c:numCache></c:numRef>`:
@@ -46,7 +50,7 @@ async function logoPng(){
 }
 
 const point=(tag,col,row,offset=12000)=>`<xdr:${tag}><xdr:col>${col}</xdr:col><xdr:colOff>${offset}</xdr:colOff><xdr:row>${row}</xdr:row><xdr:rowOff>12000</xdr:rowOff></xdr:${tag}>`;
-export async function nativeCharts({pkg,sources,id,firstRow,xml,logo=false,positions}){
+export async function nativeCharts({pkg,sources,id,firstRow,letter,xml,logo=false,positions}){
  const anchors=[],relationships=[];
  if(logo){
   pkg.files.push(['xl/media/emblema.png',await logoPng()]);
@@ -58,7 +62,7 @@ export async function nativeCharts({pkg,sources,id,firstRow,xml,logo=false,posit
   const wide=sources[0]?.kind==='line'&&index<2;
   const col=index%2*(wide?8:6),span=wide?(index===0?8:4):6;
   const [left,top,right,bottom]=positions?.[source.name]??[col,row,col+span,row+11];
-  pkg.add(`charts/chart${chartId}.xml`,'chart',chart(source,xml),'drawingml');
+  pkg.add(`charts/chart${chartId}.xml`,'chart',chart(source,letter,xml),'drawingml');
   relationships.push([key,'chart',`../charts/chart${chartId}.xml`]);
   anchors.push(`<xdr:twoCellAnchor editAs="oneCell">${point('from',left,top,left?59000:12000)}${point('to',right,bottom,0)}<xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="${key}" name="${xml(source.title)}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr><xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="${chartNS}"><c:chart r:id="rId${key}"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor>`);
  });

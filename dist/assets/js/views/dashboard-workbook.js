@@ -184,8 +184,6 @@ export async function dashboardWorkbook(data,generated){
  ];
  instructions.forEach((line,i)=>put(guide,i+3,0,line));
  const chartWidths=[12,14,14,12,16,13,13,13,13,13,13,13];
- const chartRanges=series.flatMap(source=>source.head.slice(0,2).map((label,i)=>
-  `<definedName name="Serie${source.id}_${i}" localSheetId="1">${source.name}[${xml(label)}]</definedName>`)).join('');
  const pivotWidths=series.flatMap(s=>[s.name==='Servicios'?40:25,23,3,3]);
  const contents=[
   sheet(cover,chartWidths,{cover:true,extra:drawingCover,merges:coverMerges,heights:coverHeights}),
@@ -197,7 +195,7 @@ export async function dashboardWorkbook(data,generated){
  contents.forEach((content,i)=>pkg.add(`worksheets/sheet${i+1}.xml`,'worksheet',content));
  pkg.rels('worksheets','sheet2.xml',tableRels);
  pkg.add('styles.xml','styles',styles());
- pkg.add('workbook.xml','sheet.main',`<workbook xmlns="${spreadsheet}" xmlns:r="${officeRel}"><bookViews><workbookView/></bookViews><sheets>${names.map((name,i)=>`<sheet name="${xml(name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets><definedNames><definedName name="_xlnm.Print_Area" localSheetId="0">Dashboard!$A$1:$L$34</definedName>${chartRanges}</definedNames><calcPr calcId="191029"/>${caches.length?`<pivotCaches>${caches.map(id=>`<pivotCache cacheId="${id}" r:id="rId${10+id}"/>`).join('')}</pivotCaches>`:''}</workbook>`);
+ pkg.add('workbook.xml','sheet.main',`<workbook xmlns="${spreadsheet}" xmlns:r="${officeRel}"><bookViews><workbookView/></bookViews><sheets>${names.map((name,i)=>`<sheet name="${xml(name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets><definedNames><definedName name="_xlnm.Print_Area" localSheetId="0">Dashboard!$A$1:$L$34</definedName></definedNames><calcPr calcId="191029"/>${caches.length?`<pivotCaches>${caches.map(id=>`<pivotCache cacheId="${id}" r:id="rId${10+id}"/>`).join('')}</pivotCaches>`:''}</workbook>`);
  pkg.rels('','workbook.xml',[...names.map((_,i)=>[i+1,'worksheet',`worksheets/sheet${i+1}.xml`]),[6,'styles','styles.xml'],...caches.map(id=>[10+id,'pivotCacheDefinition',`pivotCache/pivotCacheDefinition${id}.xml`])]);
  return pkg.finish();
 }
