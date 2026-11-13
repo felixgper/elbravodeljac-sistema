@@ -41,6 +41,11 @@ func (s *server) inspection(w http.ResponseWriter, r *http.Request, u domain.Use
 	respond(w, 200, map[string]any{"data": map[string]any{"record": out, "catalogue": technicalsheet.Catalog}})
 }
 func (s *server) sheet(w http.ResponseWriter, r *http.Request, u domain.User) {
+	// The archived PDF contains both the payable amount and commercial quote details.
+	if !u.Can("cotizaciones.ver") {
+		writeError(w, http.StatusForbidden, "FORBIDDEN", "La ficha incluye importes de cotización y requiere permiso de consulta de cotizaciones.")
+		return
+	}
 	id, ok := pathID(w, r)
 	if !ok {
 		return

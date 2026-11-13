@@ -87,6 +87,9 @@ func (s *server) frontendOptions(w http.ResponseWriter, r *http.Request, u domai
 		return
 	}
 	out, err := store.FrontendOptions(r.Context(), module, resource, p, u)
+	if err == nil {
+		out, err = workshopResponse(out, resource, true, u)
+	}
 	if err != nil {
 		s.failure(w, err)
 		return
