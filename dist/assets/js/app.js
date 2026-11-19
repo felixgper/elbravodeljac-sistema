@@ -80,19 +80,23 @@ function bindShell(session) {
   const menuMedia = matchMedia('(max-width: 900px)');
   sidebar.inert = menuMedia.matches;
   toggle.setAttribute('aria-expanded', String(!menuMedia.matches));
-  function adjustMenu() { closeMenu(); toggle.setAttribute('aria-expanded',String(!menuMedia.matches)); }
+  function adjustMenu() { closeMenu(); toggle.setAttribute('aria-expanded',String(!menuMedia.matches)); revealActiveMenu(); }
   menuMedia.addEventListener('change',adjustMenu);
   disposeShell = () => menuMedia.removeEventListener('change',adjustMenu);
   const profileButton = document.getElementById('profile-toggle'), profileMenu = document.getElementById('profile-menu');
   const search = document.getElementById('module-search'), results = document.getElementById('search-results');
   const canViewReports = permissionChecker(session.role)('reportes','ver');
+  function revealActiveMenu() {
+    if (menuMedia.matches) return;
+    const active = sidebar.querySelector('.nav-item.active');
+    if (active) active.scrollIntoView({block:'nearest',inline:'nearest'});
+  }
+  revealActiveMenu();
   function closeMenu() { app.classList.remove('sidebar-open'); scrim.hidden = true; toggle.setAttribute('aria-expanded','false'); sidebar.inert = matchMedia('(max-width: 900px)').matches; }
   toggle.addEventListener('click', () => {
     if (matchMedia('(max-width: 900px)').matches) {
       const open = app.classList.toggle('sidebar-open'); scrim.hidden = !open; sidebar.inert = !open; toggle.setAttribute('aria-expanded',String(open));
       if (open) document.querySelector('.nav-item.active').focus();
-    } else {
-      const compact = app.classList.toggle('sidebar-compact'); toggle.setAttribute('aria-expanded', String(!compact));
     }
   });
   scrim.addEventListener('click', () => { closeMenu(); toggle.focus(); });
@@ -119,7 +123,7 @@ function bindShell(session) {
   });
   search.addEventListener('keydown', event => { if (event.key === 'ArrowDown' && !results.hidden) { event.preventDefault(); results.querySelector('a')?.focus(); } });
   root.onkeydown = event => {
-    if (event.key === 'Escape') { closeMenu(); results.hidden = true; search.setAttribute('aria-expanded','false'); profileMenu.hidden = true; profileButton.setAttribute('aria-expanded','false'); toggle.focus(); }
+    if (event.key === 'Escape') { closeMenu(); results.hidden = true; search.setAttribute('aria-expanded','false'); profileMenu.hidden = true; profileButton.setAttribute('aria-expanded','false'); if (menuMedia.matches) toggle.focus(); }
     if (event.key === 'Tab' && app.classList.contains('sidebar-open')) {
       const links = [...document.querySelectorAll('.nav-item')];
       if (!event.shiftKey && document.activeElement === links.at(-1)) { event.preventDefault(); toggle.focus(); }
