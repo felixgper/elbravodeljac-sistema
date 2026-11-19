@@ -60,6 +60,23 @@
 .management-chrome .profile-menu button:hover,.management-chrome .search-results a:hover,.management-chrome .search-results a[aria-selected=true]{background:#4b2132}
 .management-chrome .sidebar-scrim{background:#080b10a6}
 
+/* Escritorio: encabezado y navegación horizontal compartidos por todos los módulos. */
+@media (min-width:901px){
+  .management-chrome{--navigation-height:64px}
+  .management-chrome .topbar{left:0}
+  .management-chrome .menu-button{display:none}
+  .management-chrome .topbar-brand .brand-link{display:block}
+  .management-chrome .topbar-brand .official-brand{flex-direction:row;gap:10px;padding:0;color:#f3f4f7}
+  .management-chrome .topbar-brand .brand-emblem{width:44px}
+  .management-chrome .topbar-brand .brand-wordmark{font-size:21px;color:#f3f4f7}
+  .management-chrome .topbar-brand .brand-wordmark small{font-size:7px}
+  .management-chrome .sidebar{inset:var(--topbar) 0 auto;width:auto;height:var(--navigation-height);padding:0 24px;transform:none;transition:none;border-right:0;border-bottom:1px solid #37393f;overflow:visible;z-index:45}
+  .management-chrome .sidebar-brand,.management-chrome .sidebar-caption,.management-chrome .sidebar-footer,.management-chrome .nav-divider{display:none}
+  .management-chrome .sidebar nav{height:100%;display:flex;flex-direction:row;align-items:center;gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;padding:6px 4px}
+  .management-chrome .nav-item{flex:0 0 auto;min-height:44px;padding:10px 13px;gap:8px;white-space:nowrap}
+  .management-chrome .workspace,.management-chrome.dashboard-surface .workspace{margin-left:0;padding-top:calc(var(--topbar) + var(--navigation-height) + 24px)}
+}
+
 /* Solo Inicio: las clases de tablas/formularios no se oscurecen fuera de aquí. */
 .dashboard-surface .workspace{--ink:#f1f2f5;--muted:#b5b8c2;--text-soft:#b5b8c2;--text-soft-strong:#d0d3db;--surface:#1c1e23;--background:#101114;--line:#41434b;--copper:#bf3355;--copper-soft:#3e202e;background:#101114;color:var(--ink);min-height:100svh;font-family:Inter,'Segoe UI',sans-serif}
 .dashboard-surface .page-heading{margin-bottom:26px;gap:18px}
