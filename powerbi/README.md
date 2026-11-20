@@ -40,6 +40,47 @@ Los identificadores técnicos de atención se conservan para contar clientes y v
 
 Los SELECT de las seis vistas son de lectura. El script de instalación contiene DDL (`CREATE OR ALTER VIEW`) y debe ejecutarse únicamente tras su aprobación.
 
+### Comparación con el backend Go
+
+Se contrastan las consultas de `backend/internal/platform/sqlserver/statistics.go` y la vista `dbo.jac_movimientos_pagos` del esquema oficial. No se cambia el criterio del backend.
+
+| Métrica | Power BI | Backend Go |
+|---|---|---|
+| Cobros históricos | Suma de pagos no revertidos | Suma de movimientos de pago y reversión: mismo resultado histórico |
+| Cobros por período | Excluye el pago revertido de su mes original | Mantiene el cobro original y resta la reversión en su fecha; puede haber meses negativos |
+| Órdenes por fecha | Estado actual de las órdenes creadas en el intervalo | Inicio muestra activas sin limitar su fecha de creación; finalizadas/canceladas por cierre. Análisis cuenta finalizadas por cierre |
+| Cotizaciones | Cada ID emitido, incluidas revisiones; fecha de emisión | `counts.quotes` cuenta cada emisión en el mismo intervalo; una revisión no es ingreso adicional |
+| Clientes y vehículos | Registrados históricos en Resumen; distintos atendidos por ingreso en Actividad | `counts.clients` y `counts.vehicles` cuentan distintos atendidos por ingreso |
+| Servicios realizados | Cantidades ejecutadas de órdenes finalizadas, por fecha de cierre | Mismo filtro técnico y cantidades; el dashboard muestra solo los cuatro grupos principales |
+
+Ejemplo sintético probado: un pago de S/75 en octubre revertido en noviembre se excluye de ambos meses en Power BI; Go conserva +75 en octubre y -75 en noviembre. Con otros cobros vigentes, la prueba obtiene octubre/noviembre 150/50 en Power BI y 225/-25 en Go; ambos suman S/200 históricos.
+La vista de servicios usa el nombre de catálogo, sin descripción libre. Go agrupa por ID y descripción comercial, por lo que las etiquetas y agrupaciones pueden diferir aunque la cantidad total coincida. Análisis agrega auxilios por separado; no forman parte de esta vista de servicios.
+La compatibilidad técnica conserva el criterio existente de Go: ejecución `Realizado` **o** pertenencia a `performedItems`. No se redefine aquí el contrato de Control técnico.
+
+### Instalación atómica y pruebas reproducibles
+
+El instalador exige una sesión sin transacciones abiertas y comprueba base/esquema antes de iniciar. Las seis definiciones se ejecutan dentro de una sola transacción con `XACT_ABORT`, `TRY/CATCH`, rollback si `XACT_STATE()` no es cero y propagación del error mediante `THROW`.
+Cada `CREATE OR ALTER VIEW` se compila mediante `sp_executesql` dentro del bloque protegido: así los errores de compilación de una vista también llegan al `CATCH`, sin continuar hasta un commit parcial. Se conserva la definición previa de las vistas si se revierte la transacción.
+Ejecute el archivo completo en una sesión dedicada, preferentemente `sqlcmd -b`. No ejecute fragmentos. Si se cancela manualmente desde un editor, cierre la sesión o asegúrese de revertir cualquier transacción abierta; una cancelación no equivale a un error capturable por `CATCH`.
+Referencia técnica: [TRY/CATCH de SQL Server](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/try-catch-transact-sql?view=sql-server-ver17).
+
+Las pruebas no necesitan instalar vistas ni acceder a tablas:
+
+```powershell
+python -m unittest discover -s database/sqlserver/bi -p test_consultas.py -v
+python -X utf8 database/sqlserver/bi/probar_consultas.py > consultas.sql
+```
+
+Ejecute el SQL generado con una conexión autorizada y `sqlcmd -f 65001 -b -h -1 -w 65535`. Revise que las 28 filas indiquen PASS; un FAIL de comparación es una fila de resultado y debe detectarlo quien ejecute la prueba, aunque sqlcmd termine con código cero.
+El generador extrae las seis consultas del propio instalador y sustituye sus fuentes por CTE de valores sintéticos. También extrae del código Go el filtro de servicios y del esquema los movimientos de pagos; no los reimplementa para hacerlos coincidir.
+
+- **PASS:** 28 comprobaciones en el motor SQL Server existente mediante SELECT sin consultar tablas oficiales. Incluyen pagos revertidos, precisión decimal, corte de mes en Lima, revisiones, cinco estados, cantidades realmente ejecutadas, JSON legado sin duplicar conceptos, fechas de finalización, privacidad y seis fuentes vacías.
+- **PASS:** seis pruebas estáticas sobre la envoltura transaccional, SQL generado sin DDL/tablas oficiales, expresiones del backend, privacidad, medidas/relaciones y parámetro deshabilitado.
+- **SKIP:** fallo DDL provocado después de crear/alterar vistas y restauración efectiva de sus definiciones; no se ejecuta DDL en la base oficial ni se crean contenedores. La atomicidad está revisada estructuralmente, pero esta prueba de integración sigue pendiente en una base QA autorizada.
+- **SKIP:** ejecución de `verificar_vistas.sql` sobre vistas instaladas, comprobación efectiva de permisos y cruces de gráficos con analítica habilitada. Requieren la instalación y autorización posteriores.
+
+Estas pruebas comprueban las expresiones SELECT, no reemplazan la validación del DDL ni del refresco completo de Power BI después de habilitarlo. No consultan ni exportan registros reales del taller.
+
 ## Habilitación pendiente de analítica
 
 La inspección real confirmó que `powerbi_reader` tiene SELECT solamente sobre `bi.vw_resumen_taller`.
@@ -63,6 +104,7 @@ La cuenta que instale las vistas necesita `CREATE VIEW` en la base, `ALTER` sobr
 La cuenta lectora conserva su permiso existente sobre el resumen y requiere SELECT por objeto sobre `bi.vw_pagos_vigentes`, `bi.vw_ordenes_analiticas`, `bi.vw_cotizaciones_analiticas`, `bi.vw_vehiculos_atendidos` y `bi.vw_servicios_realizados`.
 `bi.vw_ingresos_mensuales` es una agregación adicional; requiere SELECT solamente si se consulta directamente.
 La cadena de propiedad permite consultar estas vistas sin conceder acceso directo a las tablas, siempre que se mantenga su propietario común.
+El instalador ahora rechaza propietarios distintos entre las fuentes y las vistas antes de ejecutar DDL, en lugar de solicitar permisos adicionales. La prueba de acceso con el lector real queda pendiente hasta instalar y aprobar los SELECT.
 La conciliación con tablas de origen debe ejecutarla una cuenta administrativa autorizada.
 No se requieren permisos de escritura, `db_datareader` ni SELECT sobre todo el esquema para el lector.
 Este proyecto no incluye ni ejecuta concesiones de permisos.
