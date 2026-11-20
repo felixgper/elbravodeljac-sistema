@@ -1,0 +1,78 @@
+{
+  "name": "ElBravoDelJAC",
+  "dataColors": [
+    "#BF3355",
+    "#467BBB",
+    "#24906D",
+    "#D89A2A",
+    "#B85858",
+    "#A9ABB2"
+  ],
+  "background": "#17181B",
+  "foreground": "#F1F2F5",
+  "tableAccent": "#BF3355",
+  "textClasses": {
+    "title": {
+      "fontFace": "Segoe UI",
+      "color": "#F1F2F5",
+      "fontSize": 14
+    },
+    "label": {
+      "fontFace": "Segoe UI",
+      "color": "#B5B8C2",
+      "fontSize": 11
+    },
+    "callout": {
+      "fontFace": "Segoe UI",
+      "color": "#FFFFFF",
+      "fontSize": 30
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "color": {
+              "solid": {
+                "color": "#202125"
+              }
+            },
+            "transparency": 0
+          }
+        ],
+        "title": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#D0D3DB"
+              }
+            },
+            "fontFamily": "Segoe UI",
+            "fontSize": 12
+          }
+        ]
+      }
+    },
+    "card": {
+      "*": {
+        "labels": [
+          {
+            "fontSize": 30,
+            "color": {
+              "solid": {
+                "color": "#FFFFFF"
+              }
+            },
+            "labelDisplayUnits": 0
+          }
+        ],
+        "categoryLabels": [
+          {
+            "show": false
+          }
+        ]
+      }
+    }
+  }
+}

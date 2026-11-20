@@ -1,0 +1,19 @@
+relationship 265a3b9d-7f37-5933-97b6-40e46e9c20bb
+	fromColumn: Cobros.fecha
+	toColumn: Calendario.Fecha
+
+relationship 77efa9e0-581f-5ef4-9c92-0085e52d105d
+	fromColumn: Ordenes.fecha
+	toColumn: Calendario.Fecha
+
+relationship 857ad0f2-1571-521e-8b6e-7965a52fbb81
+	fromColumn: Cotizaciones.fecha
+	toColumn: Calendario.Fecha
+
+relationship 859c54b1-f4c8-5d43-9da6-1c5fb0ca5ace
+	fromColumn: Atenciones.fecha
+	toColumn: Calendario.Fecha
+
+relationship 120821ae-39b8-5583-8149-79b8ccc6a9a5
+	fromColumn: Servicios.fecha
+	toColumn: Calendario.Fecha

@@ -1,0 +1,36 @@
+table Atenciones
+	lineageTag: 44ee3070-037b-5f60-9178-20e7b7d8eba4
+
+	column id_recepcion
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_recepcion
+
+	column id_vehiculo
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_vehiculo
+
+	column id_cliente
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_cliente
+
+	column fecha
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: fecha
+
+	column tipo_atencion
+		dataType: string
+		summarizeBy: none
+		sourceColumn: tipo_atencion
+
+	partition Atenciones = m
+		mode: import
+		source =
+				let
+				    Datos = if HabilitarAnalitica then Sql.Database("127.0.0.1,1435", "elbravodeljac_sqlserver_dev"){[Schema="bi",Item="vw_vehiculos_atendidos"]}[Data] else #table({"id_recepcion", "id_vehiculo", "id_cliente", "fecha", "tipo_atencion"}, {}),
+				    Tipos = Table.TransformColumnTypes(Datos, {{"id_recepcion", Int64.Type}, {"id_vehiculo", Int64.Type}, {"id_cliente", Int64.Type}, {"fecha", type date}, {"tipo_atencion", type text}})
+				in
+				    Tipos

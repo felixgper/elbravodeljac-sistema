@@ -1,0 +1,41 @@
+table Cotizaciones
+	lineageTag: d20addb0-a7e3-571c-b440-685da508a3fe
+
+	column id_cotizacion
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_cotizacion
+
+	column id_recepcion
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_recepcion
+
+	column id_cotizacion_base
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_cotizacion_base
+
+	column fecha
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: fecha
+
+	column estado
+		dataType: string
+		summarizeBy: none
+		sourceColumn: estado
+
+	column total
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: total
+
+	partition Cotizaciones = m
+		mode: import
+		source =
+				let
+				    Datos = if HabilitarAnalitica then Sql.Database("127.0.0.1,1435", "elbravodeljac_sqlserver_dev"){[Schema="bi",Item="vw_cotizaciones_analiticas"]}[Data] else #table({"id_cotizacion", "id_recepcion", "id_cotizacion_base", "fecha", "estado", "total"}, {}),
+				    Tipos = Table.TransformColumnTypes(Datos, {{"id_cotizacion", Int64.Type}, {"id_recepcion", Int64.Type}, {"id_cotizacion_base", Int64.Type}, {"fecha", type date}, {"estado", type text}, {"total", Currency.Type}})
+				in
+				    Tipos

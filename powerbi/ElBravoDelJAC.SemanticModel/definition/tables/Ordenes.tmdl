@@ -1,0 +1,31 @@
+table Ordenes
+	lineageTag: 38659d69-a433-5a0f-9440-f59a46249635
+
+	column id_orden
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_orden
+
+	column id_cotizacion
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_cotizacion
+
+	column fecha
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: fecha
+
+	column estado
+		dataType: string
+		summarizeBy: none
+		sourceColumn: estado
+
+	partition Ordenes = m
+		mode: import
+		source =
+				let
+				    Datos = if HabilitarAnalitica then Sql.Database("127.0.0.1,1435", "elbravodeljac_sqlserver_dev"){[Schema="bi",Item="vw_ordenes_analiticas"]}[Data] else #table({"id_orden", "id_cotizacion", "fecha", "estado"}, {}),
+				    Tipos = Table.TransformColumnTypes(Datos, {{"id_orden", Int64.Type}, {"id_cotizacion", Int64.Type}, {"fecha", type date}, {"estado", type text}})
+				in
+				    Tipos

@@ -1,0 +1,41 @@
+table Servicios
+	lineageTag: c15c1b3a-d2d9-521e-8d62-b3dc9fcf1e85
+
+	column id_detalle
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_detalle
+
+	column id_orden
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_orden
+
+	column id_servicio
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_servicio
+
+	column fecha
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: fecha
+
+	column servicio
+		dataType: string
+		summarizeBy: none
+		sourceColumn: servicio
+
+	column cantidad
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: cantidad
+
+	partition Servicios = m
+		mode: import
+		source =
+				let
+				    Datos = if HabilitarAnalitica then Sql.Database("127.0.0.1,1435", "elbravodeljac_sqlserver_dev"){[Schema="bi",Item="vw_servicios_realizados"]}[Data] else #table({"id_detalle", "id_orden", "id_servicio", "fecha", "servicio", "cantidad"}, {}),
+				    Tipos = Table.TransformColumnTypes(Datos, {{"id_detalle", Int64.Type}, {"id_orden", Int64.Type}, {"id_servicio", Int64.Type}, {"fecha", type date}, {"servicio", type text}, {"cantidad", Currency.Type}})
+				in
+				    Tipos
