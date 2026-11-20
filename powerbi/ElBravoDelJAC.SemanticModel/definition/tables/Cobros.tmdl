@@ -1,0 +1,31 @@
+table Cobros
+	lineageTag: 645bd29c-1500-5b75-9249-56e2acd2b590
+
+	column id_pago
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_pago
+
+	column id_orden
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: id_orden
+
+	column fecha
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: fecha
+
+	column monto
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: monto
+
+	partition Cobros = m
+		mode: import
+		source =
+				let
+				    Datos = if HabilitarAnalitica then Sql.Database("127.0.0.1,1435", "elbravodeljac_sqlserver_dev"){[Schema="bi",Item="vw_pagos_vigentes"]}[Data] else #table({"id_pago", "id_orden", "fecha", "monto"}, {}),
+				    Tipos = Table.TransformColumnTypes(Datos, {{"id_pago", Int64.Type}, {"id_orden", Int64.Type}, {"fecha", type date}, {"monto", Currency.Type}})
+				in
+				    Tipos

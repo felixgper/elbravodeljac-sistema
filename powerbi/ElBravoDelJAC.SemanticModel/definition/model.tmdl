@@ -1,0 +1,28 @@
+model Model
+	culture: es-PE
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_QueryOrder = ["bi vw_resumen_taller"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table 'bi vw_resumen_taller'
+
+ref cultureInfo es-PE
+
+
+ref expression HabilitarAnalitica
+ref table Cobros
+ref table Ordenes
+ref table Cotizaciones
+ref table Atenciones
+ref table Servicios
+ref table Configuracion
+ref table Calendario

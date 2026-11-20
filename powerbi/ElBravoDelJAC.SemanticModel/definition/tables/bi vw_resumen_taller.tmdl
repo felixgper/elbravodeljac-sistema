@@ -1,0 +1,97 @@
+table 'bi vw_resumen_taller'
+	lineageTag: f5fcfd7e-1933-483f-9e05-dce0b86276b6
+
+	measure 'Clientes registrados' = COALESCE(MAX('bi vw_resumen_taller'[TotalClientes]), 0)
+		formatString: #,0
+
+	measure 'Vehículos registrados' = COALESCE(MAX('bi vw_resumen_taller'[TotalVehiculos]), 0)
+		formatString: #,0
+
+	measure 'Órdenes de trabajo' = COALESCE(MAX('bi vw_resumen_taller'[TotalOrdenes]), 0)
+		formatString: #,0
+
+	measure 'Cotizaciones emitidas' = COALESCE(MAX('bi vw_resumen_taller'[TotalCotizaciones]), 0)
+		formatString: #,0
+
+	measure 'Ingresos cobrados' = COALESCE(MAX('bi vw_resumen_taller'[IngresosCobrados]), 0)
+		formatString: "S/ " #,0.00
+
+	measure 'Analítica disponible' = IF(SELECTEDVALUE(Configuracion[Habilitada], FALSE()), 1, 0)
+		formatString: 0
+
+	measure 'Estado de analítica' = IF([Analítica disponible] = 1, "Fecha filtra actividad; las órdenes muestran su estado actual.", "PENDIENTE · Autorizar vistas y lectura. Analítica sin habilitar.")
+
+	measure 'Cobros del período' = IF([Analítica disponible] = 1, COALESCE(SUM(Cobros[monto]), 0))
+		formatString: "S/ " #,0.00
+
+	measure 'Órdenes del período' = IF([Analítica disponible] = 1, COALESCE(DISTINCTCOUNT(Ordenes[id_orden]), 0))
+		formatString: #,0
+
+	measure 'Cotizaciones del período' = IF([Analítica disponible] = 1, COALESCE(DISTINCTCOUNT(Cotizaciones[id_cotizacion]), 0))
+		formatString: #,0
+
+	measure 'Vehículos atendidos' = IF([Analítica disponible] = 1, COALESCE(DISTINCTCOUNT(Atenciones[id_vehiculo]), 0))
+		formatString: #,0
+
+	measure 'Clientes atendidos' = IF([Analítica disponible] = 1, COALESCE(DISTINCTCOUNT(Atenciones[id_cliente]), 0))
+		formatString: #,0
+
+	measure 'Servicios realizados' = IF([Analítica disponible] = 1, COALESCE(SUM(Servicios[cantidad]), 0))
+		formatString: #,0.##
+
+	column TotalClientes
+		dataType: int64
+		formatString: 0
+		lineageTag: b0842442-73ae-474a-ae92-4f69d465948c
+		summarizeBy: sum
+		sourceColumn: TotalClientes
+
+		annotation SummarizationSetBy = Automatic
+
+	column TotalVehiculos
+		dataType: int64
+		formatString: 0
+		lineageTag: 7661a94f-fd74-4656-9340-12fdaa932d08
+		summarizeBy: sum
+		sourceColumn: TotalVehiculos
+
+		annotation SummarizationSetBy = Automatic
+
+	column TotalOrdenes
+		dataType: int64
+		formatString: 0
+		lineageTag: 505937aa-1b1e-4cd5-af5c-9a09e413863f
+		summarizeBy: sum
+		sourceColumn: TotalOrdenes
+
+		annotation SummarizationSetBy = Automatic
+
+	column TotalCotizaciones
+		dataType: int64
+		formatString: 0
+		lineageTag: 7e0e5342-a25c-4651-9c5d-fd042598f29e
+		summarizeBy: sum
+		sourceColumn: TotalCotizaciones
+
+		annotation SummarizationSetBy = Automatic
+
+	column IngresosCobrados
+		dataType: decimal
+		lineageTag: ef24fa87-4937-4f0c-b97c-a780bfa49cc8
+		summarizeBy: sum
+		sourceColumn: IngresosCobrados
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition 'bi vw_resumen_taller' = m
+		mode: import
+		source =
+				let
+				    Origen = Sql.Database("127.0.0.1,1435", "elbravodeljac_sqlserver_dev"),
+				    bi_vw_resumen_taller = Origen{[Schema="bi",Item="vw_resumen_taller"]}[Data]
+				in
+				    bi_vw_resumen_taller
+
+	annotation PBI_ResultType = Table

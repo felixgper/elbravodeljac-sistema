@@ -1,0 +1,26 @@
+table Calendario
+	column Fecha
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		summarizeBy: none
+		sourceColumn: Fecha
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Mes
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Mes
+
+	partition Calendario = m
+		mode: import
+		source =
+				let
+				    Hoy = Date.From(DateTimeZone.SwitchZone(DateTimeZone.FixedUtcNow(), -5)),
+				    Fechas = List.RemoveNulls(List.Combine({Cobros[fecha], Ordenes[fecha], Cotizaciones[fecha], Atenciones[fecha], Servicios[fecha], {Hoy}})),
+				    Inicio = Date.StartOfYear(List.Min(Fechas)),
+				    Fin = Date.EndOfYear(List.Max(Fechas)),
+				    Tabla = Table.FromList(List.Dates(Inicio, Duration.Days(Fin-Inicio)+1, #duration(1,0,0,0)), Splitter.SplitByNothing(), {"Fecha"}),
+				    Tipos = Table.TransformColumnTypes(Tabla, {{"Fecha", type date}}),
+				    Mes = Table.AddColumn(Tipos, "Mes", each Date.ToText([Fecha], "yyyy-MM"), type text)
+				in
+				    Mes
