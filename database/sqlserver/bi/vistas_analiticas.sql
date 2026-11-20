@@ -2,12 +2,18 @@
 -- Solo cambia metadatos de seis vistas; no modifica registros ni concede permisos.
 -- Ejecutar el archivo completo en una sesión dedicada, preferentemente sqlcmd -b.
 -- Fechas analíticas en hora de Lima (UTC-05).
+-- Rechazar antes de cualquier SET y sin THROW: RAISERROR no aplica XACT_ABORT,
+-- incluso si el llamador lo tiene ON. RETURN impide continuar sin TRY externo.
+IF @@TRANCOUNT <> 0
+BEGIN
+    RAISERROR(N'Utilice una sesión sin transacciones abiertas.', 16, 1);
+    RETURN;
+END;
+
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
-IF @@TRANCOUNT <> 0
-    THROW 51000, N'Utilice una sesión sin transacciones abiertas.', 1;
 IF DB_NAME() <> N'elbravodeljac_sqlserver_dev'
     THROW 51000, N'Confirme la base de destino antes de adaptar este script.', 1;
 IF SCHEMA_ID(N'bi') IS NULL

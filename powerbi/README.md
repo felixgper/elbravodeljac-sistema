@@ -59,27 +59,51 @@ La compatibilidad técnica conserva el criterio existente de Go: ejecución `Rea
 
 ### Instalación atómica y pruebas reproducibles
 
-El instalador exige una sesión sin transacciones abiertas y comprueba base/esquema antes de iniciar. Las seis definiciones se ejecutan dentro de una sola transacción con `XACT_ABORT`, `TRY/CATCH`, rollback si `XACT_STATE()` no es cero y propagación del error mediante `THROW`.
+El instalador rechaza primero una transacción ajena mediante `RAISERROR` de severidad 16 y `RETURN`, antes de cualquier `SET`. No usa `THROW` en ese rechazo: `RAISERROR` no aplica `XACT_ABORT`, incluso si el llamador ya lo tiene activado. No cambia opciones, confirma ni revierte trabajo del llamador. Después comprueba base/esquema e instala las seis definiciones en una sola transacción con `XACT_ABORT`, `TRY/CATCH`, rollback si `XACT_STATE()` no es cero y propagación de errores propios mediante `THROW`.
 Cada `CREATE OR ALTER VIEW` se compila mediante `sp_executesql` dentro del bloque protegido: así los errores de compilación de una vista también llegan al `CATCH`, sin continuar hasta un commit parcial. Se conserva la definición previa de las vistas si se revierte la transacción.
 Ejecute el archivo completo en una sesión dedicada, preferentemente `sqlcmd -b`. No ejecute fragmentos. Si se cancela manualmente desde un editor, cierre la sesión o asegúrese de revertir cualquier transacción abierta; una cancelación no equivale a un error capturable por `CATCH`.
 Referencia técnica: [TRY/CATCH de SQL Server](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/try-catch-transact-sql?view=sql-server-ver17).
+La excepción deliberada para rechazar una transacción ajena se fundamenta en [RAISERROR y XACT_ABORT](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/raiserror-transact-sql?view=sql-server-ver17).
 
 Las pruebas no necesitan instalar vistas ni acceder a tablas:
 
 ```powershell
-python -m unittest discover -s database/sqlserver/bi -p test_consultas.py -v
-python -X utf8 database/sqlserver/bi/probar_consultas.py > consultas.sql
+python -B -m unittest discover -s database/sqlserver/bi -p test_consultas.py -v
+python -B -X utf8 database/sqlserver/bi/probar_consultas.py > consultas.sql
 ```
 
 Ejecute el SQL generado con una conexión autorizada y `sqlcmd -f 65001 -b -h -1 -w 65535`. Revise que las 28 filas indiquen PASS; un FAIL de comparación es una fila de resultado y debe detectarlo quien ejecute la prueba, aunque sqlcmd termine con código cero.
 El generador extrae las seis consultas del propio instalador y sustituye sus fuentes por CTE de valores sintéticos. También extrae del código Go el filtro de servicios y del esquema los movimientos de pagos; no los reimplementa para hacerlos coincidir.
 
-- **PASS:** 28 comprobaciones en el motor SQL Server existente mediante SELECT sin consultar tablas oficiales. Incluyen pagos revertidos, precisión decimal, corte de mes en Lima, revisiones, cinco estados, cantidades realmente ejecutadas, JSON legado sin duplicar conceptos, fechas de finalización, privacidad y seis fuentes vacías.
-- **PASS:** seis pruebas estáticas sobre la envoltura transaccional, SQL generado sin DDL/tablas oficiales, expresiones del backend, privacidad, medidas/relaciones y parámetro deshabilitado.
+- **PASS previo, commit ecfd628:** 28 comprobaciones en el motor SQL Server existente mediante SELECT sin consultar tablas oficiales. Incluyen pagos revertidos, precisión decimal, corte de mes en Lima, revisiones, cinco estados, cantidades realmente ejecutadas, JSON legado sin duplicar conceptos, fechas de finalización, privacidad y seis fuentes vacías. No se repiten contra el servidor durante esta revisión estática; los SELECT de las seis vistas no cambian.
+- **PASS actual:** nueve pruebas estáticas sobre rechazo antes de cambiar opciones, envoltura transaccional, SQL generado sin DDL/tablas oficiales, expresiones del backend, privacidad, medidas/relaciones, parámetro deshabilitado y preparación de casos QA. Validar el texto generado no demuestra su comportamiento en el motor.
 - **SKIP:** fallo DDL provocado después de crear/alterar vistas y restauración efectiva de sus definiciones; no se ejecuta DDL en la base oficial ni se crean contenedores. La atomicidad está revisada estructuralmente, pero esta prueba de integración sigue pendiente en una base QA autorizada.
 - **SKIP:** ejecución de `verificar_vistas.sql` sobre vistas instaladas, comprobación efectiva de permisos y cruces de gráficos con analítica habilitada. Requieren la instalación y autorización posteriores.
 
 Estas pruebas comprueban las expresiones SELECT, no reemplazan la validación del DDL ni del refresco completo de Power BI después de habilitarlo. No consultan ni exportan registros reales del taller.
+
+### GitHub Actions: alcance de las omisiones
+
+Para ecfd628, [SQL Server 2025 QA](https://github.com/felixgper/elbravodeljac-sistema/actions/runs/44649161815) terminó `skipped` en el job `schema`, sin pasos: su condición exige el PR #12 y `codex/migracion-sql-server`.
+[Backend SQL Server QA](https://github.com/felixgper/elbravodeljac-sistema/actions/runs/44649161809) terminó `skipped` en `integration`, sin pasos: para eventos de PR exige el #20 y `codex/permisos-financieros`.
+El evento `synchronize` de este PR coincide con los disparadores generales, pero no con sus condiciones de job. No son fallos de SQL ni pruebas aprobadas del PR #22. No se modifican estos workflows.
+Una comprobación adicional apropiada sería un workflow independiente, limitado al PR #22 y su rama, con `contents: read`, checkout sin persistir credenciales, timeout y `python -B -m unittest discover -s database/sqlserver/bi -p test_consultas.py -v`. No requeriría Docker, secretos ni acceso SQL. Es una propuesta, no se añade ni habilita aquí. La integración de vistas requiere una ejecución QA separada y autorizada; Go/Chrome completos no sustituyen las pruebas del instalador BI.
+
+### Plan de QA real — pendiente de autorización
+
+No ejecutar los pasos siguientes hasta aprobar expresamente la creación y uso de recursos QA, DDL, permisos de prueba y posterior limpieza selectiva. No se usan respaldos ni datos reales como fuente de QA.
+
+1. **Inventario y protección.** Registrar IDs/imágenes/labels/redes/montajes de todos los contenedores protegidos, volúmenes oficiales y sus consumidores; verificar los hashes de respaldos y configuraciones privadas sin copiarlos a Git ni al runner. No declarar restaurables copias sin restauración probada. Comprobar recursos del equipo o runner antes de iniciar. El healthcheck oficial ya identificado queda fuera de este trabajo.
+2. **Aislamiento.** Crear un único proyecto `elbravodeljac-bi-qa-<identificador único>` con SQL Server 2025 Standard Developer, imagen fijada/verificada, red y volumen nuevos etiquetados con ese identificador. Ningún montaje, red, credencial o DSN de producción. Sin puertos públicos; si Desktop necesita conectarse, publicar solo un puerto loopback libre distinto de 1435 y 8080. Usar credenciales QA temporales fuera de logs. MongoDB solo si se reutiliza el flujo Go completo, también exclusivo de QA.
+3. **Base y datos sintéticos.** Crear `elbravodeljac_sqlserver_qa`, compatibilidad 170, instalar allí el esquema oficial y comprobar 28 tablas/208 columnas/50 FK. Reutilizar la preparación y `TestSQLServer2025` existentes con `SQLSERVER_QA_DSN` apuntando solo al QA: ese test exige exactamente ese nombre de base. Si se habilitan los subcasos MongoDB/Chrome, reutilizar también sus marcadores y servicios QA; registrar sus SKIP si faltan. No ejecutar el bootstrap sobre otra base. Conservar fuera de Docker inventario y respaldo de esta base **sintética**, con hashes y lectura verificables, antes de probar vistas.
+4. **Marcar el destino.** Solo en esa base nueva, crear la propiedad extendida de base `jac.bi_qa` con valor `synthetic-only` mediante `sys.sp_addextendedproperty`. El generador siguiente rechaza cualquier otro nombre de base, ausencia del marcador, transacción inicial abierta o usuario lector preexistente. El nombre de base por sí solo no sustituye comprobar IDs, etiquetas, montajes y conexión.
+5. **Generar y revisar sin ejecutar.** `python -B -X utf8 database/sqlserver/bi/preparar_qa.py > pruebas_qa.sql`. Revisar destino y hash del archivo generado. Este generador no abre conexiones ni ejecuta procesos. Adapta en memoria únicamente la comprobación de nombre de base del instalador para QA; no modifica el SQL oficial ni añade una excepción para producción.
+6. **Instalación y rollback.** Ejecutar el archivo generado con sqlcmd `-b -f 65001` exclusivamente contra QA. Primero prueba transacción externa con `XACT_ABORT OFF` y `ON`, trabajo temporal del llamador, error 50000, `@@TRANCOUNT=1`, `XACT_STATE()=1` y opciones conservadas; luego confirma el trabajo del llamador. Instala las seis vistas, conserva sus IDs y definiciones binarias exactas y provoca un fallo de compilación en cada una de las seis posiciones. Las definiciones anteriores al fallo llevan un comentario distinto para demostrar una modificación real. Cada intento debe propagar 102/156, dejar `@@TRANCOUNT=0`/`XACT_STATE()=0` y recuperar exactamente las seis definiciones e IDs anteriores. Cualquier error inesperado detiene la ejecución.
+7. **Permisos y conciliación.** El mismo archivo prepara un usuario QA `powerbi_reader WITHOUT LOGIN`, sin contraseñas, y concede solo CONNECT y SELECT por objeto sobre las seis vistas de prueba. Usa `EXECUTE AS` para comprobar lectura y ausencia de SELECT/escritura/ALTER/CONTROL sobre tablas y de privilegios amplios de base. No cambia el login oficial. Ejecutar después `verificar_vistas.sql` como administrador QA, repetir los 28 SELECT sintéticos detectando cualquier fila FAIL y conciliar conteos/importes en el conjunto Go. La prueba de impersonación no sustituye una conexión real desde Desktop.
+8. **Power BI autorizado.** En una copia privada del PBIP, nunca en los archivos versionados, configurar el origen QA y un login temporal lector exclusivamente QA, con permisos equivalentes. Reproducir allí también la vista de resumen existente. Solo tras conciliar, poner el parámetro de esa **copia QA** en true y verificar actualización, filtros, gráficos, ceros y criterios financieros documentados. El proyecto del PR conserva `HabilitarAnalitica=false`; no utiliza el login ni credenciales oficiales para QA.
+9. **Evidencias y cierre.** Guardar fuera de Docker solo resultados PASS/FAIL/SKIP, inventarios, hashes y capturas sintéticas, sin secretos. Comparar los recursos oficiales antes/después. Una vez autorizada la limpieza, retirar exclusivamente IDs QA verificados y sus copias temporales de datos; conservar respaldos/evidencias necesarios. Si hay discrepancias de propiedad, no eliminar el recurso. No usar limpiezas globales.
+
+La ejecución real de este plan, los nueve casos SQL preparados (dos de transacción externa, seis fallos DDL y uno de permisos), la conciliación instalada y los gráficos QA permanecen **SKIP: pendientes de autorización**. No se han abierto conexiones SQL ni ejecutado comandos Docker durante esta revisión.
 
 ## Habilitación pendiente de analítica
 

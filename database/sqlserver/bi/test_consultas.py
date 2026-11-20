@@ -3,9 +3,39 @@ import re
 import unittest
 from pathlib import Path
 import probar_consultas as bi
+import preparar_qa as qa
 
 
 class ConsultasTests(unittest.TestCase):
+    def test_rechazo_antes_de_cambiar_opciones(self):
+        sql = Path(__file__).with_name("vistas_analiticas.sql").read_text(encoding="utf-8")
+        executable = re.sub(r"--[^\n]*", "", sql).strip()
+        guard, rest = executable.split("SET ANSI_NULLS", 1)
+        self.assertRegex(guard, r"^IF @@TRANCOUNT <> 0\s+BEGIN")
+        self.assertIn("RAISERROR(N'Utilice una sesión sin transacciones abiertas.', 16, 1);", guard)
+        self.assertRegex(guard, r"RETURN;\s+END;\s*$")
+        self.assertNotRegex(guard, r"\b(?:SET|THROW|ROLLBACK|COMMIT|EXEC)\b")
+        self.assertIn("SET XACT_ABORT ON", rest)
+
+    def test_qa_transaccion_externa_en_ambos_modos(self):
+        sql = qa.build_sql()
+        for option, ident in (("OFF", 1), ("ON", 2)):
+            self.assertIn(f"SET XACT_ABORT {option};\nBEGIN TRANSACTION;", sql)
+            self.assertIn(f"@error{ident}<>50000 OR @@TRANCOUNT<>1 OR XACT_STATE()<>1", sql)
+            self.assertIn(f"@@OPTIONS<>@options{ident}", sql)
+            self.assertIn(f"UPDATE #transaccion_ajena SET valor=2 WHERE id={ident};\nCOMMIT", sql)
+
+    def test_qa_destino_y_rollback_preparados_no_ejecutados(self):
+        sql = qa.build_sql()
+        self.assertIn("DB_NAME() <> N'elbravodeljac_sqlserver_qa'", sql)
+        self.assertIn("name=N'jac.bi_qa'", sql)
+        self.assertNotIn("elbravodeljac_sqlserver_dev", sql)
+        self.assertEqual(sql.count("PASS: rollback ante fallo DDL en posición"), 6)
+        self.assertIn("CONVERT(varbinary(max),OBJECT_DEFINITION(a.objeto))<>a.definicion", sql)
+        self.assertIn("CREATE USER powerbi_reader WITHOUT LOGIN", sql)
+        self.assertNotIn("CREATE LOGIN", sql)
+        self.assertNotIn("GRANT SELECT ON dbo.", sql)
+
     def test_instalacion_atomica(self):
         sql = Path(__file__).with_name("vistas_analiticas.sql").read_text(encoding="utf-8")
         self.assertEqual(sql.count("BEGIN TRANSACTION;"), 1)
