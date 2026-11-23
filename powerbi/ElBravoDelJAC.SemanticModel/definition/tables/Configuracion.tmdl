@@ -1,0 +1,10 @@
+table Configuracion
+	column Habilitada
+		dataType: boolean
+		isHidden
+		sourceColumn: Habilitada
+		summarizeBy: none
+
+	partition Configuracion = m
+		mode: import
+		source = #table(type table [Habilitada = logical], {{HabilitarAnalitica}})
