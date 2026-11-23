@@ -19,7 +19,7 @@ table 'bi vw_resumen_taller'
 	measure 'Analítica disponible' = IF(SELECTEDVALUE(Configuracion[Habilitada], FALSE()), 1, 0)
 		formatString: 0
 
-	measure 'Estado de analítica' = IF([Analítica disponible] = 1, "Fecha filtra actividad; las órdenes muestran su estado actual.", "PENDIENTE · Autorizar vistas y lectura. Analítica sin habilitar.")
+	measure 'Estado de analítica' = IF([Analítica disponible] = 1, "Fecha filtra actividad; las órdenes muestran su estado actual.", "Analítica desactivada por configuración (HabilitarAnalitica=false).")
 
 	measure 'Cobros del período' = IF([Analítica disponible] = 1, COALESCE(SUM(Cobros[monto]), 0))
 		formatString: "S/ " #,0.00

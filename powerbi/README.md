@@ -75,65 +75,51 @@ python -B -X utf8 database/sqlserver/bi/probar_consultas.py > consultas.sql
 Ejecute el SQL generado con una conexión autorizada y `sqlcmd -f 65001 -b -h -1 -w 65535`. Revise que las 28 filas indiquen PASS; un FAIL de comparación es una fila de resultado y debe detectarlo quien ejecute la prueba, aunque sqlcmd termine con código cero.
 El generador extrae las seis consultas del propio instalador y sustituye sus fuentes por CTE de valores sintéticos. También extrae del código Go el filtro de servicios y del esquema los movimientos de pagos; no los reimplementa para hacerlos coincidir.
 
-- **PASS:** 28 comprobaciones repetidas en el motor SQL Server existente mediante SELECT sin consultar tablas oficiales. Incluyen pagos revertidos, precisión decimal, corte de mes en Lima, revisiones, cinco estados, cantidades realmente ejecutadas, JSON legado sin duplicar conceptos, fechas de finalización, privacidad y seis fuentes vacías. No requieren instalar vistas ni crear registros; los SELECT de las seis vistas no cambian.
-- **PASS actual:** nueve pruebas estáticas sobre rechazo antes de cambiar opciones, envoltura transaccional, SQL generado sin DDL/tablas oficiales, expresiones del backend, privacidad, medidas/relaciones, parámetro deshabilitado y preparación de casos QA. Validar el texto generado no demuestra su comportamiento en el motor.
-- **PASS:** 33 definiciones PBIR validadas contra esquemas públicos de Microsoft, sin errores.
-- **PASS:** las seis expresiones ejecutadas como CTE de solo lectura contra las fuentes de desarrollo concilian conteos y sumas, sin pagos ni servicios duplicados. No se han instalado vistas; los resultados vacíos no demuestran escenarios inexistentes en los datos actuales. Frontend, `/healthz` y `/readyz` responden HTTP 200.
-- **SKIP:** fallo DDL provocado y preservación de transacción externa en el motor; se conservan pruebas preparadas pero no se ejecutan en la base de desarrollo. La protección se revisa estáticamente y no se presenta como rollback DDL probado.
-- **SKIP:** ejecución de `verificar_vistas.sql` sobre vistas instaladas, comprobación efectiva de permisos y cruces de gráficos con analítica habilitada. Requieren la instalación y autorización posteriores.
+## Estado verificado de la integración
 
-Estas pruebas comprueban las expresiones SELECT, no reemplazan la validación del DDL ni del refresco completo de Power BI después de habilitarlo. No consultan ni exportan registros reales del taller.
+Las siguientes comprobaciones ya se completaron con autorizaciones separadas:
+
+- **PASS — Instalación:** las seis vistas de [vistas_analiticas.sql](../database/sqlserver/bi/vistas_analiticas.sql) están instaladas y verificadas en `elbravodeljac_sqlserver_dev`. Se ejecutó [verificar_vistas.sql](../database/sqlserver/bi/verificar_vistas.sql) mediante lecturas; se conservaron las tablas, los registros y `bi.vw_resumen_taller`.
+- **PASS — Acceso:** se concedieron los cinco SELECT por objeto indicados abajo. Se comprobó el acceso con `powerbi_reader`, la cadena de propiedad y la ausencia de permisos directos innecesarios sobre tablas operativas, escritura o administración. Se conservó su SELECT del resumen. No se cambiaron las credenciales.
+- **PASS — Power BI Desktop:** una copia local excluida de Git, con analítica temporalmente habilitada, abrió y actualizó desde SQL Server usando la conexión configurada del lector. Se comprobaron cinco indicadores, cinco gráficos, las cinco relaciones, el filtro de fechas y el cruce desde vehículos atendidos. Las fuentes vacías mostraron estados adecuados; no se insertaron registros.
+- **PASS — Diseño:** el usuario aprobó el diseño carbón y granate, las tarjetas legibles, los gráficos y los mensajes sin datos. Se trasladó al PBIP oficial sin modificar los cálculos. Se conservan las 13 medidas originales y se agregan cinco medidas de texto para los mensajes.
+- **PASS — SELECT sintéticos, ejecución anterior:** 28 comprobaciones en SQL Server sin consultar tablas oficiales. Cubren pagos revertidos, precisión decimal, corte de mes en Lima, revisiones, cinco estados, servicios ejecutados, JSON legado sin duplicar conceptos, privacidad y seis fuentes vacías. Su código contiene ejemplos sintéticos, no datos extraídos del taller.
+- **PASS — Conciliación anterior:** las seis expresiones, inicialmente probadas como CTE de lectura, conciliaron conteos y sumas con sus fuentes; posteriormente se verificaron las vistas instaladas. Los resultados sin operaciones no demuestran escenarios positivos ausentes. Go, frontend, `/healthz` y `/readyz` continuaron funcionando en aquellas comprobaciones; esta revisión documental no vuelve a intervenirlos.
+- **PASS — Revisión estática:** nueve pruebas de `test_consultas.py`, definiciones PBIR publicadas, referencias TMDL, consultas, relaciones y conservación de medidas. La comprobación estática no reemplaza la ejecución del DDL ni del motor DAX.
+
+### Pendientes y límites de la validación
+
+- **SKIP — DDL provocado y transacción externa:** no se ejecutaron fallos DDL intencionales ni casos de transacción externa en la base de desarrollo. `preparar_qa.py` conserva esos casos para un QA aislado y autorizado, con marcador `synthetic-only`; su revisión estática no demuestra rollback real.
+- **SKIP — Series positivas en Desktop:** faltan operaciones para comprobar valores positivos y todos los cruces de cobros, órdenes, cotizaciones y servicios. Los SELECT sintéticos previos cubren esos criterios SQL, pero no sustituyen la comprobación visual con datos autorizados. No se crearán datos para rellenar gráficos.
+- **SKIP — Resolución exacta 1366×768:** se revisaron escritorio y ventana reducida; no se reprodujo esa resolución exacta. El selector conserva el formato regional que muestre Desktop.
+- **SKIP — Esquema de metadatos locales 2.14.0:** la URL pública de Microsoft devolvió 404. La compatibilidad estructural con 2.7.0 pasó; no se presenta como validación exacta. El contenido visual publicado conserva 2.13.0 y sí pasó su esquema exacto. Los metadatos locales ajenos no se publicaron.
+- **Pendiente de autorización:** habilitar la analítica en el PBIP oficial y fusionar el PR. Son decisiones separadas; ninguna se ejecuta durante esta revisión.
 
 ### GitHub Actions: alcance de las omisiones
 
-Para ecfd628, [SQL Server 2025 QA](https://github.com/felixgper/elbravodeljac-sistema/actions/runs/44649161815) terminó `skipped` en el job `schema`, sin pasos: su condición exige el PR #12 y `codex/migracion-sql-server`.
-[Backend SQL Server QA](https://github.com/felixgper/elbravodeljac-sistema/actions/runs/44649161809) terminó `skipped` en `integration`, sin pasos: para eventos de PR exige el #20 y `codex/permisos-financieros`.
-El evento `synchronize` de este PR coincide con los disparadores generales, pero no con sus condiciones de job. No son fallos de SQL ni pruebas aprobadas del PR #22. No se modifican estos workflows.
-Una comprobación adicional apropiada sería un workflow independiente, limitado al PR #22 y su rama, con `contents: read`, checkout sin persistir credenciales, timeout y `python -B -m unittest discover -s database/sqlserver/bi -p test_consultas.py -v`. No requeriría Docker, secretos ni acceso SQL. Es una propuesta, no se añade ni habilita aquí. La integración de vistas requiere una ejecución QA separada y autorizada; Go/Chrome completos no sustituyen las pruebas del instalador BI.
+Los workflows se disparan ante `synchronize`, pero sus condiciones de job excluyen el PR #22:
 
-### Validación en la base de desarrollo existente
+- **SQL Server 2025 QA** exige el PR #12 y `codex/migracion-sql-server`.
+- **Backend SQL Server QA** exige, para eventos de PR, el #20 y `codex/permisos-financieros`; su disparador push se limita a `codex/backend-sql-server`.
 
-Se utiliza exclusivamente `elbravodeljac_sqlserver_dev`, en el SQL Server del proyecto oficial, accesible desde Windows por `127.0.0.1,1435`. La conexión TCP de SSMS y la configuración de Go se contrastan con la misma instancia. No se crean bases, contenedores ni respaldos adicionales ni se importan registros.
-El catálogo conserva las 28 tablas/208 columnas/50 FK del aplicativo; `dbo.sysdiagrams` es una tabla auxiliar de SSMS adicional y queda fuera de los indicadores. No se altera ni se confunde con una entidad del sistema.
+Para `ecfd628` terminaron `skipped` sin ejecutar sus jobs: [esquema](https://github.com/felixgper/elbravodeljac-sistema/actions/runs/44649161815) y [backend](https://github.com/felixgper/elbravodeljac-sistema/actions/runs/44649161809). También se confirmó `skipped` para `b590c42`: [esquema](https://github.com/felixgper/elbravodeljac-sistema/actions/runs/45107719045) y [backend](https://github.com/felixgper/elbravodeljac-sistema/actions/runs/45107718982).
+No son fallos SQL ni aprobaciones automáticas del PR #22. Las pruebas estáticas se ejecutan localmente sin Docker ni acceso a bases. No se modifican ni amplían estos workflows. Un workflow estático específico sería opcional y requeriría revisión independiente.
 
-Antes del DDL, revisar las seis fuentes y sus columnas, propietarios, vistas ya existentes y permisos actuales. La revisión confirmó `dbo` como propietario de las fuentes y de `bi`, y únicamente la vista de resumen ya instalada. La cuenta de aplicación no tiene visibilidad completa de permisos ajenos: la revisión del lector debe realizarse desde una sesión administrativa ya autenticada, sin copiar sus credenciales. No concluir que un usuario o permiso no existe porque esté oculto por visibilidad de metadatos.
+## Configuración oficial y activación posterior
 
-1. **Autorización DDL.** Solicitar aprobación expresa para ejecutar el archivo completo `vistas_analiticas.sql` en esa base, conservando transacción única y guarda inicial. Antes y después, comparar las definiciones de tablas, conteos de registros y estado de la API mediante lecturas. El instalador solo crea/altera las seis vistas, no toca tablas, triggers, registros ni la vista de resumen.
-2. **Conciliación.** Tras la instalación autorizada, ejecutar `verificar_vistas.sql`, revisar fechas/importes/conteos y confrontar cada vista con su fuente. Con tablas operativas vacías, documentar resultados cero; no crear operaciones para rellenar los gráficos. Los escenarios con pagos revertidos, revisiones y servicios realizados siguen cubiertos por los SELECT sintéticos reproducibles.
-3. **Autorización SELECT separada.** Conservar CONNECT y SELECT del resumen ya concedidos. Solicitar aprobación para los cinco GRANT por objeto indicados más abajo; no ejecutarlos junto con el instalador. El modelo usa la tabla de cobros para agregar meses, por lo que `vw_ingresos_mensuales` no necesita un GRANT adicional salvo que se apruebe su consulta directa. No conceder SELECT sobre tablas, escritura ni roles administrativos.
-4. **Comprobar acceso.** Tras aprobar los GRANT, verificar lectura de las cinco vistas con `powerbi_reader`, ausencia de permisos directos sobre tablas y roles elevados, y funcionamiento normal de Go. No cambiar contraseña ni crear otro usuario. Una comprobación por impersonación no reemplaza la actualización real desde Desktop.
-5. **Power BI.** Conservar el PBIP versionado con `HabilitarAnalitica=false`. En una copia local excluida de Git, activar temporalmente el parámetro, actualizar desde el mismo origen autorizado y verificar cinco tarjetas, cinco gráficos, filtro de fechas y cruces. Conciliar los valores con SQL respetando los criterios financieros anteriores. Con datos vacíos, comprobar estados vacíos sin sustituirlos por ejemplos. No publicar ni guardar cachés o datos importados en el PR.
-6. **Cierre.** Repetir pruebas estáticas, comprobar enlaces/secretos y actualizar este mismo Draft PR con PASS/FAIL/SKIP reales. La instalación transaccional, los GRANT y la activación no se consideran aprobados por una prueba estática. Solicitar aprobación final antes del merge y de habilitar el parámetro oficial.
+El PBIP oficial conserva **HabilitarAnalitica=false** por decisión expresa, aunque las seis vistas y sus permisos ya están preparados y comprobados. El aviso indica «Analítica desactivada por configuración», sin atribuirlo a falta de permisos. Actividad muestra sus medidas deshabilitadas y el resumen sigue consultando su vista real.
 
-La prueba de fallo DDL intencional y los casos SQL de transacción externa quedan **SKIP: no se ejecutan en la base de desarrollo**. `preparar_qa.py` se conserva como prueba opcional aislada, sin ejecución y sin formar parte del procedimiento actual. No ejecutar su salida en desarrollo ni crear QA para este cierre. Las comprobaciones estáticas de ese generador siguen siendo válidas como revisión de código, no como pruebas ejecutadas en SQL Server.
+Tras una autorización nueva para habilitar el proyecto oficial:
 
-## Habilitación pendiente de analítica
+1. En **Transformar datos > Administrar parámetros**, cambiar **HabilitarAnalitica** a `true`, aplicar y actualizar mediante la conexión existente de `powerbi_reader`.
+2. Verificar tarjetas, fechas, relaciones, cruces y estados sin datos, respetando los criterios financieros anteriores. Una respuesta vacía no debe sustituirse por datos ficticios.
+3. Comprobar escenarios positivos cuando existan datos autorizados. Los errores de fuente deben mostrarse, no ocultarse con cifras de ejemplo.
 
-La inspección real confirmó que `powerbi_reader` tiene SELECT solamente sobre `bi.vw_resumen_taller`.
-Las nuevas vistas todavía no están instaladas y este trabajo no modifica usuarios ni permisos.
-Por ello **HabilitarAnalitica** se entrega en `false`. La segunda página muestra un aviso y medidas en blanco, sin datos de ejemplo.
-La actualización de la página de resumen sigue consultando la vista real.
+No es necesario reinstalar las vistas ni repetir los GRANT para habilitar el parámetro. Una instalación nueva en otra base requiere autorización y comprobación independiente de destino, fuentes, propietarios y permisos.
 
-Antes de habilitarla, un administrador debe aprobar y aplicar por separado los siguientes pasos.
+### Permisos concedidos: referencia de instalación
 
-1. Solicitar autorización expresa y ejecutar [vistas_analiticas.sql](../database/sqlserver/bi/vistas_analiticas.sql). El script crea seis vistas SELECT y conserva el resumen existente. No modifica datos ni concede permisos.
-2. Solicitar autorización separada para el acceso SELECT de `powerbi_reader` a las cinco vistas utilizadas por el modelo. Este paso requiere aprobación del propietario y queda fuera de los cambios realizados.
-3. Ejecutar [verificar_vistas.sql](../database/sqlserver/bi/verificar_vistas.sql) con una cuenta que pueda consultar las fuentes.
-4. En **Transformar datos > Administrar parámetros**, cambiar **HabilitarAnalitica** a `true`, aplicar y actualizar.
-5. Revisar selección de fechas, cruces entre gráficos, conciliación y actualización con pagos revertidos. Los gráficos ya están construidos.
-
-No active el parámetro mientras falten vistas o permisos. Los errores de fuente se mostrarán; no se sustituyen por datos ficticios.
-
-### Permisos propuestos para revisión
-
-La cuenta que instale las vistas necesita `CREATE VIEW` en la base, `ALTER` sobre el esquema `bi` y acceso a los objetos referenciados.
-La cuenta lectora conserva su permiso existente sobre el resumen y requiere SELECT por objeto sobre `bi.vw_pagos_vigentes`, `bi.vw_ordenes_analiticas`, `bi.vw_cotizaciones_analiticas`, `bi.vw_vehiculos_atendidos` y `bi.vw_servicios_realizados`.
-`bi.vw_ingresos_mensuales` es una agregación adicional; requiere SELECT solamente si se consulta directamente.
-La cadena de propiedad permite consultar estas vistas sin conceder acceso directo a las tablas, siempre que se mantenga su propietario común.
-El instalador ahora rechaza propietarios distintos entre las fuentes y las vistas antes de ejecutar DDL, en lugar de solicitar permisos adicionales. La prueba de acceso con el lector real queda pendiente hasta instalar y aprobar los SELECT.
-La conciliación con tablas de origen debe ejecutarla una cuenta administrativa autorizada.
-No se requieren permisos de escritura, `db_datareader` ni SELECT sobre todo el esquema para el lector.
-Las concesiones propuestas se muestran solo para revisión y requieren autorización expresa antes de ejecutarse:
+Se conservó CONNECT y el SELECT existente sobre `bi.vw_resumen_taller`. Los cinco permisos siguientes ya fueron autorizados, ejecutados y comprobados; se documentan como referencia, no como tareas pendientes ni instrucciones para volver a ejecutarlos:
 
 ```sql
 GRANT SELECT ON OBJECT::bi.vw_pagos_vigentes TO powerbi_reader;
@@ -143,7 +129,10 @@ GRANT SELECT ON OBJECT::bi.vw_vehiculos_atendidos TO powerbi_reader;
 GRANT SELECT ON OBJECT::bi.vw_servicios_realizados TO powerbi_reader;
 ```
 
-No revocar ni reemplazar permisos existentes. No ejecutar estos GRANT durante la revisión previa.
+El modelo agrega meses desde Cobros, por lo que no necesita SELECT directo sobre `bi.vw_ingresos_mensuales`. La cadena de propiedad común permite consultar las vistas sin SELECT sobre tablas operativas. No se requieren escritura, `db_datareader`, SELECT global del esquema ni privilegios administrativos.
+La conciliación con las tablas de origen requiere una cuenta administrativa autorizada; el lector del informe no debe recibir esos permisos.
+Para una instalación nueva, la cuenta instaladora necesita `CREATE VIEW`, `ALTER` sobre `bi` y acceso a las fuentes. El instalador rechaza propietarios incompatibles sin ampliarlos automáticamente.
+No se revocan ni reemplazan permisos existentes en este PR.
 
 ## Healthcheck de SQL Server
 
