@@ -39,6 +39,21 @@ table 'bi vw_resumen_taller'
 	measure 'Servicios realizados' = IF([Analítica disponible] = 1, COALESCE(SUM(Servicios[cantidad]), 0))
 		formatString: #,0.##
 
+	measure 'Mensaje ingresos' = IF(COALESCE(COUNTROWS(Cobros), 0) = 0, "Sin cobros en el período", "Pagos vigentes · excluye reversiones")
+		lineageTag: 688dd7b6-af5e-4ed6-ad44-32a5c4ff701a
+
+	measure 'Mensaje ordenes' = IF(COALESCE(COUNTROWS(Ordenes), 0) = 0, "Sin órdenes en el período", "Estado actual de las órdenes")
+		lineageTag: e7e55f8a-4f7c-4492-a8fa-428190f005d1
+
+	measure 'Mensaje cotizaciones' = IF(COALESCE(COUNTROWS(Cotizaciones), 0) = 0, "Sin cotizaciones en el período", "Incluye revisiones emitidas")
+		lineageTag: 45a3e907-ab38-4fa2-9ca5-64c7eb8e41a7
+
+	measure 'Mensaje vehiculos' = IF(COALESCE(COUNTROWS(Atenciones), 0) = 0, "Sin vehículos atendidos en el período", "Vehículos únicos por mes")
+		lineageTag: 4f0142fb-627a-4abd-b8e5-d74116c9509b
+
+	measure 'Mensaje servicios' = IF(COALESCE(COUNTROWS(Servicios), 0) = 0, "Sin servicios en el período", "Servicios confirmados y ejecutados")
+		lineageTag: e80725d7-c5a1-4d97-8755-b3effb4d0f90
+
 	column TotalClientes
 		dataType: int64
 		formatString: 0

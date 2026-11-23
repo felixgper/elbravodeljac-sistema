@@ -3,8 +3,8 @@
   "name": "actividad",
   "displayName": "Actividad por período",
   "displayOption": "FitToPage",
-  "width": 1440,
-  "height": 900,
+  "width": 1280,
+  "height": 720,
   "objects": {
     "background": [
       {
@@ -14,7 +14,7 @@
               "color": {
                 "expr": {
                   "Literal": {
-                    "Value": "'#17181B'"
+                    "Value": "'#18191C'"
                   }
                 }
               }
@@ -23,7 +23,7 @@
           "transparency": {
             "expr": {
               "Literal": {
-                "Value": "0"
+                "Value": "0D"
               }
             }
           }

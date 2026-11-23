@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "logo",
   "position": {
-    "x": 32,
-    "y": 19,
+    "x": 24,
+    "y": 18,
     "z": 1,
-    "width": 74,
-    "height": 87,
+    "height": 58,
+    "width": 58,
     "tabOrder": 1
   },
   "visual": {
@@ -33,13 +33,6 @@
                   }
                 }
               }
-            },
-            "transparency": {
-              "expr": {
-                "Literal": {
-                  "Value": "0"
-                }
-              }
             }
           }
         }
@@ -62,13 +55,6 @@
                       "Value": "'#41434B'"
                     }
                   }
-                }
-              }
-            },
-            "radius": {
-              "expr": {
-                "Literal": {
-                  "Value": "8"
                 }
               }
             }
