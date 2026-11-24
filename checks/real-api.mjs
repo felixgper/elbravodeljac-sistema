@@ -1,8 +1,15 @@
 import assert from 'node:assert/strict';
-globalThis.__BRAVO_MODE='real';
+globalThis.__BRAVO_MODE='demo';
+globalThis.document={querySelector:()=>({content:'demo'})};
 // Any accidental local demo fallback is a test failure.
 globalThis.localStorage={getItem(){throw Error('Demo storage forbidden');},setItem(){throw Error('Demo storage forbidden');}};
 const api=await import('../dist/assets/js/services/api-service.js');
+assert.equal(api.realMode,true,'Ni metadatos demo ni una variable global pueden habilitar datos ficticios');
+delete globalThis.document;
+const {getStore,resetDemo,transaction}=await import('../dist/assets/js/services/store-service.js');
+assert.deepEqual(getStore().clients,[],'La instalación vacía no debe cargar semillas del navegador');
+assert.throws(()=>resetDemo());assert.throws(()=>transaction(()=>({})));
+const auth=await import('../dist/assets/js/services/auth-service.js');
 const real=await import('../dist/assets/js/services/real-workshop.js');
 const state=await import('../dist/assets/js/services/real-state.js');
 const workshop=await import('../dist/assets/js/services/workshop-service.js');
@@ -43,6 +50,21 @@ assert.equal(real.cents('9999999999.99'),999999999999);assert.throws(()=>real.ce
 ok({data:{monthlyIncomeCents:'12000',currentMonth:'2026-10',from:'2026-10-01T00:00:00-05:00',until:'2026-11-01T00:00:00-05:00',income:[{month:'2026-05',cents:'0'},{month:'2026-10',cents:'12000'}]}});const dashboard=await real.getDashboard();assert.equal(dashboard.currentMonth,'octubre de 2026');assert.equal(dashboard.income.at(-1).month.toLocaleLowerCase('es'),'oct');assert(!dashboard.period.includes('T00:'));
 let page=0;globalThis.fetch=async()=>Response.json({data:[{id:String(++page)}],meta:{total:2}});assert.equal((await api.allPages('/clientes')).length,2);
 globalThis.fetch=async()=>{throw Error('offline');};await assert.rejects(workshop.saveClient({}),/contactar/);
+await assert.rejects(auth.login({username:'admin',password:'Bravo2026!',remember:false}),/contactar/);
+await assert.rejects(auth.refreshSession(),/contactar/);
+await assert.rejects(workshop.saveReception({}),/contactar/);
+assert.equal(getStore().clients.some(c=>c.name==='Cliente de prueba'),false);
+const {getDashboard}=await import('../dist/assets/js/services/dashboard-service.js');
+await assert.rejects(getDashboard(),/contactar/);
+
 globalThis.fetch=async()=>Response.json({error:{code:'CONFLICT',message:'Duplicado'}},{status:409});await assert.rejects(workshop.saveClient({}),e=>e.status===409&&e.message==='Duplicado');
 state.replaceRealStore({clients:[{id:'private'}]});globalThis.fetch=async()=>Response.json({error:{message:'Sesión vencida'}},{status:401});await assert.rejects(api.request('/auth/me'),e=>e.status===401);assert.equal(api.realSession(),null);assert.deepEqual(state.realStore().clients,[]);
+await assert.rejects(auth.login({username:'admin',password:'Bravo2026!',remember:false}),e=>e.status===401);
+assert.equal(auth.getSession(),null,'El rechazo del backend nunca debe activar la autenticación simulada');
+assert.deepEqual(getStore().clients,[]);
+const fs=await import('node:fs');const appSource=fs.readFileSync('dist/assets/js/app.js','utf8');
+for(const retired of ['/demo/','export-demo','reset-demo','demoCredentials'])assert(!appSource.includes(retired),retired);
+
 console.log('Servicios reales: cookies/CSRF, DTO, permisos efectivos, roles N, conceptos manuales y referencias opcionales, decimales, paginación, errores 409/red/401 y limpieza de datos: OK.');
+
+await import('./navigation.mjs');

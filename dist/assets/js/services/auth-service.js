@@ -5,7 +5,6 @@ export async function refreshSession(){if(!realMode)return getSession();const ve
 import {getStore} from './store-service.js';
 import {passwordDigest} from './workshop-service.js';
 const SESSION_KEY='bravo-jac:demo-session:v1',REMEMBER_KEY='bravo-jac:remembered-user:v1';
-export const demoCredentials=Object.freeze({username:'admin',password:'Bravo2026!'});
 export function getSession(){if(realMode)return realSession();try{const value=JSON.parse(sessionStorage.getItem(SESSION_KEY));if(!value?.demo)return null;const u=getStore().users.find(u=>(u.id===value.id||u.username===value.username)&&u.active);return u?{id:u.id,name:u.name,username:u.username,role:u.role,demo:true}:null;}catch{return null;}}
 export function getRememberedUser(){try{return localStorage.getItem(realMode?'bravo-jac:real-remembered':REMEMBER_KEY)||'';}catch{return '';}}
 export async function login({username,password,remember}){

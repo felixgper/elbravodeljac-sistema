@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {dashboardDemo} from '../dist/assets/js/data/demo.js';
+import {dashboardDemo} from './fixtures/dashboard-prototype.js';
 import {getActiveOrders} from '../dist/assets/js/services/dashboard-service.js';
 import {modules} from '../dist/assets/js/components/navigation.js';
 // Historical prototype contract; NOT a live Login/Dashboard or database test.

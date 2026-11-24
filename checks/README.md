@@ -15,9 +15,15 @@ Las categorías no son intercambiables: un store demo o un `fetch` simulado no a
 | `live-docker.mjs`, `read-persisted-docker.mjs` | Persistencia en QA | Mismo harness temporal: recorrido y GridFS, seguido por otra sesión que consulta los registros. El nombre histórico se conserva; ya no leen `.env.fase-e.local` ni apuntan al Docker habitual. No afirman un reinicio de servicios que no ejecutan. |
 | `clean-copy-browser.mjs` | Auditoría histórica específica | Solo mediante su harness y una copia QA explícita; requiere precondiciones adicionales. No forma parte de la inicialización corriente ni debe usar una instalación real. |
 
+## Validación crítica sin bases adicionales
+
+`node checks/real-api.mjs` comprueba servicios reales con `fetch` simulado, rechazo de fallback demo y permisos; también ejecuta `navigation.mjs`. Esta última prueba utiliza `bindShell` del aplicativo con un DOM mínimo y la política de permisos vigente: tres perfiles en anchos 390, 768, 900, 901, 1366 y 1920. Verifica foco, menú móvil, transición a escritorio y reglas CSS horizontales; no acredita renderizado visual ni persistencia.
+
+`go test -p=1 -count=1 ./internal/httpapi -run '^(TestFrontendSameOriginAndPublicFilesOnly|TestHTTPAuthenticationCSRFAndLivePermissions|TestLoginLimiterAndDecoder|TestMechanicFinancialBoundaryAudit)$'` (desde `backend`) usa stores sintéticos y peticiones HTTP en memoria, sin escuchar en localhost:8080 ni conectarse a una base. No sustituye la integración SQL Server/MongoDB, generación real de PDF ni GridFS.
+
 ## Comandos
 
-`node checks/run.mjs` ejecuta ocho suites de demo/unidad/prototipo. El coordinador imprime su categoría. No inicia bases ni ejecuta los escenarios de navegador de escritura.
+`node checks/run.mjs` ejecuta ocho suites de unidad/regresión/prototipo. El coordinador imprime su categoría. Las regresiones históricas `verify`, `workflow`, `edge-cases` y `report-periods` conservan sus aserciones mediante el cargador exclusivo de Node `fixtures/legacy-demo-loader.mjs` (Node 20.6+; verificado con Node 24). Para ejecutarlas individualmente: `node --import ./checks/fixtures/legacy-demo-loader.mjs checks/workflow.mjs`. El cargador y la muestra `fixtures/dashboard-prototype.js` están fuera de `dist`; Go no los publica. El frontend siempre usa la API real, incluso sin metadatos o con un antiguo indicador de demo. Las ramas internas históricas compartidas se conservan temporalmente para evitar una refactorización amplia. No inicia bases ni ejecuta los escenarios de navegador de escritura.
 
 Para integración nueva y aislada desde PowerShell en la raíz:
 

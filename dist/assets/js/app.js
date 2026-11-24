@@ -5,14 +5,14 @@ import {loadModule} from './services/real-workshop.js';
 import {clearRealStore} from './services/real-state.js';
 import { icon } from './components/icons.js';
 import { modules } from './components/navigation.js';
-import { refreshSession, getSession, getRememberedUser, login, logout, demoCredentials } from './services/auth-service.js';
+import { refreshSession, getSession, getRememberedUser, login, logout } from './services/auth-service.js';
 import { renderClients, renderVehicles } from './views/clients-vehicles.js';
 import { renderReceptions, renderDiagnoses, renderQuotes, renderOrders, renderRescues } from './views/operations.js';
 import { renderPayments } from './views/payments.js';
 import { renderMechanics, renderSuppliers, renderUsers, renderReports } from './views/administration.js';
-import { getStore, resetDemo } from './services/store-service.js';
+import { getStore } from './services/store-service.js';
 import { permissionChecker, homePath } from './services/permissions.js';
-import { notify, showModal, form, submit, button, bindForm, go } from './components/ui.js';
+import { notify, go } from './components/ui.js';
 
 const root = document.getElementById('app');
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
@@ -33,13 +33,13 @@ function renderLogin() {
 
       <div class="login-heading"><h1 id="login-title">Bienvenido</h1></div>
       <form id="login-form">
-        <label class="field-label" for="username">Correo o usuario</label><div class="input-wrap">${icon('user')}<input id="username" name="username" autocomplete="username" placeholder="Ingresa tu correo o usuario" value="${escapeHtml(remembered)}" required maxlength="${realMode?150:120}" autocapitalize="none" spellcheck="false"></div>
-        <label class="field-label" for="password">Contraseña</label><div class="input-wrap">${icon('lock')}<input id="password" name="password" type="password" autocomplete="current-password" placeholder="Ingrese su contraseña" required maxlength="${realMode?72:128}"><button type="button" class="password-toggle" id="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false">${icon('eye')}</button></div>
+        <label class="field-label" for="username">Correo o usuario</label><div class="input-wrap">${icon('user')}<input id="username" name="username" autocomplete="username" placeholder="Ingresa tu correo o usuario" value="${escapeHtml(remembered)}" required maxlength="150" autocapitalize="none" spellcheck="false"></div>
+        <label class="field-label" for="password">Contraseña</label><div class="input-wrap">${icon('lock')}<input id="password" name="password" type="password" autocomplete="current-password" placeholder="Ingrese su contraseña" required maxlength="72"><button type="button" class="password-toggle" id="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false">${icon('eye')}</button></div>
         <input type="checkbox" name="remember" ${remembered ? 'checked' : ''} hidden aria-hidden="true">
         <p id="login-error" class="form-error" role="alert" hidden></p>
         <button class="primary-button login-submit" type="submit">Iniciar sesión</button>
       </form>
-      <div class="demo-access">${icon('info')}<div><strong>${realMode?'Acceso al taller':'Acceso de demostración'}</strong>${realMode?'<p>Modo real · Usa tu cuenta del taller. Los cambios se guardan en el servidor. <a href="/demo/">Abrir demostración separada</a></p>':`<p>Usuario: <code>${demoCredentials.username}</code> <span>·</span> Contraseña: <code>${demoCredentials.password}</code></p><p>Auxiliar: <code>kevin</code> · <code>Auxiliar2026!</code></p>`}</div></div>
+      <div class="demo-access">${icon('info')}<div><strong>Acceso al taller</strong><p>Usa tu cuenta del taller. Los cambios se guardan en el servidor.</p></div></div>
 
     </section><footer class="login-footer">EL BRAVO DEL JAC <span>·</span> Taller automotriz</footer>
   </main>`;
@@ -66,11 +66,11 @@ function shell(session, module) {
   root.innerHTML = `<div class="app-shell management-chrome ${module.id === 'inicio' ? 'dashboard-surface' : ''}">
     <header class="topbar"><div class="topbar-brand"><button class="icon-button menu-button" id="menu-toggle" aria-label="Abrir o contraer menú" aria-expanded="false" aria-controls="sidebar">${icon('menu')}</button><a class="brand-link" href="#/inicio" aria-label="Inicio de El Bravo del JAC">${brand()}</a></div>
       <div class="module-search"><label class="sr-only" for="module-search">Buscar módulo</label>${icon('search')}<input id="module-search" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" placeholder="Buscar módulo…" autocomplete="off" aria-controls="search-results" aria-expanded="false"><kbd>/</kbd><div id="search-results" class="search-results" role="listbox" aria-label="Módulos encontrados" hidden></div></div>
-      <span class="topbar-demo"><span></span>${realMode?'Modo real':'Demostración'}</span><div class="profile-wrap"><button class="profile-button" id="profile-toggle" aria-label="Opciones de ${escapeHtml(session.name)}" aria-expanded="false" aria-controls="profile-menu"><span class="profile-avatar">${escapeHtml(session.name.trim().charAt(0).toUpperCase())}</span><span>${escapeHtml(session.name)}</span>${icon('down')}</button><div class="profile-menu" id="profile-menu" hidden><span>${escapeHtml(session.role)}</span><button id="export-demo" ${realMode?'hidden':''}>${icon('quote')} Descargar datos demo</button><button id="reset-demo" ${realMode?'hidden':''}>${icon('info')} Reiniciar datos demo</button><button id="logout">${icon('logout')} Cerrar sesión</button></div></div>
+      <span class="topbar-demo"><span></span>${realMode?'Modo real':'Demostración'}</span><div class="profile-wrap"><button class="profile-button" id="profile-toggle" aria-label="Opciones de ${escapeHtml(session.name)}" aria-expanded="false" aria-controls="profile-menu"><span class="profile-avatar">${escapeHtml(session.name.trim().charAt(0).toUpperCase())}</span><span>${escapeHtml(session.name)}</span>${icon('down')}</button><div class="profile-menu" id="profile-menu" hidden><span>${escapeHtml(session.role)}</span><button id="logout">${icon('logout')} Cerrar sesión</button></div></div>
     </header>
     <button class="sidebar-scrim" id="sidebar-scrim" aria-label="Cerrar menú" hidden></button>
     <aside class="sidebar" id="sidebar" aria-label="Menú principal"><a class="sidebar-brand" href="#/${homePath(session.role)}" aria-label="Inicio de El Bravo del JAC">${brand()}</a><div class="sidebar-caption">GESTIÓN DEL TALLER</div><nav>${allowed.map(m => `${m.id === 'mecanicos' && allowed.indexOf(m) > 0 ? '<div class="nav-divider"></div>' : ''}<a class="nav-item ${m.id === module.id ? 'active' : ''}" href="#/${m.id}" ${m.id === module.id ? 'aria-current="page"' : ''} title="${m.label}">${icon(m.icon)}<span>${m.label}</span>${!m.ready ? '<span class="nav-pending" aria-label="Próxima etapa"></span>' : ''}</a>`).join('')}</nav><div class="sidebar-footer"><span>EL BRAVO DEL JAC</span><small>Cuidado experto. En cada detalle.</small></div></aside>
-    <main class="workspace" id="main-content"><div class="page-heading"><div><div class="breadcrumb">El Bravo del JAC ${icon('chevron')} <span>${module.id === 'inicio' ? 'Dashboard' : module.label}</span></div><h1>${module.id === 'inicio' ? `Bienvenido, ${escapeHtml(session.name)}` : module.label}</h1><p>${module.id === 'inicio' ? 'Panel de control del taller' : 'Sistema de gestión del taller automotriz'}</p></div><div class="page-date">${icon('clock')}<span>${date}</span></div></div><div id="page-content"></div><footer class="workspace-footer"><span>El Bravo del JAC · Gestión del taller</span><span>${realMode?'Modo real':'Frontend demo'} <span class="footer-dot">•</span> ${realMode?'Datos del taller':'Datos ilustrativos'}</span></footer></main>
+    <main class="workspace" id="main-content"><div class="page-heading"><div><div class="breadcrumb">El Bravo del JAC ${icon('chevron')} <span>${module.id === 'inicio' ? 'Dashboard' : module.label}</span></div><h1>${module.id === 'inicio' ? `Bienvenido, ${escapeHtml(session.name)}` : module.label}</h1><p>${module.id === 'inicio' ? 'Panel de control del taller' : 'Sistema de gestión del taller automotriz'}</p></div><div class="page-date">${icon('clock')}<span>${date}</span></div></div><div id="page-content"></div><footer class="workspace-footer"><span>El Bravo del JAC · Gestión del taller</span><span>Modo real <span class="footer-dot">•</span> Datos del taller</span></footer></main>
   </div>`;
   bindShell(session);
 }
@@ -101,18 +101,6 @@ function bindShell(session) {
   });
   scrim.addEventListener('click', () => { closeMenu(); toggle.focus(); });
   profileButton.addEventListener('click', () => { const open = profileMenu.hidden; profileMenu.hidden = !open; profileButton.setAttribute('aria-expanded', String(open)); });
-  document.getElementById('export-demo').addEventListener('click', () => {
-    if(realMode)return;
-    const data = getStore(); data.users = data.users.map(({passwordDigest,...user}) => user);
-    const url = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-    const a = document.createElement('a'); a.href=url; a.download='El_Bravo_del_JAC_Datos_Demo.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); notify('Datos de demostración descargados.');
-  });
-  document.getElementById('reset-demo').addEventListener('click', () => {
-    if(realMode)return;
-    const dialog=showModal('Reiniciar datos de demostración',form('CONFIRMAR REINICIO','<p class="full-width">Se reemplazarán los registros de este navegador por los ejemplos iniciales. Puedes descargar tus datos antes de continuar.</p>',submit('Reiniciar datos')+button('Cancelar','cancel'),'reset-form'));
-    dialog.querySelector('[data-action="cancel"]').onclick=()=>dialog.close();
-    bindForm('reset-form',()=>{resetDemo();dialog.close();notify('Datos de demostración reiniciados.');go('inicio');});
-  });
   document.getElementById('logout').addEventListener('click', async () => { try {await logout(); location.hash = '#/login';}catch(error){notify(error.message);} });
   search.addEventListener('input', () => {
     const query = search.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();

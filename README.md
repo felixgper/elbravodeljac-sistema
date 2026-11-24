@@ -27,7 +27,7 @@ Para iniciar o reiniciar una instalación ya provisionada, ejecuta desde la raí
 
 Abre **http://localhost:8080/** con las credenciales de tu instalación. El script verifica los volúmenes y reanuda los contenedores existentes de SQL Server, MongoDB y Go. Si falta alguno, consulta la guía antes de continuar.
 
-Go sirve UI y API bajo el mismo origen con JWT HttpOnly, CSRF y permisos en servidor. `/demo/` es demostración ficticia separada; Live Server solo sirve esa demostración. No abrir `index.html` con doble clic.
+Go sirve UI y API bajo el mismo origen con JWT HttpOnly, CSRF y permisos en servidor. La aplicación utiliza exclusivamente la API real; `/demo/` no está disponible. Live Server y abrir `index.html` con doble clic no sustituyen el servidor Go. Los fallos del backend se muestran como errores, sin datos ficticios de respaldo.
 
 ## Pruebas y mantenimiento
 
@@ -38,6 +38,6 @@ node checks/run.mjs
 ./backend/scripts/test-isolated.ps1
 ```
 
-El primer comando ejecuta ocho suites de demo/unidad/prototipo. El segundo crea PostgreSQL/MongoDB temporales con UUID y ejecuta Go y `go vet`. Para integración Chrome, requisitos y `-Browser`: [guía de pruebas](checks/README.md). **PASS, FAIL y SKIP se reportan por separado; SKIP no significa aprobado.** Nunca dirigir pruebas de escritura a localhost:8080 ni a bases existentes.
+El primer comando ejecuta ocho suites de unidad/regresión/prototipo. El segundo crea PostgreSQL/MongoDB temporales con UUID y ejecuta Go y `go vet`. Para integración Chrome, requisitos y `-Browser`: [guía de pruebas](checks/README.md). **PASS, FAIL y SKIP se reportan por separado; SKIP no significa aprobado.** Nunca dirigir pruebas de escritura a localhost:8080 ni a bases existentes.
 
 [Backend y configuración](backend/README.md) · [API REST](docs/backend/ENDPOINTS.md).
