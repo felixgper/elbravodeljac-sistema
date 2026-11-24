@@ -1,6 +1,7 @@
 import {clearRealStore} from './real-state.js';
-// El servidor elige el modo. No hay conmutación ni respaldo automático a la demo.
-export const realMode = globalThis.__BRAVO_MODE === 'real' || globalThis.document?.querySelector('meta[name="bravo-mode"]')?.content === 'real';
+// La aplicación administrativa siempre utiliza la API. La ausencia de metadatos,
+// un fallo de red o una variable global nunca habilitan datos ni sesiones ficticias.
+export const realMode = true;
 let session = null, csrfToken = '';
 export const realSession = () => session;
 export function setSession(response) {

@@ -25,4 +25,4 @@ for(const folder of ['dist/assets/js','dist/assets/js/components','dist/assets/j
   const source=fs.readFileSync(`${folder}/${name}`,'utf8');assert(!source.includes('fetch(')||name==='api-service.js','HTTP centralizado: cookies y CSRF en api-service');
  }
 }
-console.log('Demo actual: acceso, sesión, recordatorio, store del Dashboard y aislamiento de datos; sin conexión PostgreSQL.');
+console.log('Fixture histórico en Node: acceso simulado, recordatorio, store y aislamiento; no acredita el sistema real ni conecta con bases.');

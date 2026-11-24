@@ -18,19 +18,12 @@ func mountFrontend(mux *http.ServeMux, dir string) error {
 	assets := http.FileServer(http.Dir(filepath.Join(dir, "assets")))
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/", "/index.html", "/demo/", "/demo/index.html":
-			mode := "real"
-			if strings.HasPrefix(r.URL.Path, "/demo/") {
-				mode = "demo"
-			}
-			page := bytes.Replace(index, []byte("<head>"), []byte("<head>\n<meta name=\"bravo-mode\" content=\""+mode+"\">"), 1)
+		case "/", "/index.html":
+			page := bytes.Replace(index, []byte("<head>"), []byte("<head>\n<meta name=\"bravo-mode\" content=\"real\">"), 1)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			_, _ = w.Write(page)
 		default:
 			prefix := "/assets/"
-			if strings.HasPrefix(r.URL.Path, "/demo/assets/") {
-				prefix = "/demo/assets/"
-			}
 			if !strings.HasPrefix(r.URL.Path, prefix) {
 				http.NotFound(w, r)
 				return
