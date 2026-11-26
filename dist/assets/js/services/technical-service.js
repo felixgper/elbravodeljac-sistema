@@ -44,3 +44,25 @@ export function technicalAttempt(kind,diagnosis,actor){
   finally{busy=false;}
  }};attempts.set(key,result);return result;
 }
+
+// Serialize first-draft creation and reconcile an uncertain HTTP response before
+// trying again. The server still enforces one diagnosis per reception.
+export function automaticDiagnosisDraft({getRecord,readInput,findRecord,create,onSaved}){
+ let pending;
+ return async()=>{
+  if(getRecord()?.id)return getRecord();
+  if(pending)return pending;
+  pending=(async()=>{
+   const input=readInput();
+   const found=await findRecord();
+   if(found){onSaved(found);return found;}
+   try{const record=await create({...input,status:'Borrador'});onSaved(record);return record;}
+   catch(error){
+    // A committed SQL write may have lost its response. Do not blindly POST again.
+    try{const found=await findRecord();if(found){onSaved(found);return found;}}catch{}
+    throw error;
+   }
+  })();
+  try{return await pending;}finally{pending=null;}
+ };
+}

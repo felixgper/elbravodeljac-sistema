@@ -17,14 +17,16 @@ export function scanInput(equipment,version,codes,measurements){
  return {equipo:{nombre:equipment.trim(),version:version.trim()},dtcs,mediciones:values};
 }
 
-export function openDiagnosisTechnical({diagnosisId,closed=false,onBusy=()=>{}}){
- const user=realSession();if(!user||!diagnosisId)return;
+export function openDiagnosisTechnical({diagnosisId,draftKey=diagnosisId,ensureDiagnosis,closed=false,onBusy=()=>{}}){
+ const user=realSession();if(!user||(!diagnosisId&&!ensureDiagnosis))return;
  const can=permissionChecker(user.role);if(!can('diagnosticos','ver'))return;
  if(draftOwner!==user.id){drafts.clear();draftOwner=user.id;}
- const key=user.id+':'+diagnosisId;
+ const key=user.id+':'+draftKey;
  let state=drafts.get(key);if(!state){state={tab:'evidence',file:null,description:'',equipment:'',version:'',codes:[{code:'',description:''}],measurements:[],evidence:[],scans:[],busy:false};drafts.set(key,state);}
  const writable=()=>!closed&&can('diagnosticos','crear');
- const evidence=technicalAttempt('evidence',diagnosisId,user.id),scan=technicalAttempt('scan',diagnosisId,user.id);
+ let evidence,scan;
+ const bindAttempts=()=>{evidence=technicalAttempt('evidence',diagnosisId,user.id);scan=technicalAttempt('scan',diagnosisId,user.id);};
+ if(diagnosisId)bindAttempts();
  const dialog=showModal('Evidencias y escáner',`<p class="dialog-intro">Información complementaria y opcional del diagnóstico. ${closed?'Diagnóstico finalizado: solo consulta.':'Puedes continuar tu diagnóstico sin adjuntar archivos ni registrar códigos.'}</p><div class="tabs technical-tabs" role="tablist" aria-label="Información técnica"><button type="button" role="tab" id="technical-evidence-tab" aria-controls="technical-evidence">Fotografías</button><button type="button" role="tab" id="technical-scan-tab" aria-controls="technical-scan">Escáner</button></div><p class="technical-status" role="status" aria-live="polite"></p><section id="technical-evidence" role="tabpanel" aria-labelledby="technical-evidence-tab"></section><section id="technical-scan" role="tabpanel" aria-labelledby="technical-scan-tab"></section>`,{onClose:()=>{onBusy(false);}});
  dialog.classList.add('diagnosis-technical-dialog');
  const current=()=>dialog.isConnected&&realSession()?.id===user.id;
@@ -36,6 +38,7 @@ export function openDiagnosisTechnical({diagnosisId,closed=false,onBusy=()=>{}})
  for(const id of ['evidence','scan'])dialog.querySelector('#technical-'+id+'-tab').onclick=()=>selectTab(id);
  dialog.querySelector('.technical-tabs').onkeydown=event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();selectTab(event.key==='Home'?'evidence':event.key==='End'?'scan':state.tab==='scan'?'evidence':'scan');dialog.querySelector('#technical-'+state.tab+'-tab').focus();}};
  async function refresh(){
+  if(!diagnosisId){renderLists();return;}
   const [files,scans]=await Promise.all([listEvidence(diagnosisId),listScans(diagnosisId)]);if(!current())return;
   state.evidence=files;state.scans=scans;renderLists();
   const fileConfirmed=evidence.confirm(files),scanConfirmed=scan.confirm(scans);
@@ -59,20 +62,27 @@ export function openDiagnosisTechnical({diagnosisId,closed=false,onBusy=()=>{}})
  rows();
  dialog.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{const list=b.dataset.add==='code'?state.codes:state.measurements;if(list.length>=(b.dataset.add==='code'?1000:100)){message('Se alcanzó el máximo de filas.',true);return;}list.push(b.dataset.add==='code'?{code:'',description:''}:{name:'',value:''});rows();});
  dialog.querySelectorAll('.technical-refresh').forEach(b=>b.onclick=()=>refresh().catch(e=>message(e.message,true)));
- async function send(attempt,payload,operation,success){
-  if(state.busy||!current())return;toggleBusy(true);message('Guardando…');
-  try{await attempt.send(payload,operation);if(!current())return;success();message('Registro guardado correctamente.');notify('Información técnica guardada.');try{await refresh();}catch{message('El registro se guardó. Usa Actualizar registros para consultar la lista.',true);}}
-  catch(error){message(error.message,true);if(error.fields?.diagnosisId){closed=true;dialog.querySelectorAll('form').forEach(f=>f.hidden=true);}}
+ async function send(kind,payload,operation,success){
+  if(state.busy||!current())return;let automaticDraft=false;toggleBusy(true);message('Guardando…');
+  try{
+   if(!diagnosisId){
+    const record=await ensureDiagnosis();
+    if(!current())return;
+    diagnosisId=record.id;closed=record.status==='Finalizado';automaticDraft=!closed;bindAttempts();
+    if(closed){dialog.querySelectorAll('form').forEach(f=>f.hidden=true);throw Error('El diagnóstico ya está finalizado. Los anexos son de solo consulta.');}
+   }
+   await (kind==='evidence'?evidence:scan).send(payload,operation);if(!current())return;success();message('Registro guardado correctamente.');notify('Información técnica guardada.');try{await refresh();}catch{message('El registro se guardó. Usa Actualizar registros para consultar la lista.',true);}}
+  catch(error){message((automaticDraft?'El borrador quedó guardado. Puedes reintentar el anexo. ':'')+error.message,true);if(error.fields?.diagnosisId){closed=true;dialog.querySelectorAll('form').forEach(f=>f.hidden=true);}}
   finally{state.busy=false;onBusy(false);if(current())toggleBusy(false);}
  }
  const ef=dialog.querySelector('#technical-evidence-form'),sf=dialog.querySelector('#technical-scan-form');
  if(ef){ef.elements.file.required=!state.file;ef.elements.file.onchange=()=>{state.file=ef.elements.file.files[0]||null;ef.elements.file.required=!state.file;};ef.elements.description.oninput=()=>state.description=ef.elements.description.value;
   if(state.file)message('La selección anterior se conserva. Puedes reintentar la misma carga.');
-  ef.onsubmit=event=>{event.preventDefault();const file=state.file;if(!file){message('Selecciona un archivo para subir.',true);return;}send(evidence,{file,description:state.description},v=>uploadEvidence(diagnosisId,v),()=>{state.file=null;state.description='';ef.reset();ef.elements.file.required=true;});};
+  ef.onsubmit=event=>{event.preventDefault();const file=state.file;if(!file){message('Selecciona un archivo para subir.',true);return;}send('evidence',{file,description:state.description},v=>uploadEvidence(diagnosisId,v),()=>{state.file=null;state.description='';ef.reset();ef.elements.file.required=true;});};
  }
  if(sf){sf.elements.equipment.oninput=()=>state.equipment=sf.elements.equipment.value;sf.elements.version.oninput=()=>state.version=sf.elements.version.value;
-  sf.onsubmit=event=>{event.preventDefault();let input;try{input=scanInput(state.equipment,state.version,state.codes,state.measurements);}catch(error){message(error.message,true);return;}send(scan,input,v=>saveScan(diagnosisId,v),()=>{});};
+  sf.onsubmit=event=>{event.preventDefault();let input;try{input=scanInput(state.equipment,state.version,state.codes,state.measurements);}catch(error){message(error.message,true);return;}send('scan',input,v=>saveScan(diagnosisId,v),()=>{});};
  }
- dialog.querySelectorAll('.technical-new').forEach(b=>b.onclick=()=>{const attempt=b.closest('form')===ef?evidence:scan;if(attempt.pending&&!globalThis.confirm('El envío anterior podría haberse guardado. Actualiza los registros antes de preparar otro. ¿Deseas preparar una nueva solicitud?'))return;attempt.reset();message('Puedes preparar un nuevo registro.');});
+ dialog.querySelectorAll('.technical-new').forEach(b=>b.onclick=()=>{const attempt=b.closest('form')===ef?evidence:scan;if(attempt?.pending&&!globalThis.confirm('El envío anterior podría haberse guardado. Actualiza los registros antes de preparar otro. ¿Deseas preparar una nueva solicitud?'))return;attempt?.reset();message('Puedes preparar un nuevo registro.');});
  selectTab(state.tab);refresh().catch(error=>message(error.message,true));return dialog;
 }

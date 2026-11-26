@@ -1,3 +1,4 @@
+import {automaticDiagnosisDraft} from '../services/technical-service.js';
 import {openDiagnosisTechnical} from '../components/diagnosis-technical.js';
 import {diagnosisText} from '../services/diagnosis-text.js';
 import {quotePDFButton,bindQuoteDownloads} from '../components/quote-pdf.js';
@@ -6,7 +7,7 @@ import {openInspection} from '../components/technical-sheet.js';
 import {remotePicker,clientPicker,ownerVehicles} from '../components/remote-picker.js';
 import {saveUnit,updateRescue} from '../services/real-workshop.js';
 import {todayLabel} from '../components/ui.js';
-import {realMode} from '../services/api-service.js';
+import {realMode,allPages} from '../services/api-service.js';
 import {getStore,saveReception,saveDiagnosis,saveQuote,createOrder,updateOrder,deleteOrder,saveRescue,getContext,quoteTotal,itemSubtotal,decimalMinor,ORDER_STATES,ACTIVE_STATES} from '../services/workshop-service.js';
 import {e,money,date,stamp,field,textarea,select,placeholder,selectOptions,link,button,submit,form,hint,pageHeader,searchableList,bindForm,go,notify,showModal,table,badge,readDraft,bindDraft,clearDraft,rowActions,confirmDelete} from '../components/ui.js';
 import {icon} from '../components/icons.js';
@@ -36,7 +37,8 @@ export async function renderReceptions({root,params,session}){
 
 }
 export function renderDiagnoses({root,params,session}){
- const s=getStore(),selected=params.get('recepcion')||'',r=s.receptions.find(r=>r.id===selected),saved=s.diagnoses.find(d=>d.receptionId===selected),can=permissionChecker(session.role),closed=saved?.status==='Finalizado',attrs=closed?'readonly':'';
+ const s=getStore(),selected=params.get('recepcion')||'',r=s.receptions.find(r=>r.id===selected),can=permissionChecker(session.role),closed=s.diagnoses.find(d=>d.receptionId===selected)?.status==='Finalizado',attrs=closed?'readonly':'';
+ let saved=s.diagnoses.find(d=>d.receptionId===selected);
  if(r?.attentionType==='Directo'){go('cotizaciones?recepcion='+r.id);return;}
  const tasks=realMode?(s.diagnosisTasks||[]):s.receptions.filter(r=>r.attentionType!=='Directo').map(reception=>({reception}));
  root.innerHTML=pageHeader('Diagnósticos técnicos','El mecánico asignado evalúa la recepción; la asignación de ejecución de la OT es independiente.')+`<section class="panel" id="diagnosis-inbox-pending"><h2 class="form-section-title">Mis diagnósticos pendientes</h2>${table(['Recepción','Cliente','Vehículo','Motivo','Ingreso','Estado','Acción'],tasks.map(({reception:x,diagnosis:d})=>[e(x.id),e(x.clientName),e((x.vehiclePlate||'')+' · '+(x.vehicleBrand||'')+' '+(x.vehicleModel||'')),e(x.symptoms),date(x.createdAt),badge(d?.status||x.evaluationState||'Pendiente'),x.technicianId?link(d?.status==='Borrador'?'Continuar borrador':'Abrir evaluación','diagnosticos?recepcion='+x.id):'Pendiente de asignar']),'No tienes diagnósticos pendientes autorizados.')}</section>`;
@@ -46,9 +48,19 @@ export function renderDiagnoses({root,params,session}){
   const evaluation=root.querySelector('#edit-form');
   if(realMode&&can('diagnosticos','ver')){
    const actions=evaluation.querySelector('.form-actions');actions.classList.add('diagnosis-actions');
-   actions.insertAdjacentHTML('afterbegin',`<div class="diagnosis-technical-action"><button type="button" class="secondary-button" id="diagnosis-technical" ${saved?.id?'':'disabled aria-describedby="technical-save-first"'}>${icon('quote')} Evidencias y escáner</button>${saved?.id?'':'<small id="technical-save-first">Guarda primero el diagnóstico como borrador.</small>'}</div>`);
+   actions.insertAdjacentHTML('afterbegin',`<div class="diagnosis-technical-action"><button type="button" class="secondary-button" id="diagnosis-technical">${icon('quote')} Evidencias y escáner</button></div>`);
    let uploading=false;const primary=[...actions.querySelectorAll('[type=submit]')];
-   document.getElementById('diagnosis-technical').onclick=()=>openDiagnosisTechnical({diagnosisId:saved?.id,closed,onBusy:value=>{uploading=value;if(evaluation.isConnected)primary.forEach(b=>b.disabled=value);}});
+   const ensureDiagnosis=automaticDiagnosisDraft({getRecord:()=>saved,readInput:()=>{
+    if(!evaluation.isConnected)throw Error('Vuelve a abrir la evaluación antes de adjuntar información.');
+    const invalid=[...evaluation.elements].find(n=>n.willValidate&&!n.checkValidity());
+    if(invalid)throw Error('Completa o corrige el campo «'+(evaluation.querySelector(`label[for="${invalid.id}"]`)?.textContent||invalid.name)+'» antes de guardar el anexo.');
+    if(!r.technicianId)throw Error('Asigna un mecánico a la recepción antes de guardar el anexo.');
+    return {...Object.fromEntries(new FormData(evaluation)),technicianId:r.technicianId};
+   },findRecord:async()=>{const rows=await allPages('/diagnosticos');return rows.find(d=>d.receptionId===r.id);},create:input=>saveDiagnosis(input,session.id),onSaved:record=>{saved=record;const state=evaluation.previousElementSibling.querySelector('.status-badge');if(state)state.textContent=record.status;}});
+   document.getElementById('diagnosis-technical').onclick=()=>{
+    if(primary.some(b=>b.disabled)){notify('Espera a que termine de guardarse el diagnóstico.');return;}
+    openDiagnosisTechnical({diagnosisId:saved?.id,draftKey:'recepcion:'+r.id,ensureDiagnosis,closed,onBusy:value=>{uploading=value;if(evaluation.isConnected)primary.forEach(b=>b.disabled=value);}});
+   };
    evaluation.addEventListener('submit',event=>{if(uploading){event.preventDefault();event.stopImmediatePropagation();notify('Espera a que termine de guardarse la información técnica.');}},true);
   }
   root.querySelector('#edit-form').previousElementSibling.insertAdjacentHTML('beforeend',' '+badge(saved?.status||r.evaluationState||'Pendiente'));
