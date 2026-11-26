@@ -192,3 +192,23 @@ El diagnóstico admite Borrador o Finalizado. La finalización exige hallazgos, 
 La cotización exige recepción y diagnóstico finalizado cuando corresponde. Las referencias de conceptos manuales son opcionales y validadas. La orden exige aprobación y un mecánico de ejecución, que puede ser distinto del responsable del diagnóstico. Las nuevas asignaciones de auxiliar y los cambios de `assistantId` devuelven 422. Las asignaciones históricas se conservan. Pago requiere `requestId` estable y entrega verifica saldo, identidad y conformidad.
 
 Los PDF archivados de entrega se devuelven byte por byte. Para su generación y descarga, consulta el [contrato de PDF](../../backend/internal/platform/technicalsheet/README.md).
+
+### Interfaz opcional de evidencias y escáner
+
+En Diagnósticos técnicos → Evaluación del mecánico, «Evidencias y escáner» abre
+un modal con dos pestañas. Primero debe guardarse el borrador para obtener un ID
+SQL real. No es obligatorio adjuntar archivos ni códigos para guardar/finalizar.
+Los diagnósticos finalizados admiten consulta, no nuevas cargas ni escaneos.
+
+Las rutas técnicas conservan sesión, CSRF y permisos efectivos. Cada escritura
+se autoriza de nuevo bajo un bloqueo de recepción y diagnóstico, en el mismo
+orden que el cierre/reasignación; una finalización concurrente espera la carga o
+rechaza la operación que llega después del cierre. No se cambian tablas ni reglas
+financieras. Una incertidumbre de red se resuelve consultando `requestId`, no
+creando silenciosamente otra solicitud.
+
+El modal reutiliza `technical-service.js`. Su estado de sesión conserva solo el
+identificador de reintento y un digest, nunca bytes ni texto del archivo. Se acepta
+JPEG/PNG/PDF hasta 10 MiB, descripción opcional y descarga por la API protegida.
+Escáner es ingreso manual: equipo, versión, varios DTC y mediciones opcionales
+(`mediciones:{}` cuando están vacías); no conecta automáticamente con OBD-II.

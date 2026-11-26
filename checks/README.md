@@ -57,3 +57,18 @@ Cada escenario histórico tiene su propio servidor y limitador de Login. No se d
 Esta protección previene conexiones accidentales mediante los runners soportados; no sustituye JWT/CSRF/permisos ni es una barrera contra un operador que altere deliberadamente el harness o marque manualmente otra base. No apuntar variables de integración a instalaciones existentes.
 
 `go test ./...` sin DSN o flags omite las integraciones correspondientes. **SKIP significa no ejecutada**, no aprobada.
+
+## Evidencias y escáner
+
+`node checks/technical-modal.mjs` verifica contratos, CSRF/multipart simulado,
+mediciones vacías, validaciones, reintentos persistentes, doble clic y estructura
+opcional. No acredita navegador, SQL Server ni MongoDB reales.
+
+`go test ./internal/httpapi -run TestTechnicalModalHTTPGuards` utiliza almacenes
+sintéticos: autorización, cierre concurrente simulado, rechazo de contenido y
+relectura de bytes. La suite `TestSQLServer2025` conserva la prueba GridFS antes
+del cierre y comprueba que las escrituras posteriores se rechacen; requiere QA.
+No dirigir estas pruebas a bases existentes ni a localhost:8080.
+
+El prototipo conserva sus 23 pantallas principales y agrega dos estados del mismo
+modal: 08A Evidencias y 08B Escáner. No son nuevos módulos de navegación.

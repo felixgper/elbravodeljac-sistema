@@ -73,8 +73,8 @@ func diagnosisSupervisor(u domain.User) bool {
 }
 
 func (s *Store) AuthorizeDiagnosis(ctx context.Context, id, actor string, write bool) error {
-	var technician string
-	if err := s.db.QueryRowContext(ctx, `SELECT CONVERT(varchar(20),id_tecnico) FROM dbo.diagnosticos WHERE id_diagnostico=@p1`, id).Scan(&technician); err != nil {
+	var technician, state string
+	if err := s.db.QueryRowContext(ctx, `SELECT CONVERT(varchar(20),id_tecnico),estado FROM dbo.diagnosticos WHERE id_diagnostico=@p1`, id).Scan(&technician, &state); err != nil {
 		return translate(err)
 	}
 	u, err := s.User(ctx, actor)
@@ -89,6 +89,9 @@ func (s *Store) AuthorizeDiagnosis(ctx context.Context, id, actor string, write 
 		return domain.ErrForbidden
 	}
 	if technician == actor || diagnosisSupervisor(u) || u.Can("usuarios.roles") {
+		if write && state == "Finalizado" {
+			return domain.Invalid("diagnosisId", "El diagnóstico está finalizado. Solo puedes consultar sus evidencias y escaneos.")
+		}
 		return nil
 	}
 	var assigned bool
@@ -102,6 +105,9 @@ THEN 1 ELSE 0 END)`, id, actor, write).Scan(&assigned)
 	}
 	if !assigned {
 		return domain.ErrForbidden
+	}
+	if write && state == "Finalizado" {
+		return domain.Invalid("diagnosisId", "El diagnóstico está finalizado. Solo puedes consultar sus evidencias y escaneos.")
 	}
 	return nil
 }

@@ -1,6 +1,8 @@
 package httpapi
 
 import (
+	"errors"
+	"github.com/felixgper/elbravodeljac-sistema/backend/internal/application"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 	"io"
 	"net/http"
@@ -57,7 +59,12 @@ func (s *server) putScan(w http.ResponseWriter, r *http.Request, u domain.User) 
 	if !decodeLimit(w, r, &v, 256<<10) {
 		return
 	}
-	out, created, err := s.options.Technical.PutScan(r.Context(), id, u.ID, v)
+	var out domain.Scan
+	var created bool
+	var err error
+	if !s.technicalWrite(w, r, id, u, func() error { out, created, err = s.options.Technical.PutScan(r.Context(), id, u.ID, v); return err }) {
+		return
+	}
 	status := 200
 	if created {
 		status = 201
@@ -146,13 +153,18 @@ func (s *server) putEvidence(w http.ResponseWriter, r *http.Request, u domain.Us
 	if !ok {
 		return
 	}
-	out, created, err := s.options.Technical.PutEvidence(r.Context(), id, u.ID, v)
+	var out domain.Evidence
+	var created bool
+	var err error
+	if !s.technicalWrite(w, r, id, u, func() error {
+		out, created, err = s.options.Technical.PutEvidence(r.Context(), id, u.ID, v)
+		return err
+	}) {
+		return
+	}
 	status := 200
 	if created {
 		status = 201
-	}
-	if err != nil && status == 200 {
-		w.Header().Set("Retry-After", "2")
 	}
 	s.result(w, status, out, err)
 }
@@ -177,4 +189,20 @@ func (s *server) technicalFile(w http.ResponseWriter, r *http.Request, u domain.
 	w.Header().Set("Content-Security-Policy", "sandbox; default-src 'none'")
 	w.WriteHeader(200)
 	_, _ = w.Write(data)
+}
+
+func (s *server) technicalWrite(w http.ResponseWriter, r *http.Request, id string, u domain.User, action func() error) bool {
+	guard, ok := s.store.(application.DiagnosisTechnicalWriter)
+	if !ok {
+		writeError(w, 503, "TECHNICAL_WRITE_UNAVAILABLE", "No se puede comprobar el estado del diagnóstico. Intenta más tarde.")
+		return false
+	}
+	if err := guard.WithDiagnosisTechnicalWrite(r.Context(), id, u.ID, action); err != nil {
+		if errors.Is(err, domain.ErrConflict) {
+			w.Header().Set("Retry-After", "2")
+		}
+		s.failure(w, err)
+		return false
+	}
+	return true
 }

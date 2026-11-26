@@ -1,3 +1,4 @@
+import {openDiagnosisTechnical} from '../components/diagnosis-technical.js';
 import {diagnosisText} from '../services/diagnosis-text.js';
 import {quotePDFButton,bindQuoteDownloads} from '../components/quote-pdf.js';
 import {lookupApprovedQuotes,lookupQuoteReceptions,assignDiagnosis} from '../services/real-workshop.js';
@@ -42,6 +43,14 @@ export function renderDiagnoses({root,params,session}){
  if(selected&&!r)throw Error('Recepción no autorizada o inexistente.');
  if(r){
   root.insertAdjacentHTML('beforeend',form('EVALUACIÓN DEL MECÁNICO',field('Recepción','receptionId',r.id,'text','readonly')+field('Cliente','client',r.clientName||s.clients.find(c=>c.id===r.clientId)?.name||'','text','readonly')+field('Vehículo / placa','vehicle',[r.vehiclePlate,r.vehicleBrand,r.vehicleModel].filter(Boolean).join(' '),'text','readonly')+field('Mecánico responsable del diagnóstico','technician',r.technicianName||'Sin asignar','text','readonly')+textarea('Motivo de ingreso','symptoms',r.symptoms,'readonly')+textarea('Diagnóstico técnico','technicalDiagnosis',diagnosisText(saved||{}),attrs+' maxlength="8200" placeholder="Describe lo encontrado y su causa probable."')+textarea('Reparaciones o servicios recomendados','recommendations',saved?.recommendations||'',attrs+' maxlength="4000"')+textarea('Observaciones adicionales (opcional)','notes',saved?.notes||'',attrs+' maxlength="4000"')+(closed?'':hint('Puedes retomar el borrador más tarde. Al finalizar, la evaluación queda cerrada y se puede cotizar.')),closed?(can('cotizaciones','crear')?link('Crear cotización','cotizaciones?diagnostico='+saved.id):''):`<button type="submit" class="secondary-button" value="Borrador">Guardar borrador</button><button type="submit" class="primary-button" value="Finalizado">Finalizar diagnóstico</button>`));
+  const evaluation=root.querySelector('#edit-form');
+  if(realMode&&can('diagnosticos','ver')){
+   const actions=evaluation.querySelector('.form-actions');actions.classList.add('diagnosis-actions');
+   actions.insertAdjacentHTML('afterbegin',`<div class="diagnosis-technical-action"><button type="button" class="secondary-button" id="diagnosis-technical" ${saved?.id?'':'disabled aria-describedby="technical-save-first"'}>${icon('quote')} Evidencias y escáner</button>${saved?.id?'':'<small id="technical-save-first">Guarda primero el diagnóstico como borrador.</small>'}</div>`);
+   let uploading=false;const primary=[...actions.querySelectorAll('[type=submit]')];
+   document.getElementById('diagnosis-technical').onclick=()=>openDiagnosisTechnical({diagnosisId:saved?.id,closed,onBusy:value=>{uploading=value;if(evaluation.isConnected)primary.forEach(b=>b.disabled=value);}});
+   evaluation.addEventListener('submit',event=>{if(uploading){event.preventDefault();event.stopImmediatePropagation();notify('Espera a que termine de guardarse la información técnica.');}},true);
+  }
   root.querySelector('#edit-form').previousElementSibling.insertAdjacentHTML('beforeend',' '+badge(saved?.status||r.evaluationState||'Pendiente'));
   if(closed)root.insertAdjacentHTML('beforeend',hint('Evaluación finalizada el '+stamp(saved.finishedAt||saved.createdAt)+'. Se conserva sin sobrescribir.'));
   const previous=(saved?.history||[]).filter(event=>event.previous);

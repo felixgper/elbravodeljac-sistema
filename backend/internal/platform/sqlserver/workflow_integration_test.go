@@ -179,12 +179,6 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 				diagnosis := draft["id"].(string)
 				manager.call(t, "POST", "/cotizaciones", quoteBody, 422)
 				other.call(t, "GET", "/diagnosticos/"+diagnosis, nil, 404)
-				draftBody["status"] = "Finalizado"
-				draftBody["version"] = draft["version"]
-				draftBody["recommendations"] = "Revisión sintética autorizada"
-				worker.call(t, "PUT", "/diagnosticos/"+diagnosis, draftBody, 200)
-				worker.call(t, "PUT", "/diagnosticos/"+diagnosis, draftBody, 409)
-				quoteBody["diagnosisId"] = diagnosis
 				t.Run("MongoDB_GridFS", func(t *testing.T) {
 					if technical == nil {
 						t.Skip("requires isolated MongoDB QA")
@@ -221,6 +215,17 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 						t.Fatal("GridFS file changed")
 					}
 				})
+				draftBody["status"] = "Finalizado"
+				draftBody["version"] = draft["version"]
+				draftBody["recommendations"] = "Revisión sintética autorizada"
+				finalizeAfterTechnicalWrite(t, s, worker, diagnosis, draftBody)
+				worker.call(t, "PUT", "/diagnosticos/"+diagnosis, draftBody, 409)
+				quoteBody["diagnosisId"] = diagnosis
+				if technical != nil {
+					worker.call(t, "POST", "/diagnosticos/"+diagnosis+"/escaneres", map[string]any{"requestId": "closed-qa"}, 422)
+					worker.call(t, "GET", "/diagnosticos/"+diagnosis+"/escaneres", nil, 200)
+				}
+
 			}
 			quote := qaData(t, manager.call(t, "POST", "/cotizaciones", quoteBody, 201))
 			qid := quote["id"].(string)
@@ -351,4 +356,68 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 		t.Fatalf("historical report requires an empty services array: %v", empty)
 	}
 	admin.call(t, "GET", "/dashboard", nil, 200)
+}
+
+// Preserve this race regression in the existing isolated SQL Server workflow.
+func finalizeAfterTechnicalWrite(t *testing.T, s *Store, worker qaSession, id string, body map[string]any) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	actor, err := s.FindLogin(ctx, "mecanico_qa")
+	if err != nil {
+		t.Fatal(err)
+	}
+	entered := make(chan struct{})
+	release := make(chan struct{}, 1)
+	done := make(chan error, 1)
+	defer func() {
+		select {
+		case release <- struct{}{}:
+		default:
+		}
+	}()
+	go func() {
+		done <- s.WithDiagnosisTechnicalWrite(ctx, id, actor.ID, func() error {
+			close(entered)
+			select {
+			case <-release:
+				return nil
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		})
+	}()
+	select {
+	case <-entered:
+	case err := <-done:
+		t.Fatal(err)
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+	type result struct {
+		status int
+		err    error
+	}
+	saved := make(chan result, 1)
+	go func() {
+		status, _, err := worker.request("PUT", "/api/v1/diagnosticos/"+id, body)
+		saved <- result{status, err}
+	}()
+	select {
+	case r := <-saved:
+		t.Fatalf("finalization bypassed active technical write: status=%d err=%v", r.status, r.err)
+	case <-time.After(150 * time.Millisecond):
+	}
+	release <- struct{}{}
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case r := <-saved:
+		if r.err != nil || r.status != 200 {
+			t.Fatalf("finalize after technical write: %d %v", r.status, r.err)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
 }
