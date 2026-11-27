@@ -56,6 +56,7 @@ func main() {
 		log.Fatal("Base relacional no disponible; comprueba el entorno de pruebas")
 	}
 	var technical application.Technical
+	var surveys application.Surveys
 	if uri := os.Getenv("MONGODB_URI"); uri != "" {
 		name := os.Getenv("MONGODB_DATABASE")
 		mongoStore, openErr := mongodb.Open(uri, name)
@@ -63,6 +64,7 @@ func main() {
 			log.Fatal(openErr)
 		}
 		technical = mongoStore
+		surveys = mongoStore
 		defer func() {
 			closeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
@@ -73,7 +75,7 @@ func main() {
 	if frontendDir == "" {
 		frontendDir = "../dist"
 	}
-	handler, err := httpapi.New(store, httpapi.Options{FrontendDir: frontendDir, Origin: cfg.Origin, Key: cfg.Key, SecureCookies: cfg.SecureCookies, Technical: technical, SQLServer: cfg.SQLServer})
+	handler, err := httpapi.New(store, httpapi.Options{FrontendDir: frontendDir, Origin: cfg.Origin, Key: cfg.Key, SecureCookies: cfg.SecureCookies, Technical: technical, Surveys: surveys, SQLServer: cfg.SQLServer, SurveyTrustedProxyIPs: cfg.SurveyTrustedProxyIPs})
 	if err != nil {
 		log.Fatal("No se pudo preparar HTTP")
 	}

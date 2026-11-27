@@ -1,5 +1,6 @@
 // Iconos propios basados en trazos geométricos. Sin dependencias de red.
 const paths = {
+  star: '<path d="m12 3 2.8 5.7 6.3.9-4.55 4.44 1.07 6.27L12 17.35l-5.62 2.96 1.07-6.27L2.9 9.6l6.3-.9Z"/>',
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
   home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
   users: '<circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6m3 11v-3a6 6 0 0 0-3-5"/>',

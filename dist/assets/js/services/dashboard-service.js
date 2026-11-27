@@ -37,12 +37,13 @@ function demoPeriod(period,reference=new Date()){
 }
 
 export function reportRange(period,reference){
- if(!['Semana','Mes','Año'].includes(period)||!/^\d{4}-\d{2}-\d{2}$/.test(reference))throw new Error('Período o fecha de referencia inválidos.');
+ if(!['Día','Semana','Mes','Año'].includes(period)||!/^\d{4}-\d{2}-\d{2}$/.test(reference))throw new Error('Período o fecha de referencia inválidos.');
  let start=new Date(reference+'T05:00:00Z');if(!Number.isFinite(start.getTime())||start.toISOString().slice(0,10)!==reference)throw new Error('Fecha de referencia inválida.');
  if(period==='Semana')start.setUTCDate(start.getUTCDate()-(start.getUTCDay()+6)%7);
  if(period==='Mes')start.setUTCDate(1);
  if(period==='Año')start=new Date(start.getUTCFullYear()+'-01-01T05:00:00Z');
  const end=new Date(start),previous=new Date(start);
+ if(period==='Día'){end.setUTCDate(end.getUTCDate()+1);previous.setUTCDate(previous.getUTCDate()-1);}
  if(period==='Semana'){end.setUTCDate(end.getUTCDate()+7);previous.setUTCDate(previous.getUTCDate()-7);}
  if(period==='Mes'){end.setUTCMonth(end.getUTCMonth()+1);previous.setUTCMonth(previous.getUTCMonth()-1);}
  if(period==='Año'){end.setUTCFullYear(end.getUTCFullYear()+1);previous.setUTCFullYear(previous.getUTCFullYear()-1);}
@@ -53,5 +54,15 @@ export async function getReport(period='Mes',reference){
  if(period==='Últimos 6 meses')return currentReport(period);
  reference??=new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'America/Lima'}).format(new Date());
  const range=reportRange(period,reference),[current,comparison]=await Promise.all([currentReport(period,range),currentReport(period,{start:range.previous,end:range.start})]);
+ return {...current,comparison,range};
+}
+
+// Financial filtering reuses the existing authorized report and payment ledger.
+// Explicit Lima bounds determine the period; no new accounting calculation.
+export async function getIncomeReport(period='Mes',reference){
+ reference??=new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'America/Lima'}).format(new Date());
+ if(!['Día','Semana','Mes'].includes(period))throw Error('Selecciona Día, Semana o Mes.');
+ const range=reportRange(period,reference);
+ const [current,comparison]=await Promise.all([currentReport('Mes',range),currentReport('Mes',{start:range.previous,end:range.start})]);
  return {...current,comparison,range};
 }

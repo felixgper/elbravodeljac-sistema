@@ -12,6 +12,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/netip"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,19 +20,22 @@ import (
 )
 
 type Options struct {
-	FrontendDir   string
-	Technical     application.Technical
-	Origin        string
-	Key           []byte
-	SecureCookies bool
-	SQLServer     bool
+	FrontendDir           string
+	Technical             application.Technical
+	Origin                string
+	Key                   []byte
+	SecureCookies         bool
+	SQLServer             bool
+	Surveys               application.Surveys
+	SurveyTrustedProxyIPs []netip.Addr
 }
 type server struct {
-	store     application.Store
-	options   Options
-	tokens    *auth.Manager
-	dummyHash []byte
-	limiter   loginLimiter
+	store         application.Store
+	options       Options
+	tokens        *auth.Manager
+	dummyHash     []byte
+	limiter       loginLimiter
+	surveyLimiter loginLimiter
 }
 type endpoint struct {
 	method, path, permission string
@@ -46,7 +50,8 @@ type loginLimiter struct {
 	entries map[string]loginWindow
 }
 
-func (l *loginLimiter) allow(ip string) bool {
+func (l *loginLimiter) allow(ip string) bool { return l.allowN(ip, 5) }
+func (l *loginLimiter) allowN(ip string, max int) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	now := time.Now()
@@ -64,7 +69,7 @@ func (l *loginLimiter) allow(ip string) bool {
 	}
 	w.count++
 	l.entries[ip] = w
-	return w.count <= 5
+	return w.count <= max
 }
 func New(store application.Store, opts Options) (http.Handler, error) {
 	if store == nil || opts.Origin == "" {
@@ -79,7 +84,9 @@ func New(store application.Store, opts Options) (http.Handler, error) {
 		return nil, err
 	}
 	s := &server{store: store, options: opts, tokens: tokens, dummyHash: dummy, limiter: loginLimiter{entries: map[string]loginWindow{}}}
+	s.surveyLimiter.entries = map[string]loginWindow{}
 	mux := http.NewServeMux()
+	s.mountSurveys(mux)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { respond(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
 		if err := store.Ping(r.Context()); err != nil {

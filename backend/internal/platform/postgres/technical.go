@@ -6,8 +6,8 @@ import (
 )
 
 func (s *Store) AuthorizeDiagnosis(ctx context.Context, id, actor string, write bool) error {
-	var technician string
-	if err := s.Pool.QueryRow(ctx, `SELECT id_tecnico::text FROM diagnosticos WHERE id_diagnostico=$1`, id).Scan(&technician); err != nil {
+	var technician, state string
+	if err := s.Pool.QueryRow(ctx, `SELECT id_tecnico::text,estado FROM diagnosticos WHERE id_diagnostico=$1`, id).Scan(&technician, &state); err != nil {
 		return translate(err)
 	}
 	u, err := s.User(ctx, actor)
@@ -22,6 +22,9 @@ func (s *Store) AuthorizeDiagnosis(ctx context.Context, id, actor string, write 
 		return domain.ErrForbidden
 	}
 	if technician == actor || diagnosisSupervisor(u) || u.Can("usuarios.roles") {
+		if write && state == "Finalizado" {
+			return domain.Invalid("diagnosisId", "El diagnóstico está finalizado. Solo puedes consultar sus evidencias y escaneos.")
+		}
 		return nil
 	}
 	var assigned bool
@@ -34,5 +37,34 @@ func (s *Store) AuthorizeDiagnosis(ctx context.Context, id, actor string, write 
 	if !assigned {
 		return domain.ErrForbidden
 	}
+	if write && state == "Finalizado" {
+		return domain.Invalid("diagnosisId", "El diagnóstico está finalizado. Solo puedes consultar sus evidencias y escaneos.")
+	}
 	return nil
+}
+
+// Reception-before-diagnosis lock order matches SaveDiagnosis and reassignment.
+func (s *Store) WithDiagnosisTechnicalWrite(ctx context.Context, id, actor string, action func() error) error {
+	tx, err := s.Pool.Begin(ctx)
+	if err != nil {
+		return translate(err)
+	}
+	defer tx.Rollback(ctx)
+	var reception, state string
+	if err = tx.QueryRow(ctx, `SELECT id_recepcion::text FROM diagnosticos WHERE id_diagnostico=$1`, id).Scan(&reception); err != nil {
+		return translate(err)
+	}
+	if err = tx.QueryRow(ctx, `SELECT id_recepcion::text FROM recepciones WHERE id_recepcion=$1 FOR UPDATE`, reception).Scan(&reception); err != nil {
+		return translate(err)
+	}
+	if err = tx.QueryRow(ctx, `SELECT estado FROM diagnosticos WHERE id_diagnostico=$1 FOR UPDATE`, id).Scan(&state); err != nil {
+		return translate(err)
+	}
+	if err = s.AuthorizeDiagnosis(ctx, id, actor, true); err != nil {
+		return err
+	}
+	if err = action(); err != nil {
+		return err
+	}
+	return translate(tx.Commit(ctx))
 }

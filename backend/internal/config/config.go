@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/base64"
 	"errors"
+	"net/netip"
 	"net/url"
 	"os"
 	"strings"
@@ -12,10 +13,11 @@ import (
 )
 
 type Config struct {
-	Addr, DSN, Origin string
-	SQLServer         bool
-	Key               []byte
-	SecureCookies     bool
+	Addr, DSN, Origin     string
+	SQLServer             bool
+	Key                   []byte
+	SecureCookies         bool
+	SurveyTrustedProxyIPs []netip.Addr
 }
 
 func ValidateDSN(dsn string) error {
@@ -68,5 +70,29 @@ func Load() (Config, error) {
 	if c.SecureCookies && u.Scheme != "https" {
 		return c, errors.New("Cookies Secure requieren APP_ORIGIN HTTPS; para pruebas locales configura COOKIE_SECURE=false")
 	}
+	c.SurveyTrustedProxyIPs, err = surveyProxyIPs(os.Getenv("SURVEY_TRUSTED_PROXY_IPS"))
+	if err != nil {
+		return c, err
+	}
 	return c, nil
+}
+
+// Exact peers only: do not implicitly trust all Docker/private networks.
+func surveyProxyIPs(value string) ([]netip.Addr, error) {
+	if strings.TrimSpace(value) == "" {
+		return nil, nil
+	}
+	parts := strings.Split(value, ",")
+	if len(parts) > 16 {
+		return nil, errors.New("SURVEY_TRUSTED_PROXY_IPS admite como máximo 16 IP explícitas")
+	}
+	var result []netip.Addr
+	for _, part := range parts {
+		ip, err := netip.ParseAddr(strings.TrimSpace(part))
+		if err != nil || ip.Zone() != "" || ip.IsUnspecified() || ip.IsMulticast() {
+			return nil, errors.New("SURVEY_TRUSTED_PROXY_IPS requiere IP explícitas sin puertos, rangos ni comodines")
+		}
+		result = append(result, ip.Unmap())
+	}
+	return result, nil
 }

@@ -18,6 +18,16 @@ func mountFrontend(mux *http.ServeMux, dir string) error {
 	assets := http.FileServer(http.Dir(filepath.Join(dir, "assets")))
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case "/encuesta":
+			page, err := os.ReadFile(filepath.Join(dir, "encuesta.html"))
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Header().Set("Referrer-Policy", "no-referrer")
+			w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
+			_, _ = w.Write(page)
 		case "/", "/index.html":
 			page := bytes.Replace(index, []byte("<head>"), []byte("<head>\n<meta name=\"bravo-mode\" content=\"real\">"), 1)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")

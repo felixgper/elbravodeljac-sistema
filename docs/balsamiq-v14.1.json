@@ -4603,7 +4603,7 @@
     "id": "5E31C69F-F4C6-4D73-B2EF-EB7E6F331E61",
     "name": "08 - Diagnóstico técnico",
     "order": 8000,
-    "notes": "Versión V14.1.1 revisada. Navegación lateral izquierda (salvo login y vista móvil). Pantallas y modales son prototipos estáticos. Órdenes: crear desde cotización aprobada; editar por fila; papelera con confirmación simple y eliminación definitiva. Recepción no identifica al entregante; se verifica el receptor solo en Pagos y entrega.",
+    "notes": "Versión V14.1.1 revisada. Navegación lateral izquierda (salvo login y vista móvil). Pantallas y modales son prototipos estáticos. Órdenes: crear desde cotización aprobada; editar por fila; papelera con confirmación simple y eliminación definitiva. Recepción no identifica al entregante; se verifica el receptor solo en Pagos y entrega. Evidencias y escáner es un modal opcional; no es requisito para finalizar. El botón está disponible desde el inicio. Se pueden preparar fotografías, PDF o códigos sin guardar previamente. Al confirmar el primer anexo, SQL Server crea automáticamente el borrador con los datos actuales y devuelve su ID; MongoDB guarda el anexo asociado a ese diagnóstico. Finalizar es una acción independiente.",
     "controls": [
       {
         "ID": "0",
@@ -4832,29 +4832,29 @@
       {
         "ID": "33",
         "typeID": "Button",
-        "x": "408",
+        "x": "738",
         "y": "635",
         "zOrder": "16",
         "measuredW": "85",
         "measuredH": "27",
-        "w": "241",
+        "w": "170",
         "h": "37",
         "properties": {
-          "text": "Guardar diagnóstico"
+          "text": "Guardar borrador"
         }
       },
       {
         "ID": "34",
         "typeID": "Button",
-        "x": "666",
+        "x": "920",
         "y": "635",
         "zOrder": "17",
         "measuredW": "85",
         "measuredH": "27",
-        "w": "275",
+        "w": "174",
         "h": "37",
         "properties": {
-          "text": "Continuar a cotización"
+          "text": "Finalizar diagnóstico"
         }
       },
       {
@@ -5095,6 +5095,1496 @@
         "h": "24",
         "properties": {
           "text": "   Usuarios y roles"
+        }
+      },
+      {
+        "ID": "5100",
+        "typeID": "Button",
+        "x": "263",
+        "y": "635",
+        "zOrder": "5100",
+        "measuredW": "230",
+        "measuredH": "37",
+        "w": "230",
+        "h": "37",
+        "properties": {
+          "text": "Evidencias y escáner"
+        }
+      },
+      {
+        "ID": "5101",
+        "typeID": "Label",
+        "x": "263",
+        "y": "685",
+        "zOrder": "5101",
+        "measuredW": "831",
+        "measuredH": "25",
+        "w": "831",
+        "h": "25",
+        "properties": {
+          "text": "Opcional. El primer anexo guarda el borrador automáticamente. Finalizar es una acción aparte."
+        }
+      }
+    ]
+  },
+  {
+    "id": "26B491C5-345A-4DF1-9AE4-F674102FC187",
+    "name": "08A - Evidencias (modal)",
+    "order": 8010,
+    "notes": "Estado del modal opcional Evidencias y escáner. Misma pantalla Diagnósticos; sin módulo adicional. JPEG/PNG/PDF hasta 10 MiB; reintentos conservan requestId; cerrado: solo lectura. Puede prepararse sin guardar previamente. El primer anexo crea automáticamente el borrador SQL y se guarda en MongoDB con su ID. La finalización es independiente.",
+    "controls": [
+      {
+        "ID": "0",
+        "typeID": "TitleWindow",
+        "x": "0",
+        "y": "0",
+        "zOrder": "0",
+        "measuredW": "450",
+        "measuredH": "400",
+        "w": "1180",
+        "h": "770",
+        "properties": {
+          "text": "EL BRAVO DEL JAC · 08 - Diagnóstico técnico"
+        }
+      },
+      {
+        "ID": "18",
+        "typeID": "Title",
+        "x": "238",
+        "y": "74",
+        "zOrder": "1",
+        "measuredW": "160",
+        "measuredH": "45",
+        "w": "817",
+        "h": "50",
+        "properties": {
+          "text": "Registrar diagnóstico técnico"
+        }
+      },
+      {
+        "ID": "19",
+        "typeID": "Label",
+        "x": "240",
+        "y": "121",
+        "zOrder": "2",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "856",
+        "h": "24",
+        "properties": {
+          "text": "Seleccionar recepción guardada y registrar evaluación técnica por separado."
+        }
+      },
+      {
+        "ID": "20",
+        "typeID": "Canvas",
+        "x": "238",
+        "y": "160",
+        "zOrder": "3",
+        "measuredW": "100",
+        "measuredH": "70",
+        "w": "886",
+        "h": "540",
+        "properties": {
+          "borderStyle": "square"
+        }
+      },
+      {
+        "ID": "21",
+        "typeID": "SubTitle",
+        "x": "256",
+        "y": "174",
+        "zOrder": "4",
+        "measuredW": "140",
+        "measuredH": "30",
+        "w": "826",
+        "h": "34",
+        "properties": {
+          "text": "EVALUACIÓN DEL MECÁNICO"
+        }
+      },
+      {
+        "ID": "22",
+        "typeID": "Label",
+        "x": "263",
+        "y": "216",
+        "zOrder": "5",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "831",
+        "h": "22",
+        "properties": {
+          "text": "Recepción registrada (seleccionar pendiente de diagnóstico)"
+        }
+      },
+      {
+        "ID": "23",
+        "typeID": "ComboBox",
+        "x": "263",
+        "y": "242",
+        "zOrder": "6",
+        "measuredW": "120",
+        "measuredH": "27",
+        "w": "831",
+        "h": "32",
+        "properties": {
+          "text": "RX-100  ·  ABC-123  ·  Juan Pérez"
+        }
+      },
+      {
+        "ID": "24",
+        "typeID": "Label",
+        "x": "263",
+        "y": "294",
+        "zOrder": "7",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "392",
+        "h": "22",
+        "properties": {
+          "text": "Cliente — solo lectura"
+        }
+      },
+      {
+        "ID": "25",
+        "typeID": "TextInput",
+        "x": "263",
+        "y": "320",
+        "zOrder": "8",
+        "measuredW": "120",
+        "measuredH": "27",
+        "w": "392",
+        "h": "32",
+        "properties": {
+          "text": "Juan Pérez"
+        }
+      },
+      {
+        "ID": "26",
+        "typeID": "Label",
+        "x": "683",
+        "y": "294",
+        "zOrder": "9",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "414",
+        "h": "22",
+        "properties": {
+          "text": "Vehículo — solo lectura"
+        }
+      },
+      {
+        "ID": "27",
+        "typeID": "TextInput",
+        "x": "683",
+        "y": "320",
+        "zOrder": "10",
+        "measuredW": "120",
+        "measuredH": "27",
+        "w": "411",
+        "h": "32",
+        "properties": {
+          "text": "ABC-123 — JAC T8"
+        }
+      },
+      {
+        "ID": "28",
+        "typeID": "Label",
+        "x": "263",
+        "y": "372",
+        "zOrder": "11",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "831",
+        "h": "22",
+        "properties": {
+          "text": "Síntomas registrados por recepción (solo lectura)"
+        }
+      },
+      {
+        "ID": "29",
+        "typeID": "TextArea",
+        "x": "263",
+        "y": "398",
+        "zOrder": "12",
+        "measuredW": "200",
+        "measuredH": "140",
+        "w": "831",
+        "h": "54",
+        "properties": {
+          "text": "Ruido en el motor al acelerar"
+        }
+      },
+      {
+        "ID": "30",
+        "typeID": "Label",
+        "x": "263",
+        "y": "465",
+        "zOrder": "13",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "831",
+        "h": "22",
+        "properties": {
+          "text": "Diagnóstico técnico / evaluación del mecánico"
+        }
+      },
+      {
+        "ID": "31",
+        "typeID": "TextArea",
+        "x": "263",
+        "y": "491",
+        "zOrder": "14",
+        "measuredW": "200",
+        "measuredH": "140",
+        "w": "831",
+        "h": "95",
+        "properties": {
+          "text": "Escriba hallazgos, pruebas y conclusión técnica..."
+        }
+      },
+      {
+        "ID": "32",
+        "typeID": "Label",
+        "x": "264",
+        "y": "597",
+        "zOrder": "15",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "831",
+        "h": "20",
+        "properties": {
+          "text": "Técnico autenticado y fecha automáticos. Guardar diagnóstico antes de cotizar."
+        }
+      },
+      {
+        "ID": "33",
+        "typeID": "Button",
+        "x": "738",
+        "y": "635",
+        "zOrder": "16",
+        "measuredW": "85",
+        "measuredH": "27",
+        "w": "170",
+        "h": "37",
+        "properties": {
+          "text": "Guardar borrador"
+        }
+      },
+      {
+        "ID": "34",
+        "typeID": "Button",
+        "x": "920",
+        "y": "635",
+        "zOrder": "17",
+        "measuredW": "85",
+        "measuredH": "27",
+        "w": "174",
+        "h": "37",
+        "properties": {
+          "text": "Finalizar diagnóstico"
+        }
+      },
+      {
+        "ID": "5000",
+        "typeID": "Canvas",
+        "x": "17",
+        "y": "59",
+        "zOrder": "18",
+        "measuredW": "100",
+        "measuredH": "70",
+        "w": "192",
+        "h": "681",
+        "properties": {
+          "color": "15395562",
+          "borderStyle": "square"
+        }
+      },
+      {
+        "ID": "5001",
+        "typeID": "SubTitle",
+        "x": "31",
+        "y": "83",
+        "zOrder": "19",
+        "measuredW": "140",
+        "measuredH": "30",
+        "w": "166",
+        "h": "31",
+        "properties": {
+          "text": "EL BRAVO DEL JAC"
+        }
+      },
+      {
+        "ID": "5002",
+        "typeID": "Label",
+        "x": "31",
+        "y": "118",
+        "zOrder": "20",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "150",
+        "h": "18",
+        "properties": {
+          "text": "TALLER AUTOMOTRIZ"
+        }
+      },
+      {
+        "ID": "5003",
+        "typeID": "Label",
+        "x": "34",
+        "y": "161",
+        "zOrder": "21",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Inicio"
+        }
+      },
+      {
+        "ID": "5004",
+        "typeID": "Label",
+        "x": "34",
+        "y": "202",
+        "zOrder": "22",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Clientes"
+        }
+      },
+      {
+        "ID": "5005",
+        "typeID": "Label",
+        "x": "34",
+        "y": "243",
+        "zOrder": "23",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Vehículos"
+        }
+      },
+      {
+        "ID": "5006",
+        "typeID": "Label",
+        "x": "34",
+        "y": "284",
+        "zOrder": "24",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Recepciones"
+        }
+      },
+      {
+        "ID": "5007",
+        "typeID": "Canvas",
+        "x": "25",
+        "y": "319",
+        "zOrder": "25",
+        "measuredW": "100",
+        "measuredH": "70",
+        "w": "172",
+        "h": "34",
+        "properties": {
+          "borderStyle": "square",
+          "color": "15395562"
+        }
+      },
+      {
+        "ID": "5008",
+        "typeID": "Label",
+        "x": "34",
+        "y": "325",
+        "zOrder": "26",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "> Diagnósticos"
+        }
+      },
+      {
+        "ID": "5009",
+        "typeID": "Label",
+        "x": "34",
+        "y": "366",
+        "zOrder": "27",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Cotizaciones"
+        }
+      },
+      {
+        "ID": "5010",
+        "typeID": "Label",
+        "x": "34",
+        "y": "407",
+        "zOrder": "28",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Órdenes de trabajo"
+        }
+      },
+      {
+        "ID": "5011",
+        "typeID": "Label",
+        "x": "34",
+        "y": "448",
+        "zOrder": "29",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Auxilio mecánico"
+        }
+      },
+      {
+        "ID": "5012",
+        "typeID": "Label",
+        "x": "34",
+        "y": "489",
+        "zOrder": "30",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Pagos y entrega"
+        }
+      },
+      {
+        "ID": "5013",
+        "typeID": "Label",
+        "x": "34",
+        "y": "530",
+        "zOrder": "31",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Mecánicos"
+        }
+      },
+      {
+        "ID": "5014",
+        "typeID": "Label",
+        "x": "34",
+        "y": "571",
+        "zOrder": "32",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Proveedores"
+        }
+      },
+      {
+        "ID": "5015",
+        "typeID": "Label",
+        "x": "34",
+        "y": "612",
+        "zOrder": "33",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Reportes"
+        }
+      },
+      {
+        "ID": "5016",
+        "typeID": "Label",
+        "x": "34",
+        "y": "653",
+        "zOrder": "34",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Usuarios y roles"
+        }
+      },
+      {
+        "ID": "5100",
+        "typeID": "Button",
+        "x": "263",
+        "y": "635",
+        "zOrder": "5100",
+        "measuredW": "230",
+        "measuredH": "37",
+        "w": "230",
+        "h": "37",
+        "properties": {
+          "text": "Evidencias y escáner"
+        }
+      },
+      {
+        "ID": "5101",
+        "typeID": "Label",
+        "x": "263",
+        "y": "685",
+        "zOrder": "5101",
+        "measuredW": "831",
+        "measuredH": "25",
+        "w": "831",
+        "h": "25",
+        "properties": {
+          "text": "Opcional. El primer anexo guarda el borrador automáticamente. Finalizar es una acción aparte."
+        }
+      },
+      {
+        "ID": "6000",
+        "typeID": "Canvas",
+        "x": "240",
+        "y": "100",
+        "zOrder": "6000",
+        "measuredW": "720",
+        "measuredH": "620",
+        "w": "720",
+        "h": "620",
+        "properties": {
+          "text": ""
+        }
+      },
+      {
+        "ID": "6001",
+        "typeID": "SubTitle",
+        "x": "265",
+        "y": "120",
+        "zOrder": "6001",
+        "measuredW": "620",
+        "measuredH": "32",
+        "w": "620",
+        "h": "32",
+        "properties": {
+          "text": "Evidencias y escáner"
+        }
+      },
+      {
+        "ID": "6002",
+        "typeID": "Button",
+        "x": "895",
+        "y": "117",
+        "zOrder": "6002",
+        "measuredW": "35",
+        "measuredH": "30",
+        "w": "35",
+        "h": "30",
+        "properties": {
+          "text": "X"
+        }
+      },
+      {
+        "ID": "6003",
+        "typeID": "Label",
+        "x": "265",
+        "y": "164",
+        "zOrder": "6003",
+        "measuredW": "650",
+        "measuredH": "30",
+        "w": "650",
+        "h": "30",
+        "properties": {
+          "text": "Prepara archivos o códigos; el primer anexo guarda el borrador."
+        }
+      },
+      {
+        "ID": "6004",
+        "typeID": "ButtonBar",
+        "x": "265",
+        "y": "205",
+        "zOrder": "6004",
+        "measuredW": "650",
+        "measuredH": "34",
+        "w": "650",
+        "h": "34",
+        "properties": {
+          "text": "Fotografías, Escáner"
+        }
+      },
+      {
+        "ID": "6005",
+        "typeID": "Label",
+        "x": "265",
+        "y": "252",
+        "zOrder": "6005",
+        "measuredW": "650",
+        "measuredH": "23",
+        "w": "650",
+        "h": "23",
+        "properties": {
+          "text": "Fotografía o documento (JPG, PNG o PDF · máximo 10 MiB)"
+        }
+      },
+      {
+        "ID": "6006",
+        "typeID": "Button",
+        "x": "265",
+        "y": "282",
+        "zOrder": "6006",
+        "measuredW": "180",
+        "measuredH": "32",
+        "w": "180",
+        "h": "32",
+        "properties": {
+          "text": "Seleccionar archivo"
+        }
+      },
+      {
+        "ID": "6007",
+        "typeID": "Label",
+        "x": "265",
+        "y": "330",
+        "zOrder": "6007",
+        "measuredW": "650",
+        "measuredH": "22",
+        "w": "650",
+        "h": "22",
+        "properties": {
+          "text": "Descripción (opcional)"
+        }
+      },
+      {
+        "ID": "6008",
+        "typeID": "TextArea",
+        "x": "265",
+        "y": "360",
+        "zOrder": "6008",
+        "measuredW": "650",
+        "measuredH": "70",
+        "w": "650",
+        "h": "70",
+        "properties": {
+          "text": ""
+        }
+      },
+      {
+        "ID": "6009",
+        "typeID": "Button",
+        "x": "765",
+        "y": "447",
+        "zOrder": "6009",
+        "measuredW": "150",
+        "measuredH": "34",
+        "w": "150",
+        "h": "34",
+        "properties": {
+          "text": "Subir archivo"
+        }
+      },
+      {
+        "ID": "6010",
+        "typeID": "Label",
+        "x": "265",
+        "y": "502",
+        "zOrder": "6010",
+        "measuredW": "650",
+        "measuredH": "22",
+        "w": "650",
+        "h": "22",
+        "properties": {
+          "text": "Evidencias guardadas"
+        }
+      },
+      {
+        "ID": "6011",
+        "typeID": "DataGrid",
+        "x": "265",
+        "y": "535",
+        "zOrder": "6011",
+        "measuredW": "650",
+        "measuredH": "110",
+        "w": "650",
+        "h": "110",
+        "properties": {
+          "text": "Descripción,Formato,Fecha,Archivo\nSin evidencias guardadas.,,,\n"
+        }
+      },
+      {
+        "ID": "6012",
+        "typeID": "Label",
+        "x": "265",
+        "y": "665",
+        "zOrder": "6012",
+        "measuredW": "650",
+        "measuredH": "28",
+        "w": "650",
+        "h": "28",
+        "properties": {
+          "text": "Descarga protegida. El archivo permanece en GridFS, vinculado al diagnóstico."
+        }
+      }
+    ]
+  },
+  {
+    "id": "BDEBCE64-11F6-41C6-8B7D-2C17ED5E2768",
+    "name": "08B - Escáner (modal)",
+    "order": 8020,
+    "notes": "Estado del modal opcional Evidencias y escáner. Misma pantalla Diagnósticos; sin módulo adicional. JPEG/PNG/PDF hasta 10 MiB; reintentos conservan requestId; cerrado: solo lectura. Puede prepararse sin guardar previamente. El primer anexo crea automáticamente el borrador SQL y se guarda en MongoDB con su ID. La finalización es independiente.",
+    "controls": [
+      {
+        "ID": "0",
+        "typeID": "TitleWindow",
+        "x": "0",
+        "y": "0",
+        "zOrder": "0",
+        "measuredW": "450",
+        "measuredH": "400",
+        "w": "1180",
+        "h": "770",
+        "properties": {
+          "text": "EL BRAVO DEL JAC · 08 - Diagnóstico técnico"
+        }
+      },
+      {
+        "ID": "18",
+        "typeID": "Title",
+        "x": "238",
+        "y": "74",
+        "zOrder": "1",
+        "measuredW": "160",
+        "measuredH": "45",
+        "w": "817",
+        "h": "50",
+        "properties": {
+          "text": "Registrar diagnóstico técnico"
+        }
+      },
+      {
+        "ID": "19",
+        "typeID": "Label",
+        "x": "240",
+        "y": "121",
+        "zOrder": "2",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "856",
+        "h": "24",
+        "properties": {
+          "text": "Seleccionar recepción guardada y registrar evaluación técnica por separado."
+        }
+      },
+      {
+        "ID": "20",
+        "typeID": "Canvas",
+        "x": "238",
+        "y": "160",
+        "zOrder": "3",
+        "measuredW": "100",
+        "measuredH": "70",
+        "w": "886",
+        "h": "540",
+        "properties": {
+          "borderStyle": "square"
+        }
+      },
+      {
+        "ID": "21",
+        "typeID": "SubTitle",
+        "x": "256",
+        "y": "174",
+        "zOrder": "4",
+        "measuredW": "140",
+        "measuredH": "30",
+        "w": "826",
+        "h": "34",
+        "properties": {
+          "text": "EVALUACIÓN DEL MECÁNICO"
+        }
+      },
+      {
+        "ID": "22",
+        "typeID": "Label",
+        "x": "263",
+        "y": "216",
+        "zOrder": "5",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "831",
+        "h": "22",
+        "properties": {
+          "text": "Recepción registrada (seleccionar pendiente de diagnóstico)"
+        }
+      },
+      {
+        "ID": "23",
+        "typeID": "ComboBox",
+        "x": "263",
+        "y": "242",
+        "zOrder": "6",
+        "measuredW": "120",
+        "measuredH": "27",
+        "w": "831",
+        "h": "32",
+        "properties": {
+          "text": "RX-100  ·  ABC-123  ·  Juan Pérez"
+        }
+      },
+      {
+        "ID": "24",
+        "typeID": "Label",
+        "x": "263",
+        "y": "294",
+        "zOrder": "7",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "392",
+        "h": "22",
+        "properties": {
+          "text": "Cliente — solo lectura"
+        }
+      },
+      {
+        "ID": "25",
+        "typeID": "TextInput",
+        "x": "263",
+        "y": "320",
+        "zOrder": "8",
+        "measuredW": "120",
+        "measuredH": "27",
+        "w": "392",
+        "h": "32",
+        "properties": {
+          "text": "Juan Pérez"
+        }
+      },
+      {
+        "ID": "26",
+        "typeID": "Label",
+        "x": "683",
+        "y": "294",
+        "zOrder": "9",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "414",
+        "h": "22",
+        "properties": {
+          "text": "Vehículo — solo lectura"
+        }
+      },
+      {
+        "ID": "27",
+        "typeID": "TextInput",
+        "x": "683",
+        "y": "320",
+        "zOrder": "10",
+        "measuredW": "120",
+        "measuredH": "27",
+        "w": "411",
+        "h": "32",
+        "properties": {
+          "text": "ABC-123 — JAC T8"
+        }
+      },
+      {
+        "ID": "28",
+        "typeID": "Label",
+        "x": "263",
+        "y": "372",
+        "zOrder": "11",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "831",
+        "h": "22",
+        "properties": {
+          "text": "Síntomas registrados por recepción (solo lectura)"
+        }
+      },
+      {
+        "ID": "29",
+        "typeID": "TextArea",
+        "x": "263",
+        "y": "398",
+        "zOrder": "12",
+        "measuredW": "200",
+        "measuredH": "140",
+        "w": "831",
+        "h": "54",
+        "properties": {
+          "text": "Ruido en el motor al acelerar"
+        }
+      },
+      {
+        "ID": "30",
+        "typeID": "Label",
+        "x": "263",
+        "y": "465",
+        "zOrder": "13",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "831",
+        "h": "22",
+        "properties": {
+          "text": "Diagnóstico técnico / evaluación del mecánico"
+        }
+      },
+      {
+        "ID": "31",
+        "typeID": "TextArea",
+        "x": "263",
+        "y": "491",
+        "zOrder": "14",
+        "measuredW": "200",
+        "measuredH": "140",
+        "w": "831",
+        "h": "95",
+        "properties": {
+          "text": "Escriba hallazgos, pruebas y conclusión técnica..."
+        }
+      },
+      {
+        "ID": "32",
+        "typeID": "Label",
+        "x": "264",
+        "y": "597",
+        "zOrder": "15",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "831",
+        "h": "20",
+        "properties": {
+          "text": "Técnico autenticado y fecha automáticos. Guardar diagnóstico antes de cotizar."
+        }
+      },
+      {
+        "ID": "33",
+        "typeID": "Button",
+        "x": "738",
+        "y": "635",
+        "zOrder": "16",
+        "measuredW": "85",
+        "measuredH": "27",
+        "w": "170",
+        "h": "37",
+        "properties": {
+          "text": "Guardar borrador"
+        }
+      },
+      {
+        "ID": "34",
+        "typeID": "Button",
+        "x": "920",
+        "y": "635",
+        "zOrder": "17",
+        "measuredW": "85",
+        "measuredH": "27",
+        "w": "174",
+        "h": "37",
+        "properties": {
+          "text": "Finalizar diagnóstico"
+        }
+      },
+      {
+        "ID": "5000",
+        "typeID": "Canvas",
+        "x": "17",
+        "y": "59",
+        "zOrder": "18",
+        "measuredW": "100",
+        "measuredH": "70",
+        "w": "192",
+        "h": "681",
+        "properties": {
+          "color": "15395562",
+          "borderStyle": "square"
+        }
+      },
+      {
+        "ID": "5001",
+        "typeID": "SubTitle",
+        "x": "31",
+        "y": "83",
+        "zOrder": "19",
+        "measuredW": "140",
+        "measuredH": "30",
+        "w": "166",
+        "h": "31",
+        "properties": {
+          "text": "EL BRAVO DEL JAC"
+        }
+      },
+      {
+        "ID": "5002",
+        "typeID": "Label",
+        "x": "31",
+        "y": "118",
+        "zOrder": "20",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "150",
+        "h": "18",
+        "properties": {
+          "text": "TALLER AUTOMOTRIZ"
+        }
+      },
+      {
+        "ID": "5003",
+        "typeID": "Label",
+        "x": "34",
+        "y": "161",
+        "zOrder": "21",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Inicio"
+        }
+      },
+      {
+        "ID": "5004",
+        "typeID": "Label",
+        "x": "34",
+        "y": "202",
+        "zOrder": "22",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Clientes"
+        }
+      },
+      {
+        "ID": "5005",
+        "typeID": "Label",
+        "x": "34",
+        "y": "243",
+        "zOrder": "23",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Vehículos"
+        }
+      },
+      {
+        "ID": "5006",
+        "typeID": "Label",
+        "x": "34",
+        "y": "284",
+        "zOrder": "24",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Recepciones"
+        }
+      },
+      {
+        "ID": "5007",
+        "typeID": "Canvas",
+        "x": "25",
+        "y": "319",
+        "zOrder": "25",
+        "measuredW": "100",
+        "measuredH": "70",
+        "w": "172",
+        "h": "34",
+        "properties": {
+          "borderStyle": "square",
+          "color": "15395562"
+        }
+      },
+      {
+        "ID": "5008",
+        "typeID": "Label",
+        "x": "34",
+        "y": "325",
+        "zOrder": "26",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "> Diagnósticos"
+        }
+      },
+      {
+        "ID": "5009",
+        "typeID": "Label",
+        "x": "34",
+        "y": "366",
+        "zOrder": "27",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Cotizaciones"
+        }
+      },
+      {
+        "ID": "5010",
+        "typeID": "Label",
+        "x": "34",
+        "y": "407",
+        "zOrder": "28",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Órdenes de trabajo"
+        }
+      },
+      {
+        "ID": "5011",
+        "typeID": "Label",
+        "x": "34",
+        "y": "448",
+        "zOrder": "29",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Auxilio mecánico"
+        }
+      },
+      {
+        "ID": "5012",
+        "typeID": "Label",
+        "x": "34",
+        "y": "489",
+        "zOrder": "30",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Pagos y entrega"
+        }
+      },
+      {
+        "ID": "5013",
+        "typeID": "Label",
+        "x": "34",
+        "y": "530",
+        "zOrder": "31",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Mecánicos"
+        }
+      },
+      {
+        "ID": "5014",
+        "typeID": "Label",
+        "x": "34",
+        "y": "571",
+        "zOrder": "32",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Proveedores"
+        }
+      },
+      {
+        "ID": "5015",
+        "typeID": "Label",
+        "x": "34",
+        "y": "612",
+        "zOrder": "33",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Reportes"
+        }
+      },
+      {
+        "ID": "5016",
+        "typeID": "Label",
+        "x": "34",
+        "y": "653",
+        "zOrder": "34",
+        "measuredW": "80",
+        "measuredH": "21",
+        "w": "164",
+        "h": "24",
+        "properties": {
+          "text": "   Usuarios y roles"
+        }
+      },
+      {
+        "ID": "5100",
+        "typeID": "Button",
+        "x": "263",
+        "y": "635",
+        "zOrder": "5100",
+        "measuredW": "230",
+        "measuredH": "37",
+        "w": "230",
+        "h": "37",
+        "properties": {
+          "text": "Evidencias y escáner"
+        }
+      },
+      {
+        "ID": "5101",
+        "typeID": "Label",
+        "x": "263",
+        "y": "685",
+        "zOrder": "5101",
+        "measuredW": "831",
+        "measuredH": "25",
+        "w": "831",
+        "h": "25",
+        "properties": {
+          "text": "Opcional. El primer anexo guarda el borrador automáticamente. Finalizar es una acción aparte."
+        }
+      },
+      {
+        "ID": "6000",
+        "typeID": "Canvas",
+        "x": "240",
+        "y": "100",
+        "zOrder": "6000",
+        "measuredW": "720",
+        "measuredH": "620",
+        "w": "720",
+        "h": "620",
+        "properties": {
+          "text": ""
+        }
+      },
+      {
+        "ID": "6001",
+        "typeID": "SubTitle",
+        "x": "265",
+        "y": "120",
+        "zOrder": "6001",
+        "measuredW": "620",
+        "measuredH": "32",
+        "w": "620",
+        "h": "32",
+        "properties": {
+          "text": "Evidencias y escáner"
+        }
+      },
+      {
+        "ID": "6002",
+        "typeID": "Button",
+        "x": "895",
+        "y": "117",
+        "zOrder": "6002",
+        "measuredW": "35",
+        "measuredH": "30",
+        "w": "35",
+        "h": "30",
+        "properties": {
+          "text": "X"
+        }
+      },
+      {
+        "ID": "6003",
+        "typeID": "Label",
+        "x": "265",
+        "y": "164",
+        "zOrder": "6003",
+        "measuredW": "650",
+        "measuredH": "30",
+        "w": "650",
+        "h": "30",
+        "properties": {
+          "text": "Prepara archivos o códigos; el primer anexo guarda el borrador."
+        }
+      },
+      {
+        "ID": "6004",
+        "typeID": "ButtonBar",
+        "x": "265",
+        "y": "205",
+        "zOrder": "6004",
+        "measuredW": "650",
+        "measuredH": "34",
+        "w": "650",
+        "h": "34",
+        "properties": {
+          "text": "Fotografías, Escáner"
+        }
+      },
+      {
+        "ID": "6005",
+        "typeID": "Label",
+        "x": "265",
+        "y": "252",
+        "zOrder": "6005",
+        "measuredW": "300",
+        "measuredH": "22",
+        "w": "300",
+        "h": "22",
+        "properties": {
+          "text": "Nombre del equipo"
+        }
+      },
+      {
+        "ID": "6006",
+        "typeID": "TextInput",
+        "x": "265",
+        "y": "279",
+        "zOrder": "6006",
+        "measuredW": "300",
+        "measuredH": "30",
+        "w": "300",
+        "h": "30",
+        "properties": {
+          "text": ""
+        }
+      },
+      {
+        "ID": "6007",
+        "typeID": "Label",
+        "x": "585",
+        "y": "252",
+        "zOrder": "6007",
+        "measuredW": "330",
+        "measuredH": "22",
+        "w": "330",
+        "h": "22",
+        "properties": {
+          "text": "Versión (opcional)"
+        }
+      },
+      {
+        "ID": "6008",
+        "typeID": "TextInput",
+        "x": "585",
+        "y": "279",
+        "zOrder": "6008",
+        "measuredW": "330",
+        "measuredH": "30",
+        "w": "330",
+        "h": "30",
+        "properties": {
+          "text": ""
+        }
+      },
+      {
+        "ID": "6009",
+        "typeID": "Label",
+        "x": "265",
+        "y": "326",
+        "zOrder": "6009",
+        "measuredW": "650",
+        "measuredH": "22",
+        "w": "650",
+        "h": "22",
+        "properties": {
+          "text": "Códigos de falla"
+        }
+      },
+      {
+        "ID": "6010",
+        "typeID": "DataGrid",
+        "x": "265",
+        "y": "353",
+        "zOrder": "6010",
+        "measuredW": "650",
+        "measuredH": "70",
+        "w": "650",
+        "h": "70",
+        "properties": {
+          "text": "Código DTC,Descripción\nP0300,Ejemplo: fallos de encendido"
+        }
+      },
+      {
+        "ID": "6011",
+        "typeID": "Button",
+        "x": "265",
+        "y": "435",
+        "zOrder": "6011",
+        "measuredW": "170",
+        "measuredH": "32",
+        "w": "170",
+        "h": "32",
+        "properties": {
+          "text": "Agregar código"
+        }
+      },
+      {
+        "ID": "6012",
+        "typeID": "Label",
+        "x": "265",
+        "y": "483",
+        "zOrder": "6012",
+        "measuredW": "650",
+        "measuredH": "22",
+        "w": "650",
+        "h": "22",
+        "properties": {
+          "text": "Mediciones (opcional): nombre y valor"
+        }
+      },
+      {
+        "ID": "6013",
+        "typeID": "Button",
+        "x": "265",
+        "y": "515",
+        "zOrder": "6013",
+        "measuredW": "180",
+        "measuredH": "32",
+        "w": "180",
+        "h": "32",
+        "properties": {
+          "text": "Agregar medición"
+        }
+      },
+      {
+        "ID": "6014",
+        "typeID": "Button",
+        "x": "745",
+        "y": "559",
+        "zOrder": "6014",
+        "measuredW": "170",
+        "measuredH": "34",
+        "w": "170",
+        "h": "34",
+        "properties": {
+          "text": "Guardar escaneo"
+        }
+      },
+      {
+        "ID": "6015",
+        "typeID": "Label",
+        "x": "265",
+        "y": "610",
+        "zOrder": "6015",
+        "measuredW": "650",
+        "measuredH": "56",
+        "w": "650",
+        "h": "56",
+        "properties": {
+          "text": "Resultados guardados: equipo, fecha, códigos y mediciones.\nIngreso manual; no existe conexión automática OBD-II."
         }
       }
     ]

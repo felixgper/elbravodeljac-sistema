@@ -1,5 +1,7 @@
 import {spawnSync} from 'node:child_process';
 const suites=[['verify.mjs','FIXTURE HISTÓRICO'],['workflow.mjs','FIXTURE HISTÓRICO'],['edge-cases.mjs','FIXTURE/UNIDAD'],['real-api.mjs','UNIDAD: fetch simulado'],['report-periods.mjs','UNIDAD'],['diagnosis-text.mjs','UNIDAD'],['isolation.mjs','UNIDAD: guardas sin bases'],['prototype.mjs','HISTÓRICO: prototipo']];
+suites.push(['technical-modal.mjs','UNIDAD: evidencias y escáner']);
+suites.push(['surveys.mjs','UNIDAD: encuestas sintéticas']);
 for(const [file,kind] of suites){
  console.log(`[${kind}] ${file}`);
  const legacy=['verify.mjs','workflow.mjs','edge-cases.mjs','report-periods.mjs'].includes(file);

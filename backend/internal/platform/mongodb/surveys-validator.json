@@ -1,0 +1,85 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "additionalProperties": false,
+    "required": [
+      "_id",
+      "deliveryId",
+      "orderId",
+      "tokenHash",
+      "createdAt",
+      "expiresAt",
+      "version"
+    ],
+    "properties": {
+      "_id": {
+        "bsonType": "string",
+        "pattern": "^[a-f0-9]{32}$"
+      },
+      "deliveryId": {
+        "bsonType": "string",
+        "pattern": "^[1-9][0-9]*$"
+      },
+      "orderId": {
+        "bsonType": "string",
+        "pattern": "^[1-9][0-9]*$"
+      },
+      "tokenHash": {
+        "bsonType": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "createdAt": {
+        "bsonType": "date"
+      },
+      "expiresAt": {
+        "bsonType": "date"
+      },
+      "version": {
+        "bsonType": [
+          "int",
+          "long"
+        ],
+        "enum": [
+          1
+        ]
+      },
+      "response": {
+        "bsonType": "object",
+        "additionalProperties": false,
+        "required": [
+          "ratings",
+          "comment",
+          "at"
+        ],
+        "properties": {
+          "ratings": {
+            "bsonType": "array",
+            "minItems": 5,
+            "maxItems": 5,
+            "items": {
+              "bsonType": [
+                "int",
+                "long"
+              ],
+              "minimum": 1,
+              "maximum": 5
+            }
+          },
+          "comment": {
+            "bsonType": "string",
+            "maxLength": 1200
+          },
+          "at": {
+            "bsonType": "date"
+          }
+        }
+      },
+      "tokenCipher": {
+        "bsonType": "string",
+        "minLength": 80,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9_-]+$"
+      }
+    }
+  }
+}

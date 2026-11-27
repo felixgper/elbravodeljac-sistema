@@ -1,7 +1,8 @@
+import {mountSurveyAnalysis} from '../components/surveys.js';
 import {getDashboard,getActiveOrders,getReport,reportRange} from '../services/dashboard-service.js';
 import {permissionChecker} from '../services/permissions.js';
 import {realMode} from '../services/api-service.js';
-import {dashboardSummary} from './dashboard-summary.js';
+import {dashboardSummary,mountSummaryIncome} from './dashboard-summary.js';
 import {mountDiagnosisDashboard} from '../components/diagnosis-inbox.js';
 import {renderReports} from './administration.js';
 import {e,money,field,select,form,submit,bindForm} from '../components/ui.js';
@@ -11,6 +12,7 @@ export async function renderIntegratedDashboard({root,session,period='Mes',refer
  reference ||= new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'America/Lima'}).format(new Date());
  if(!['Semana','Mes','Año'].includes(period))period='Mes';
  let selected=(tab==='analisis'||!summaryAllowed)&&financeAllowed?'analisis':'resumen',loadedSummary='',loadedAnalysis='';
+ const analysisState={income:{},satisfaction:{}};
  let snapshot=null;
  const cache=new Map(),key=()=>period+'|'+reference;
  root.innerHTML=`<div class="dashboard-toolbar"><nav class="tabs dashboard-tabs" role="tablist" aria-label="Contenido de Inicio"><button class="tab" id="tab-resumen" role="tab" aria-controls="dashboard-summary" ${summaryAllowed?'':'disabled'}>Resumen</button><button class="tab" id="tab-analisis" role="tab" aria-controls="dashboard-analysis" ${financeAllowed?'':'disabled title="Requiere permiso de análisis financiero"'}>Análisis ${financeAllowed?'':icon('lock')}</button></nav><details class="dashboard-export"><summary class="secondary-button">Exportar ${icon('down')}</summary><div class="dashboard-export-options"><button type="button" data-export="xlsx" disabled>Exportar a Excel (.xlsx)</button><button type="button" data-export="pdf" disabled>Exportar a PDF (.pdf)</button></div></details></div><p class="dashboard-export-status" role="status" hidden></p>`+form('PERÍODO DE CONSULTA',select('Período','period',['Semana','Mes','Año'],period)+field('Fecha de referencia','reference',reference,'date','required'),submit('Aplicar filtros'),'dashboard-filter')+`<section id="dashboard-summary" role="tabpanel" aria-labelledby="tab-resumen"></section><section id="dashboard-analysis" role="tabpanel" aria-labelledby="tab-analisis"></section>`;
@@ -33,7 +35,7 @@ export async function renderIntegratedDashboard({root,session,period='Mes',refer
    if(selected==='analisis'){
     if(!financeAllowed)throw Error('Tu cuenta no tiene permiso de análisis financiero.');
     const data=await cached('analysis',()=>getReport(period,reference));if(!fresh()||key()!==ownKey)return;
-    await renderReports({root:analysis,period,reference,embedded:true,reportData:data});loadedAnalysis=ownKey;
+    await renderReports({root:analysis,period,reference,embedded:true,reportData:data,analysisState});loadedAnalysis=ownKey;
    }else{
     if(!summaryAllowed)throw Error('Tu cuenta no tiene permiso de resumen operativo.');
     const data=await cached('summary',()=>getDashboard(period,reference));
@@ -47,13 +49,22 @@ export async function renderIntegratedDashboard({root,session,period='Mes',refer
     const range=reportRange(period,reference);
     const formatDate=value=>new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeZone:'America/Lima'}).format(value);
     const displayedPeriod=realMode?data.period:`${period} · ${formatDate(range.start)}–${formatDate(range.end.getTime()-1)}`;
-    snapshot={period:displayedPeriod,reference,demo:!realMode,cards,states:data.states??[],mechanics:(data.mechanics??[]).filter(item=>item.count>0),
+    snapshot={period:displayedPeriod,reference,demo:!realMode,satisfactionAllowed:realMode&&financeAllowed,cards,states:data.states??[],mechanics:(data.mechanics??[]).filter(item=>item.count>0),
      canViewOrders:can('ordenes','ver'),
      services:(data.services??[]).filter(item=>item.count>0).sort((a,b)=>b.count-a.count).slice(0,4),
      income:showIncome?data.income??[]:null,activity:[['Auxilios registrados',data.rescuesToday],['Recepciones registradas',data.counts?.receptions??0],['Diagnósticos registrados',data.counts?.diagnoses??0],['Entregas registradas',data.counts?.deliveries??0]]};
     summary.innerHTML=dashboardSummary(snapshot,financeAllowed);
     summary.querySelector('#open-analysis')?.addEventListener('click',()=>selectTab('analisis'));
     loadedSummary=ownKey;updateExport();
+    const satisfactionUpdate=({data,error,loading,state,range})=>{
+     if(!fresh()||key()!==ownKey)return;const value=summary.querySelector('[data-satisfaction-value]'),note=summary.querySelector('[data-satisfaction-note]');if(!value||!note)return;
+     value.textContent=loading?'Consultando…':error?'No disponible':data.total?new Intl.NumberFormat('es-PE',{minimumFractionDigits:1,maximumFractionDigits:2}).format(data.average)+' / 5':'Sin encuestas';
+     note.textContent=range?`${state.period} · ${formatDate(range.start)}–${formatDate(range.end.getTime()-1)}`:'Promedio de satisfacción general';
+    };
+    await Promise.all([
+     showIncome?mountSummaryIncome(summary.querySelector('.dashboard-income'),analysisState.income):Promise.resolve(),
+     snapshot.satisfactionAllowed?mountSurveyAnalysis(summary,undefined,analysisState.satisfaction,{section:summary.querySelector('.dashboard-satisfaction'),onUpdate:satisfactionUpdate}):Promise.resolve()
+    ]);
     await mountDiagnosisDashboard(summary);
    }
   }catch(error){if(fresh()&&key()===ownKey)target.innerHTML=`<section class="panel error-state" role="alert"><h2>No se pudo completar la consulta</h2><p>${e(error.message)}</p><p>Vuelve a aplicar los filtros para intentarlo.</p></section>`;}
@@ -83,7 +94,7 @@ export async function renderIntegratedDashboard({root,session,period='Mes',refer
    exportStatus.textContent='No se pudo generar el archivo. Intenta exportarlo nuevamente.';
   }finally{exporting=false;updateExport();}
  });
- async function selectTab(name){if(name==='analisis'&&!financeAllowed||name==='resumen'&&!summaryAllowed)return;selected=name;updateExport();updateLocation();await show();}
+ async function selectTab(name){if(name==='analisis'&&!financeAllowed||name==='resumen'&&!summaryAllowed)return;if(name==='resumen'&&selected==='analisis')loadedSummary='';selected=name;updateExport();updateLocation();await show();}
  root.querySelector('#tab-resumen').onclick=()=>selectTab('resumen');root.querySelector('#tab-analisis').onclick=()=>selectTab('analisis');
  root.querySelector('.dashboard-tabs').onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;const tabs=[...root.querySelectorAll('[role=tab]:not(:disabled)')],index=tabs.indexOf(document.activeElement),next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;event.preventDefault();tabs[next].click();tabs[next].focus();};
  bindForm('dashboard-filter',async data=>{period=data.period;reference=data.reference;snapshot=null;exportStatus.hidden=true;updateExport();loadedSummary='';loadedAnalysis='';cache.clear();updateLocation();await show();});

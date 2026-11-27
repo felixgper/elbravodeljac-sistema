@@ -14,3 +14,55 @@ export async function uploadEvidence(id,{file,description='',requestId}) {
   return request(base(id)+'/evidencias',{method:'POST',body});
 }
 export const evidenceURL=(diagnosis,id)=>'/api/v1'+base(diagnosis)+'/evidencias/'+encodeURIComponent(id)+'/archivo';
+
+// Persist only an opaque request ID and payload digest, never file bytes or text.
+// Closing/reopening the modal or reselecting the same file after refresh keeps
+// the same Mongo idempotency key. A changed payload requires explicit reset.
+const attempts=new Map();
+export function technicalAttempt(kind,diagnosis,actor){
+ const key='bravo-jac:technical:'+actor+':'+diagnosis+':'+kind;
+ if(attempts.has(key))return attempts.get(key);
+ let pending=null,busy=false;
+ try{pending=JSON.parse(globalThis.sessionStorage?.getItem(key)||'null');}catch{}
+ if(pending&&(!/^[a-f0-9]{64}$/.test(pending.digest)||typeof pending.requestId!=='string'))pending=null;
+ const reset=()=>{pending=null;try{globalThis.sessionStorage?.removeItem(key);}catch{}};
+ const result={get pending(){return pending!==null;},reset,confirm(rows){if(pending&&rows.some(r=>r.requestId===pending.requestId)){reset();return true;}return false;},async send(payload,operation){
+  if(busy)throw Error('Espera a que termine el envío actual.');busy=true;
+  try{
+   let digestInput;
+   if(kind==='evidence'){
+    const f=payload.file;if(!f||!f.size||f.size>10*1024*1024)throw Error('Selecciona un archivo de hasta 10 MiB.');
+    if(!['image/jpeg','image/png','application/pdf'].includes(f.type))throw Error('Selecciona una fotografía JPG o PNG, o un PDF.');
+    const sum=await crypto.subtle.digest('SHA-256',await f.arrayBuffer());
+    digestInput=JSON.stringify({file:[...new Uint8Array(sum)],description:payload.description||'',type:f.type});
+   }else digestInput=JSON.stringify(payload);
+   const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(digestInput));const digest=[...new Uint8Array(bytes)].map(b=>b.toString(16).padStart(2,'0')).join('');
+   if(pending&&pending.digest!==digest)throw Error('Hay un envío pendiente de confirmar. Reintenta con los mismos datos, actualiza los registros o confirma preparar otra solicitud.');
+   if(!pending){pending={requestId:newTechnicalRequestID(),digest};try{globalThis.sessionStorage?.setItem(key,JSON.stringify(pending));}catch{reset();throw Error('No se pudo conservar la solicitud. Permite el almacenamiento de sesión antes de subir información.');}}
+   const response=await operation({...payload,requestId:pending.requestId});reset();return response;
+  }catch(error){if([400,413,422].includes(error.status))reset();throw error;}
+  finally{busy=false;}
+ }};attempts.set(key,result);return result;
+}
+
+// Serialize first-draft creation and reconcile an uncertain HTTP response before
+// trying again. The server still enforces one diagnosis per reception.
+export function automaticDiagnosisDraft({getRecord,readInput,findRecord,create,onSaved}){
+ let pending;
+ return async()=>{
+  if(getRecord()?.id)return getRecord();
+  if(pending)return pending;
+  pending=(async()=>{
+   const input=readInput();
+   const found=await findRecord();
+   if(found){onSaved(found);return found;}
+   try{const record=await create({...input,status:'Borrador'});onSaved(record);return record;}
+   catch(error){
+    // A committed SQL write may have lost its response. Do not blindly POST again.
+    try{const found=await findRecord();if(found){onSaved(found);return found;}}catch{}
+    throw error;
+   }
+  })();
+  try{return await pending;}finally{pending=null;}
+ };
+}

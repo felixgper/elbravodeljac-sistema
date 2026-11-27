@@ -1,6 +1,6 @@
 import {e} from './ui.js';
 const money = value => new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN', maximumFractionDigits: 2 }).format(value / 100);
-export function incomeChart(points, width = 520, fillId = 'income-fill', height = 190) {
+export function incomeChart(points, width = 520, fillId = 'income-fill', height = 190, compactTicks = false) {
   const peak=Math.max(...points.map(p=>p.cents),100),step=10**Math.floor(Math.log10(peak));
   const min=Math.min(0,...points.map(p=>p.cents));
   const max = Math.ceil(peak/step)*step, w = Math.max(240, Math.floor(width)), h = height, left = 43, right = 15, top = 16, bottom = 36;
@@ -8,11 +8,13 @@ export function incomeChart(points, width = 520, fillId = 'income-fill', height 
   const y = value => top + (1 - (value-min) / (max-min)) * (h - top - bottom);
   const line = points.map((p, i) => `${x(i)},${y(p.cents)}`).join(' ');
   const area = `${left},${y(0)} ${line} ${w - right},${y(0)}`;
+  const tickStep=Math.max(1,Math.ceil(points.length/Math.max(2,Math.floor((w-left-right)/45))));
+  const showTick=i=>i===points.length-1||i%tickStep===0&&(!compactTicks||i===0||points.length-1-i>=tickStep*.75);
   return `<svg class="income-chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Ingresos: ${points.map(p => `${e(p.month)}, ${money(p.cents)}`).join('; ')}">
     <defs><linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#791c2b" stop-opacity=".2"/><stop offset="1" stop-color="#791c2b" stop-opacity="0"/></linearGradient></defs>
     ${[min, min+(max-min)/3, min+2*(max-min)/3, max].map(n => `<line x1="${left}" x2="${w - right}" y1="${y(n)}" y2="${y(n)}" class="chart-grid"/><text x="${left - 10}" y="${y(n) + 4}" text-anchor="end" class="chart-label">${n === 0 ? '0' : n>=100000?`${Number((n / 100000).toFixed(1))}k`:Number((n/100).toFixed(2))}</text>`).join('')}
     <polygon points="${area}" fill="url(#${fillId})"/><polyline points="${line}" fill="none" stroke="#791c2b" stroke-width="3" stroke-linejoin="round"/>
-    ${points.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.cents)}" r="4" fill="#fff" stroke="#791c2b" stroke-width="2"><title>${e(p.month)}: ${money(p.cents)}</title></circle><text x="${x(i)}" y="${h - 12}" text-anchor="middle" class="chart-label">${i%Math.max(1,Math.ceil(points.length/Math.max(2,Math.floor((w-left-right)/45))))===0||i===points.length-1?e(p.month):''}</text>`).join('')}
+    ${points.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.cents)}" r="4" fill="#fff" stroke="#791c2b" stroke-width="2"><title>${e(p.month)}: ${money(p.cents)}</title></circle><text x="${x(i)}" y="${h - 12}" text-anchor="middle" class="chart-label">${showTick(i)?e(p.month):''}</text>`).join('')}
     <text x="0" y="12" class="chart-unit">S/</text>
   </svg>`;
 }
