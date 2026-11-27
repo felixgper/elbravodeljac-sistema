@@ -196,8 +196,10 @@ Los PDF archivados de entrega se devuelven byte por byte. Para su generación y 
 ### Interfaz opcional de evidencias y escáner
 
 En Diagnósticos técnicos → Evaluación del mecánico, «Evidencias y escáner» abre
-un modal con dos pestañas. Primero debe guardarse el borrador para obtener un ID
-SQL real. No es obligatorio adjuntar archivos ni códigos para guardar/finalizar.
+un modal con dos pestañas, también en diagnósticos nuevos. Al confirmar el primer
+anexo se guarda automáticamente un borrador con los datos actuales del formulario
+y se obtiene su ID SQL real antes de escribir en MongoDB. Si el anexo falla, el
+borrador permanece y el reintento conserva su ID y la clave de solicitud. No es obligatorio adjuntar archivos ni códigos para guardar/finalizar.
 Los diagnósticos finalizados admiten consulta, no nuevas cargas ni escaneos.
 
 Las rutas técnicas conservan sesión, CSRF y permisos efectivos. Cada escritura
@@ -212,3 +214,27 @@ identificador de reintento y un digest, nunca bytes ni texto del archivo. Se ace
 JPEG/PNG/PDF hasta 10 MiB, descripción opcional y descarga por la API protegida.
 Escáner es ingreso manual: equipo, versión, varios DTC y mediciones opcionales
 (`mediciones:{}` cuando están vacías); no conecta automáticamente con OBD-II.
+
+## Encuestas de satisfacción
+
+| Método y ruta | Permiso efectivo / acceso | Resultado |
+| --- | --- | --- |
+| `POST /api/v1/ordenes/{id}/encuesta` | `pagos.entregar`, sesión y CSRF | Entrega completada: `{regenerate:false}` genera un enlace de 14 días. `false` reutiliza la invitación vigente (200); una nueva devuelve 201. `true` revoca el anterior, con confirmación en UI y espera de un minuto; no regenera respondidas. |
+| `GET /api/v1/ordenes/{id}/encuesta` | `pagos.ver` | Metadatos internos; nunca hash, cifrado, comentario ni calificaciones individuales. Devuelve también el enlace vigente exclusivamente si existe el permiso adicional `pagos.entregar`. `data:null` si aún no existe. |
+| `GET /api/v1/encuestas?page=1` | `pagos.ver` | Seguimiento de 50 invitaciones por página. |
+| `GET /api/v1/encuestas/estadisticas?desde=…&hasta=…` | `reportes.ver` | Total, media de pregunta 5, cinco medias y distribución 1–5; intervalo de fechas de respuesta `[desde,hasta)`, mismo validador de períodos existente. |
+| `POST /api/v1/encuestas/publica/validar` | Token vigente, origen permitido, sin sesión | `{token}`; devuelve solo versión y vencimiento. |
+| `POST /api/v1/encuestas/publica/responder` | Token vigente, origen permitido, sin sesión | `{token,ratings:[1,2,3,4,5],comment:"…"}`; exactamente cinco enteros 1–5, comentario opcional hasta 1200 caracteres, una respuesta atómica. |
+
+Formulario independiente: `GET /encuesta#t=…`. El token viaja en el fragmento y
+posteriormente en JSON, no en las rutas HTTP; no registrar cuerpos de estas dos
+rutas públicas. Respuestas de enlaces inválidos/vencidos/usados: 404/410/409.
+Límite público independiente del login: 30 solicitudes/minuto por IP de conexión,
+o por la IP reenviada por Caddy si su par exacto está configurado mediante
+`SURVEY_TRUSTED_PROXY_IPS`. Se ignoran cabeceras desde pares no confiables;
+listas, duplicados o IP inválidas vuelven al límite del par. No cambia el login.
+Las encuestas son voluntarias y no forman parte de las precondiciones de entrega.
+No se modifica el contrato financiero ni el acceso a fichas/PDF/GridFS.
+
+La provisión MongoDB es explícita y separada de la API:
+[procedimiento de encuestas](../../database/mongodb/README.md#encuestas-de-satisfacción).

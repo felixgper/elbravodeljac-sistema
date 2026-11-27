@@ -4603,7 +4603,7 @@
     "id": "5E31C69F-F4C6-4D73-B2EF-EB7E6F331E61",
     "name": "08 - Diagnóstico técnico",
     "order": 8000,
-    "notes": "Versión V14.1.1 revisada. Navegación lateral izquierda (salvo login y vista móvil). Pantallas y modales son prototipos estáticos. Órdenes: crear desde cotización aprobada; editar por fila; papelera con confirmación simple y eliminación definitiva. Recepción no identifica al entregante; se verifica el receptor solo en Pagos y entrega. Evidencias y escáner es un modal opcional; no es requisito para finalizar. Un borrador SQL existente es obligatorio para asociar archivos y códigos.",
+    "notes": "Versión V14.1.1 revisada. Navegación lateral izquierda (salvo login y vista móvil). Pantallas y modales son prototipos estáticos. Órdenes: crear desde cotización aprobada; editar por fila; papelera con confirmación simple y eliminación definitiva. Recepción no identifica al entregante; se verifica el receptor solo en Pagos y entrega. Evidencias y escáner es un modal opcional; no es requisito para finalizar. El botón está disponible desde el inicio. Se pueden preparar fotografías, PDF o códigos sin guardar previamente. Al confirmar el primer anexo, SQL Server crea automáticamente el borrador con los datos actuales y devuelve su ID; MongoDB guarda el anexo asociado a ese diagnóstico. Finalizar es una acción independiente.",
     "controls": [
       {
         "ID": "0",
@@ -5122,7 +5122,7 @@
         "w": "831",
         "h": "25",
         "properties": {
-          "text": "Opcional. Guarda primero un borrador. Los diagnósticos finalizados solo permiten consultar."
+          "text": "Opcional. El primer anexo guarda el borrador automáticamente. Finalizar es una acción aparte."
         }
       }
     ]
@@ -5131,7 +5131,7 @@
     "id": "26B491C5-345A-4DF1-9AE4-F674102FC187",
     "name": "08A - Evidencias (modal)",
     "order": 8010,
-    "notes": "Estado del modal opcional Evidencias y escáner. Misma pantalla Diagnósticos; sin módulo adicional. JPEG/PNG/PDF hasta 10 MiB; reintentos conservan requestId; cerrado: solo lectura.",
+    "notes": "Estado del modal opcional Evidencias y escáner. Misma pantalla Diagnósticos; sin módulo adicional. JPEG/PNG/PDF hasta 10 MiB; reintentos conservan requestId; cerrado: solo lectura. Puede prepararse sin guardar previamente. El primer anexo crea automáticamente el borrador SQL y se guarda en MongoDB con su ID. La finalización es independiente.",
     "controls": [
       {
         "ID": "0",
@@ -5650,7 +5650,7 @@
         "w": "831",
         "h": "25",
         "properties": {
-          "text": "Opcional. Guarda primero un borrador. Los diagnósticos finalizados solo permiten consultar."
+          "text": "Opcional. El primer anexo guarda el borrador automáticamente. Finalizar es una acción aparte."
         }
       },
       {
@@ -5706,7 +5706,7 @@
         "w": "650",
         "h": "30",
         "properties": {
-          "text": "Información complementaria y opcional del diagnóstico guardado."
+          "text": "Prepara archivos o códigos; el primer anexo guarda el borrador."
         }
       },
       {
@@ -5841,7 +5841,7 @@
     "id": "BDEBCE64-11F6-41C6-8B7D-2C17ED5E2768",
     "name": "08B - Escáner (modal)",
     "order": 8020,
-    "notes": "Estado del modal opcional Evidencias y escáner. Misma pantalla Diagnósticos; sin módulo adicional. JPEG/PNG/PDF hasta 10 MiB; reintentos conservan requestId; cerrado: solo lectura.",
+    "notes": "Estado del modal opcional Evidencias y escáner. Misma pantalla Diagnósticos; sin módulo adicional. JPEG/PNG/PDF hasta 10 MiB; reintentos conservan requestId; cerrado: solo lectura. Puede prepararse sin guardar previamente. El primer anexo crea automáticamente el borrador SQL y se guarda en MongoDB con su ID. La finalización es independiente.",
     "controls": [
       {
         "ID": "0",
@@ -6360,7 +6360,7 @@
         "w": "831",
         "h": "25",
         "properties": {
-          "text": "Opcional. Guarda primero un borrador. Los diagnósticos finalizados solo permiten consultar."
+          "text": "Opcional. El primer anexo guarda el borrador automáticamente. Finalizar es una acción aparte."
         }
       },
       {
@@ -6416,7 +6416,7 @@
         "w": "650",
         "h": "30",
         "properties": {
-          "text": "Información complementaria y opcional del diagnóstico guardado."
+          "text": "Prepara archivos o códigos; el primer anexo guarda el borrador."
         }
       },
       {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/application"
+	"github.com/felixgper/elbravodeljac-sistema/backend/internal/domain"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/httpapi"
 	"github.com/felixgper/elbravodeljac-sistema/backend/internal/platform/mongodb"
 )
@@ -325,7 +327,13 @@ func exerciseWorkshopHTTP(t *testing.T, s *Store, password, client, vehicle stri
 			if rejected != 1 || finalID == "" {
 				t.Fatal("exactly one payment may settle the balance")
 			}
+			if _, err := s.SurveyDelivery(context.Background(), order); !errors.Is(err, domain.ErrNotFound) {
+				t.Fatal("pending delivery must not issue surveys", err)
+			}
 			manager.call(t, "POST", orderPath+"/entrega", delivery, 201)
+			if delivered, err := s.SurveyDelivery(context.Background(), order); err != nil || delivered.ID == "" || delivered.OrderID != order {
+				t.Fatal("completed delivery must allow surveys", err)
+			}
 			first := manager.call(t, "GET", orderPath+"/ficha-tecnica.pdf", nil, 200)
 			if !bytes.HasPrefix(first, []byte("%PDF-")) {
 				t.Fatal("missing delivery PDF")

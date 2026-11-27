@@ -1,10 +1,11 @@
+import {mountPeriodPicker,todayLima} from '../components/analysis-periods.js';
 import {renderEmployees} from './employees.js';
 import {incomeChart,horizontalBars} from '../components/charts.js';
 import {realMode} from '../services/api-service.js';
 import {getStore,saveSupplier,saveUser,deleteSupplier,deleteUser,saveRolePermissions,resetRolePermissions,ROLES,ACTIVE_STATES,getContext} from '../services/workshop-service.js';
 import {rolePermissions,permissionChecker,countPermissions} from '../services/permissions.js';
 import {PERMISSION_MODULES,ROLE_ORDER,ROLE_INFO,TOTAL_PERMISSIONS,LOCKED_ROLE,REQUIRED_FOR_ADMIN} from '../data/permissions.js';
-import {getReport} from '../services/dashboard-service.js';
+import {getReport,getIncomeReport} from '../services/dashboard-service.js';
 import {e,money,field,select,checkbox,link,button,submit,form,hint,pageHeader,searchableList,bindForm,go,notify,showModal,table,badge,rowActions,confirmDelete,personCell,phoneFormat} from '../components/ui.js';
 import {icon} from '../components/icons.js';
 const access=role=>({Administrador:'Operación diaria',Gerente:'Dirección y permisos',Propietario:'Histórico',Supervisor:'Órdenes / Mecánicos',Mecánico:'Diagnósticos / Órdenes asignadas',Auxiliar:'Órdenes asignadas',Administrativo:'Clientes / Pagos'})[role]||'Según rol';
@@ -42,17 +43,28 @@ export function renderUsers({root,path,params,session}){
  root.querySelector('.list-panel').insertAdjacentHTML('beforebegin',userTabs('usuarios'));
  root.insertAdjacentHTML('beforeend',hint(realMode?'Los permisos se verifican en Go. Asignar un rol agrega esa relación y conserva los roles adicionales existentes.':'Accesos de demostración. Los usuarios nuevos pueden iniciar sesión localmente; la autorización definitiva se implementará en el servidor.'));
 }
-export async function renderReports({root,period='Mes',reference,embedded=false,reportData}){
- const today=new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'America/Lima'}).format(new Date());
- root.innerHTML=(embedded?'':pageHeader('Reportes e indicadores','Análisis detallado de servicios realizados e ingresos registrados')+form('FILTROS',select('Periodo:','period',['Semana','Mes','Año'],'Mes')+field('Fecha de referencia','reference',today,'date','required'),submit('Aplicar filtros'),'report-form'))+'<div id="report-content" aria-live="polite"></div>';
+export async function renderReports({root,period='Mes',reference,embedded=false,reportData,analysisState={}}){
+ const today=todayLima();analysisState.income ||= {period:'Mes',reference:today};
+ root.innerHTML=(embedded?'':pageHeader('Reportes e indicadores','Análisis de servicios realizados e ingresos cobrados')+form('FILTROS',select('Periodo:','period',['Semana','Mes','Año'],period)+field('Fecha de referencia','reference',reference||today,'date','required'),submit('Aplicar filtros'),'report-form'))+'<div id="report-content" aria-live="polite"></div>';
  let drawId=0;
+ const fmt=d=>new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeZone:'America/Lima'}).format(d);
  const draw=async(period,reference)=>{
-  const id=++drawId,target=root.querySelector('#report-content');target.setAttribute('aria-busy','true');
-  target.innerHTML='<div class="loading-state" role="status">Consultando pagos y servicios…</div>';
+  const id=++drawId,target=root.querySelector('#report-content');target.setAttribute('aria-busy','true');target.innerHTML='<div class="loading-state" role="status">Consultando información del taller…</div>';
   try{
    const report=reportData||await getReport(period,reference);if(id!==drawId)return;
-   const fmt=d=>new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeZone:'America/Lima'}).format(d),range=report.range,previous=report.comparison;
-   target.innerHTML=hint('Período: '+fmt(range.start)+' – '+fmt(new Date(range.end.getTime()-1))+'. Ingresos netos de pagos registrados, con sus rectificaciones. No incluye cotizaciones pendientes.')+`<div class="report-columns separated"><section class="panel"><h2 class="form-section-title">SERVICIOS REALIZADOS</h2>${table(['Tipo','Cantidad'],report.services.map(s=>[e(s.label),e(s.count)]),'No hay servicios finalizados en el periodo seleccionado.')}<h3>Servicios realizados más frecuentes</h3>${horizontalBars([...report.services].sort((a,b)=>b.count-a.count).slice(0,4),'services')}</section><section class="panel"><h2 class="form-section-title">INGRESOS REGISTRADOS</h2>${table(['Período','Ingresos'],report.months.map(m=>[e(m.label),money(m.cents)]))}<h3>Evolución de ingresos</h3>${incomeChart(report.months.map(m=>({month:/^\d{2}\/\d{2}$/.test(m.label)?m.label:m.label.slice(0,3),cents:m.cents})),Math.max(260,root.clientWidth/2-60))}<div class="report-total"><span>Total registrado</span><strong>${money(report.income)}</strong></div></section></div><section class="panel separated" id="historical-comparison"><h2 class="form-section-title">COMPARACIÓN CON EL PERÍODO ANTERIOR</h2><p>${fmt(range.previous)} – ${fmt(new Date(range.start.getTime()-1))}. Se comparan períodos completos de calendario.</p>${table(['Indicador','Período seleccionado','Período anterior','Diferencia'],[['Ingresos netos',money(report.income),money(previous.income),money(report.income-previous.income)],['Órdenes finalizadas',e(report.orders),e(previous.orders),e(report.orders-previous.orders)]])}</section>`;
+   const range=report.range,previous=report.comparison;
+   target.innerHTML=hint('Servicios y órdenes: '+fmt(range.start)+' – '+fmt(new Date(range.end.getTime()-1))+'. Los ingresos y la satisfacción tienen filtros propios.')+`<div class="report-columns separated"><section class="panel"><h2 class="form-section-title">SERVICIOS REALIZADOS</h2>${table(['Tipo','Cantidad'],report.services.map(s=>[e(s.label),e(s.count)]),'No hay servicios finalizados en el período seleccionado.')}<h3>Servicios realizados más frecuentes</h3>${horizontalBars([...report.services].sort((a,b)=>b.count-a.count).slice(0,4),'services')}</section><section class="panel report-income"><h2 class="form-section-title">INGRESOS COBRADOS</h2><div class="income-filter"></div><div class="income-content" role="status"></div></section></div><section class="panel separated" id="historical-comparison"><h2 class="form-section-title">ÓRDENES FINALIZADAS</h2><p>Período anterior: ${fmt(range.previous)} – ${fmt(new Date(range.start.getTime()-1))}.</p>${table(['Indicador','Consultado','Anterior','Cambio'],[['Órdenes finalizadas',e(report.orders),e(previous.orders),e(report.orders-previous.orders)]])}</section>`;
+   const income=target.querySelector('.income-content');let incomeRequest=0;
+   async function drawIncome(){
+    const request=++incomeRequest;income.setAttribute('aria-busy','true');income.innerHTML='<p>Consultando ingresos…</p>';
+    try{const data=await getIncomeReport(analysisState.income.period,analysisState.income.reference);if(!income.isConnected||request!==incomeRequest)return;
+     const range=data.range;
+     income.innerHTML=`<p class="analysis-period-caption">${fmt(range.start)} – ${fmt(new Date(range.end.getTime()-1))}</p>`+'<details class="income-detail"><summary>Ver detalle de ingresos</summary>'+table(['Período','Ingresos'],data.months.map(m=>[e(m.label),money(m.cents)]),'Sin ingresos en este período.')+'</details>'+`<h3>Evolución de ingresos</h3>${incomeChart(data.months.map(m=>({month:m.label,cents:m.cents})),Math.max(260,root.clientWidth/2-60),'analysis-income-fill')}<div class="report-total"><span>Total cobrado</span><strong>${money(data.income)}</strong></div><p>Ingresos netos de pagos registrados y sus rectificaciones. No incluye cotizaciones ni saldos por cobrar.</p><p>Período anterior: ${fmt(range.previous)} – ${fmt(new Date(range.start.getTime()-1))}</p>`+table(['Ingresos anteriores','Diferencia'],[[money(data.comparison.income),money(data.income-data.comparison.income)]]);
+    }catch(error){if(income.isConnected&&request===incomeRequest)income.textContent='No se pudieron consultar los ingresos: '+error.message;}
+    finally{if(request===incomeRequest)income.removeAttribute('aria-busy');}
+   }
+   mountPeriodPicker(target.querySelector('.income-filter'),{label:'Ver ingresos por:',periods:['Día','Semana','Mes'],state:analysisState.income,onChange:drawIncome});
+   await drawIncome();
   }catch(error){if(id===drawId)target.innerHTML=hint('No se pudieron consultar los reportes: '+error.message);throw error;}
   finally{if(id===drawId)target.removeAttribute('aria-busy');}
  };
