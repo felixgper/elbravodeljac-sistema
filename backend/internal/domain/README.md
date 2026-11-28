@@ -9,5 +9,5 @@ passwordDigest del navegador. Los ID SQL son bigint; su representación HTTP ser
 string decimal. El código visible codigo_ot es distinto de id_orden.
 
 Reglas: kilometraje no decreciente, transferencia verificada, presupuesto aprobado,
-asignaciones vigentes, prueba satisfactoria posterior a reparaciones, saldo sin
+asignaciones vigentes, pruebas opcionales con resultado e historial, saldo sin
 sobrepago, retiro autorizado y conservación del historial. El servidor las verifica.

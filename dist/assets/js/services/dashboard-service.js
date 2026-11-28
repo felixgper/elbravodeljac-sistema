@@ -61,7 +61,7 @@ export async function getReport(period='Mes',reference){
 // Explicit Lima bounds determine the period; no new accounting calculation.
 export async function getIncomeReport(period='Mes',reference){
  reference??=new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'America/Lima'}).format(new Date());
- if(!['Día','Semana','Mes'].includes(period))throw Error('Selecciona Día, Semana o Mes.');
+ if(!['Día','Semana','Mes','Año'].includes(period))throw Error('Selecciona un período válido.');
  const range=reportRange(period,reference);
  const [current,comparison]=await Promise.all([currentReport('Mes',range),currentReport('Mes',{start:range.previous,end:range.start})]);
  return {...current,comparison,range};

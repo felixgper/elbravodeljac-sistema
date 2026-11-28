@@ -284,3 +284,16 @@ h1,h2,h3{font-family:var(--font-display)}
 .diagnosis-actions .diagnosis-technical-action{margin-right:auto;display:flex;flex-direction:column;gap:6px;align-items:flex-start}.diagnosis-technical-action small{font-size:12px;color:var(--muted)}.diagnosis-actions #diagnosis-technical{font-size:12px;min-height:36px;padding:7px 10px}
 .diagnosis-technical-dialog .technical-tabs{margin-bottom:16px;display:flex;gap:12px}.technical-tabs button{background:transparent;border:0;border-bottom:2px solid transparent;padding:10px;color:inherit;font:inherit;cursor:pointer}.technical-tabs [aria-selected=true]{color:var(--copper);border-color:currentColor}.technical-status{min-height:24px;margin:12px 0;color:var(--muted);overflow-wrap:anywhere}.technical-status[role=alert]{color:#df8b8b}.technical-row{display:grid;grid-template-columns:minmax(100px,1fr) minmax(140px,2fr) auto;gap:10px;align-items:end;margin:12px 0}.technical-row .secondary-button{margin-bottom:1px}.technical-record{border-top:1px solid var(--line);padding:16px 0}.technical-record summary{cursor:pointer;overflow-wrap:anywhere}.technical-evidence-list,.technical-scan-list{margin-top:20px}.diagnosis-technical-dialog h3{font-size:14px}.diagnosis-technical-dialog [hidden]{display:none!important}
 @media(max-width:700px){.diagnosis-actions .diagnosis-technical-action{flex-basis:100%;margin:0}.technical-row{grid-template-columns:1fr}.technical-row button{justify-self:start}}
+
+/* Authenticated diagnostic attachments; scoped to the existing technical modal. */
+.diagnosis-technical-dialog .technical-dtc-row{grid-template-columns:minmax(0,1fr) auto}
+.technical-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-top:16px}
+.technical-evidence-card{min-width:0;border:1px solid var(--line);border-radius:8px;padding:10px}
+.technical-thumbnail{display:grid;place-items:center;width:100%;aspect-ratio:1;padding:0;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:inherit;overflow:hidden;cursor:pointer}
+.technical-thumbnail img{width:100%;height:100%;object-fit:cover}
+.technical-thumbnail .icon{width:40px;height:40px}.technical-thumbnail>span{font-size:13px}
+.technical-evidence-card p{font-size:13px;overflow-wrap:anywhere;margin:10px 0 5px}.technical-evidence-card time{display:block;font-size:11px;color:var(--muted)}
+.technical-evidence-card>div{display:flex;gap:12px;margin-top:10px;align-items:center}.technical-open,.technical-download{font:inherit;font-size:12px;color:var(--copper);background:none;border:0;padding:3px 0;text-decoration:underline;cursor:pointer}
+.technical-preview{width:min(1000px,94vw);max-height:94svh}.technical-preview-body{padding:12px;display:grid;place-items:center;overflow:auto}.technical-preview-body img{max-width:100%;max-height:75svh;object-fit:contain}.technical-preview-body iframe{width:100%;height:72svh;border:0}
+.technical-thumbnail:focus-visible,.technical-open:focus-visible,.technical-download:focus-visible{outline:2px solid var(--copper);outline-offset:3px}
+@media(max-width:480px){.technical-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.diagnosis-technical-dialog .technical-dtc-row{grid-template-columns:minmax(0,1fr) auto}}

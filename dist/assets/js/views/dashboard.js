@@ -5,7 +5,7 @@ import {realMode} from '../services/api-service.js';
 import {dashboardSummary,mountSummaryIncome} from './dashboard-summary.js';
 import {mountDiagnosisDashboard} from '../components/diagnosis-inbox.js';
 import {renderReports} from './administration.js';
-import {e,money,field,select,form,submit,bindForm} from '../components/ui.js';
+import {e,money,select,form,submit,bindForm} from '../components/ui.js';
 import {icon} from '../components/icons.js';
 export async function renderIntegratedDashboard({root,session,period='Mes',reference,tab,isCurrent=()=>true}) {
  const can=permissionChecker(session.role),summaryAllowed=can('inicio','ver'),financeAllowed=can('reportes','ver');
@@ -15,11 +15,14 @@ export async function renderIntegratedDashboard({root,session,period='Mes',refer
  const analysisState={income:{},satisfaction:{}};
  let snapshot=null;
  const cache=new Map(),key=()=>period+'|'+reference;
- root.innerHTML=`<div class="dashboard-toolbar"><nav class="tabs dashboard-tabs" role="tablist" aria-label="Contenido de Inicio"><button class="tab" id="tab-resumen" role="tab" aria-controls="dashboard-summary" ${summaryAllowed?'':'disabled'}>Resumen</button><button class="tab" id="tab-analisis" role="tab" aria-controls="dashboard-analysis" ${financeAllowed?'':'disabled title="Requiere permiso de análisis financiero"'}>Análisis ${financeAllowed?'':icon('lock')}</button></nav><details class="dashboard-export"><summary class="secondary-button">Exportar ${icon('down')}</summary><div class="dashboard-export-options"><button type="button" data-export="xlsx" disabled>Exportar a Excel (.xlsx)</button><button type="button" data-export="pdf" disabled>Exportar a PDF (.pdf)</button></div></details></div><p class="dashboard-export-status" role="status" hidden></p>`+form('PERÍODO DE CONSULTA',select('Período','period',['Semana','Mes','Año'],period)+field('Fecha de referencia','reference',reference,'date','required'),submit('Aplicar filtros'),'dashboard-filter')+`<section id="dashboard-summary" role="tabpanel" aria-labelledby="tab-resumen"></section><section id="dashboard-analysis" role="tabpanel" aria-labelledby="tab-analisis"></section>`;
+ root.innerHTML=`<div class="dashboard-toolbar"><nav class="tabs dashboard-tabs" role="tablist" aria-label="Contenido de Inicio"><button class="tab" id="tab-resumen" role="tab" aria-controls="dashboard-summary" ${summaryAllowed?'':'disabled'}>Resumen</button><button class="tab" id="tab-analisis" role="tab" aria-controls="dashboard-analysis" ${financeAllowed?'':'disabled title="Requiere permiso de análisis financiero"'}>Análisis ${financeAllowed?'':icon('lock')}</button></nav><details class="dashboard-export"><summary class="secondary-button">Exportar ${icon('down')}</summary><div class="dashboard-export-options"><button type="button" data-export="xlsx" disabled>Exportar a Excel (.xlsx)</button><button type="button" data-export="pdf" disabled>Exportar a PDF (.pdf)</button></div></details></div><p class="dashboard-export-status" role="status" hidden></p>`+form('PERÍODO DE CONSULTA',select('Período','period',['Semana','Mes','Año'],period),submit('Aplicar filtros'),'dashboard-filter')+`<section id="dashboard-summary" role="tabpanel" aria-labelledby="tab-resumen"></section><section id="dashboard-analysis" role="tabpanel" aria-labelledby="tab-analisis"></section>`;
+ const exportMenu=root.querySelector('.dashboard-export');
  const heading=root.closest('.workspace')?.querySelector('.page-heading');
  if(heading){
   heading.querySelector('.form-panel:has(>#dashboard-filter)')?.remove();
-  heading.append(root.querySelector('#dashboard-filter').closest('.form-panel'));
+  heading.querySelector('.dashboard-heading-actions')?.remove();
+  const actions=document.createElement('div');actions.className='dashboard-heading-actions';
+  actions.append(root.querySelector('#dashboard-filter').closest('.form-panel'),exportMenu);heading.append(actions);
  }
  const summary=root.querySelector('#dashboard-summary'),analysis=root.querySelector('#dashboard-analysis');
  const updateLocation=()=>{const q=new URLSearchParams({tab:selected,period,reference});history.replaceState(null,'','#/inicio?'+q);};
@@ -70,7 +73,7 @@ export async function renderIntegratedDashboard({root,session,period='Mes',refer
   }catch(error){if(fresh()&&key()===ownKey)target.innerHTML=`<section class="panel error-state" role="alert"><h2>No se pudo completar la consulta</h2><p>${e(error.message)}</p><p>Vuelve a aplicar los filtros para intentarlo.</p></section>`;}
   finally{target.removeAttribute('aria-busy');}
  }
- const exportMenu=root.querySelector('.dashboard-export');
+
  const exportStatus=root.querySelector('.dashboard-export-status');
  let exporting=false;
  function updateExport(){
@@ -97,7 +100,7 @@ export async function renderIntegratedDashboard({root,session,period='Mes',refer
  async function selectTab(name){if(name==='analisis'&&!financeAllowed||name==='resumen'&&!summaryAllowed)return;if(name==='resumen'&&selected==='analisis')loadedSummary='';selected=name;updateExport();updateLocation();await show();}
  root.querySelector('#tab-resumen').onclick=()=>selectTab('resumen');root.querySelector('#tab-analisis').onclick=()=>selectTab('analisis');
  root.querySelector('.dashboard-tabs').onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;const tabs=[...root.querySelectorAll('[role=tab]:not(:disabled)')],index=tabs.indexOf(document.activeElement),next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;event.preventDefault();tabs[next].click();tabs[next].focus();};
- bindForm('dashboard-filter',async data=>{period=data.period;reference=data.reference;snapshot=null;exportStatus.hidden=true;updateExport();loadedSummary='';loadedAnalysis='';cache.clear();updateLocation();await show();});
+ bindForm('dashboard-filter',async data=>{period=data.period;snapshot=null;exportStatus.hidden=true;updateExport();loadedSummary='';loadedAnalysis='';cache.clear();updateLocation();await show();});
  updateExport();
  await show();
 }

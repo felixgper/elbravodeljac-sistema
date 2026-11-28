@@ -19,15 +19,15 @@ function orderStatus(states){
 export function dashboardSummary({period,cards,states,mechanics,income,activity,canViewOrders,services,satisfactionAllowed=false}, financeAllowed) {
  satisfactionAllowed=Boolean(satisfactionAllowed&&financeAllowed);
  const hasOrders=states.some(state=>state.count>0);
- const stateChart=donutChart(states);
+ const stateChart=hasOrders?donutChart(states):empty('No hay órdenes registradas.');
  return `<section class="kpi-grid" aria-label="Resumen de actividad" style="--dashboard-cards:${cards.length+(satisfactionAllowed?1:0)}">
   ${cards.map(card=>`<article class="kpi-card"><span class="kpi-icon ${card.class}">${icon(card.icon)}</span><div><h2>${e(card.label)}</h2><strong class="kpi-value">${e(card.value)}</strong></div><p>${e(card.note)}</p></article>`).join('')}
   ${satisfactionAllowed?`<article class="kpi-card dashboard-satisfaction-card"><span class="kpi-icon amber">${icon('star')}</span><div><h2>Satisfacción del cliente</h2><strong class="kpi-value" data-satisfaction-value>Consultando…</strong></div><p data-satisfaction-note>Promedio de satisfacción general</p></article>`:''}
  </section>
  <div class="dashboard-grid dashboard-overview ${income?'':'dashboard-overview-restricted'} ${satisfactionAllowed?'dashboard-overview-satisfaction':''}">
-  ${income?panel('Evolución de ingresos','<div class="summary-income-filter"></div><div class="summary-income-result" role="status"></div>','dashboard-income'):''}
+  ${income?panel('Evolución de ingresos','<div class="summary-income-result" role="status"></div>','dashboard-income','<div class="summary-income-filter"></div>'):''}
   ${satisfactionAllowed?panel(`${icon('star')} Satisfacción del cliente`,'','dashboard-satisfaction'):''}
-  ${panel('Estados de órdenes',`${stateChart}${hasOrders?'':'<p class="dashboard-caption">Sin órdenes registradas.</p>'}`,'dashboard-orders')}
+  ${panel('Estados de órdenes',stateChart,'dashboard-orders'+(hasOrders?'':' dashboard-orders-empty'))}
  </div>
  <div class="dashboard-grid dashboard-detail">
   ${panel('Órdenes y estatus',orderStatus(states),'dashboard-status',canViewOrders?'<a class="dashboard-small-action" href="#/ordenes">Ver todas</a>':'')}
@@ -52,5 +52,5 @@ export async function mountSummaryIncome(section,state){
   }catch(error){if(section.isConnected&&id===requestId)target.textContent='No se pudieron consultar los ingresos: '+error.message;}
   finally{if(id===requestId)target.removeAttribute('aria-busy');}
  }
- mountPeriodPicker(section.querySelector('.summary-income-filter'),{label:'Ver ingresos por:',periods:['Día','Semana','Mes'],state,onChange:draw});await draw();
+ mountPeriodPicker(section.querySelector('.summary-income-filter'),{label:'Período de ingresos',periods:['Semana','Mes','Año'],state,onChange:draw,compact:true});await draw();
 }

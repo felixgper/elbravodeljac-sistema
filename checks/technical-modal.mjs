@@ -35,3 +35,15 @@ const ensure=automaticDiagnosisDraft({getRecord:()=>record,readInput:()=>({recep
 const a=ensure(),b=ensure();while(!resolveCreate)await new Promise(r=>setTimeout(r,0));resolveCreate();assert.equal((await a).id,'42');assert.equal((await b).id,'42');assert.equal(posts,1);assert.equal((await ensure()).id,'42');assert.equal(posts,1);
 let created=false;const invalid=automaticDiagnosisDraft({getRecord:()=>null,readInput:()=>{throw Error('Completa el campo');},findRecord:async()=>null,create:async()=>{created=true;},onSaved:()=>{}});await assert.rejects(invalid(),/Completa/);assert.equal(created,false);
 console.log('PASS: automatic draft, current text, forced Borrador, shared concurrent creation, uncertain-response reconciliation, validation before writes.');
+
+const {manualScanInput}=await import('../dist/assets/js/components/diagnosis-technical.js');
+const manual=manualScanInput([{code:' p0300 '},{code:'U0100'}]);
+assert.deepEqual(manual.equipo,{nombre:'Registro manual',version:''});assert.deepEqual(manual.mediciones,Object.create(null));
+assert.deepEqual(manual.dtcs,[{codigo:'P0300',descripcion:''},{codigo:'U0100',descripcion:''}]);
+for(const codes of [[{code:''}],[{code:'P0300'},{code:'p0300'}],[{code:'INVALID'}]])assert.throws(()=>manualScanInput(codes));
+const {loadEvidence}=await import('../dist/assets/js/services/technical-service.js');
+for(const type of ['image/png','image/jpeg','application/pdf']){globalThis.fetch=async()=>new Response('synthetic',{headers:{'Content-Type':type}});assert.equal((await loadEvidence('1','safe-file')).type,type);}
+globalThis.fetch=async()=>new Response('<html>not a file</html>',{headers:{'Content-Type':'text/html'}});await assert.rejects(loadEvidence('1','bad'),/Formato de evidencia/);
+console.log('PASS: manual DTC codes, format/duplicates, neutral equipment, empty measurements and MIME-safe authenticated previews.');
+
+assert(operations.includes('Prueba realizada (opcional)'));assert(!operations.includes('Para finalizar se exige una prueba'));

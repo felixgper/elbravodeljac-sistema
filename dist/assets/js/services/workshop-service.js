@@ -84,9 +84,8 @@ export function updateOrder(id,input,by){if(realMode)return real.updateOrder(id,
   technicalUser(s,input.mechanicId);if(input.assistantId)throw new Error('No se permiten nuevas asignaciones de Auxiliar.');
   const test=String(input.test??'').trim(),result=input.result||'No aplica';if(!['No aplica','Satisfactoria','Fallida'].includes(result))throw new Error('Selecciona un resultado de prueba válido.');
   if(result!=='No aplica'&&!test)throw new Error('Indica qué prueba se realizó.');
-  const lastRepair=order.updates.findLastIndex(u=>u.state==='En reparación');const lastTestIndex=order.updates.findLastIndex(u=>u.result!=='No aplica');
-  const lastTest=result!=='No aplica'?{test,result}:lastTestIndex>lastRepair?order.updates[lastTestIndex]:null;
-  if(input.state==='Finalizada'&&(!lastTest?.test||lastTest.result!=='Satisfactoria'))throw new Error('Para finalizar registra una prueba satisfactoria. Si falló, corrige la reparación y vuelve a probar.');
+  if(test&&result==='No aplica')throw new Error('Indica el resultado de la prueba.');
+
   const note=text(input.note,'la observación / avance de esta actualización',4000);
   Object.assign(order,{mechanicId:input.mechanicId,state:input.state});order.updates.push({...audit(by),note,test,result,state:input.state});return order;
 });}
