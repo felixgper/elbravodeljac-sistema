@@ -239,7 +239,25 @@
 .dashboard-surface .dashboard-column-bar{position:relative;width:min(70%,40px);height:calc(var(--bar-height) * .84);background:var(--bar-color);border-radius:3px 3px 0 0}
 .dashboard-surface .dashboard-column-bar strong{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-size:11px;color:#f3f4f8}
 .dashboard-surface .dashboard-column-label{padding-top:5px;color:#d0d1d9;font-size:11px;line-height:1.2;overflow-wrap:anywhere}
-.dashboard-surface .dashboard-empty{min-height:103px;display:grid;place-items:center;text-align:center;padding:10px;border:1px dashed #45464c;border-radius:6px;color:#c2c3cc;background:#1d1e22;font-size:13px}
+.dashboard-surface .dashboard-empty,.dashboard-surface .dashboard-satisfaction .survey-results>.empty-state{min-height:103px;display:grid;place-items:center;text-align:center;padding:10px;border:1px dashed #45464c;border-radius:6px;color:#c2c3cc;background:#1d1e22;font-size:13px}
+/* Dashboard filters: one selector per scope, no manual date controls. */
+@media(min-width:1081px){.dashboard-surface .dashboard-overview-satisfaction .dashboard-orders:not(.dashboard-orders-empty) .donut-layout{min-height:234px;grid-template-rows:184px auto}}
+.dashboard-surface .dashboard-heading-actions{display:flex;align-items:flex-end;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.dashboard-surface .dashboard-heading-actions #dashboard-filter .form-grid{grid-template-columns:minmax(90px,110px);min-width:0}
+.dashboard-surface .dashboard-heading-actions #dashboard-filter .form-actions{width:auto;margin:0}
+.dashboard-surface .dashboard-heading-actions .dashboard-export summary{min-height:35px;padding:6px 10px}
+.dashboard-surface .dashboard-overview .panel-heading,.dashboard-surface #dashboard-analysis .report-income>.panel-heading{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.dashboard-surface .panel-heading>.summary-income-filter,.dashboard-surface .panel-heading>.satisfaction-filter,.dashboard-surface .panel-heading>.income-filter{flex:0 0 auto;margin-left:auto}
+.dashboard-surface .panel-heading .analysis-period-picker.period-picker-compact{margin:0;min-height:0;display:block}
+.dashboard-surface .panel-heading .analysis-period-picker.period-picker-compact select{width:86px;min-height:34px;height:34px;font-size:12px;padding:5px 8px}
+@media(max-width:700px){.dashboard-surface .dashboard-heading-actions{width:100%;gap:8px}.dashboard-surface .dashboard-heading-actions #dashboard-filter{flex-wrap:nowrap;gap:8px}.dashboard-surface .dashboard-heading-actions #dashboard-filter .form-grid{grid-template-columns:minmax(85px,100px);min-width:0}.dashboard-surface .dashboard-heading-actions #dashboard-filter .primary-button{width:auto;white-space:nowrap}.dashboard-surface .panel-heading .analysis-period-picker.period-picker-compact select{min-height:44px;height:44px}}
+/* Quiet, unboxed empty states; populated chart rules remain unchanged. */
+.dashboard-surface .dashboard-overview .dashboard-empty,.dashboard-surface .dashboard-satisfaction .survey-results>.empty-state{min-height:0;margin:0;padding:10px 8px;border:0;border-radius:0;background:transparent;color:#b5b8c2;line-height:1.5}
+.dashboard-surface .summary-income-result:has(>.dashboard-empty),.dashboard-surface .dashboard-satisfaction .survey-results:has(>.empty-state){display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0}
+.dashboard-surface .dashboard-satisfaction .survey-results:has(>.empty-state)>.analysis-period-caption{order:1;margin:0;text-align:center}
+.dashboard-surface .summary-income-result:has(>.dashboard-empty)>.dashboard-caption{margin:0;text-align:center}
+.dashboard-surface .dashboard-orders-empty{display:flex;flex-direction:column}
+.dashboard-surface .dashboard-orders-empty>.dashboard-empty{margin:auto 0}
 .dashboard-surface .dashboard-activity{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .dashboard-surface .dashboard-activity dl{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0;font-size:12px;color:var(--muted)}
 .dashboard-surface .dashboard-activity dl div{display:flex;gap:7px}

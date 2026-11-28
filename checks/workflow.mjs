@@ -29,9 +29,9 @@ assert.throws(()=>api.createOrder({quoteId:quote.id,mechanicId:'u-pedro'},actor)
 assert.throws(()=>api.saveQuote({...quoteInput,status:'Aprobada'},quote.id),/originó/);
 const input={mechanicId:'u-pedro',state:'En reparación',note:'Revisión adicional',test:'',result:'No aplica'};
 api.updateOrder(order.id,input,actor);
-assert.throws(()=>api.updateOrder(order.id,{...input,state:'Finalizada'},actor),/prueba satisfactoria/);
+assert.throws(()=>api.updateOrder(order.id,{...input,state:'Finalizada',test:'Ruta'},actor),/resultado de la prueba/);
 api.updateOrder(order.id,{...input,state:'En pruebas',note:'Prueba inicial falló',test:'Prueba de ruta',result:'Fallida'},actor);
-assert.throws(()=>api.updateOrder(order.id,{...input,state:'Finalizada'},actor),/prueba satisfactoria/);
+assert.throws(()=>api.updateOrder(order.id,{...input,state:'Finalizada',test:'',result:'Fallida'},actor),/qué prueba/);
 order=api.updateOrder(order.id,{...input,state:'Finalizada',note:'Reparación corregida y verificada',test:'Prueba de ruta',result:'Satisfactoria'},actor);
 assert.equal(order.updates.length,3);assert.equal(order.updates[0].note,'Revisión adicional');assert.equal(order.updates[1].result,'Fallida');assert.equal(api.getContext(getStore(),order).client.id,client.id);
 const payment1=api.registerPayment({orderId:order.id,amount:'100.00',method:'Efectivo'},actor);assert.equal(payment1.amountCents,10000);

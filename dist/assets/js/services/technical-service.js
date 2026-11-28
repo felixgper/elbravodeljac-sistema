@@ -66,3 +66,5 @@ export function automaticDiagnosisDraft({getRecord,readInput,findRecord,create,o
   try{return await pending;}finally{pending=null;}
  };
 }
+
+export const loadEvidence=(diagnosis,id,{signal}={})=>request(base(diagnosis)+'/evidencias/'+encodeURIComponent(id)+'/archivo',{responseType:'evidence',signal});

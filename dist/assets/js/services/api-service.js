@@ -22,6 +22,7 @@ export async function request(path,{method='GET',body,signal,responseType='json'
   let response;
   try { response = await fetch('/api/v1'+path,{method,headers,credentials:'same-origin',cache:'no-store',body:body===undefined?undefined:multipart?body:JSON.stringify(body),signal}); }
   catch(error) { if(error.name==='AbortError')throw error; throw new APIError('No se pudo contactar al servidor. Comprueba la conexión antes de volver a guardar.'); }
+  if(response.ok&&responseType==='evidence'){const mime=response.headers.get('Content-Type')?.split(';')[0].trim();if(!['image/jpeg','image/png','application/pdf'].includes(mime))throw new APIError('Formato de evidencia no permitido.',response.status);return response.blob();}
   if(response.ok&&responseType==='blob'){if(!response.headers.get('Content-Type')?.includes('application/pdf'))throw new APIError('El servidor no devolvió un PDF.',response.status);return response.blob();}
   let result;
   if(response.status!==204) {

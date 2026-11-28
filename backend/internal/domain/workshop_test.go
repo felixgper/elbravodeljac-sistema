@@ -58,3 +58,22 @@ func TestDiagnosisResponsibleMechanicID(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestOrderTestTrulyOptional(t *testing.T) {
+	for _, state := range []string{"Pendiente", "En reparación", "En pruebas", "Finalizada"} {
+		for _, result := range []string{"", "No aplica"} {
+			v := UpdateOrderInput{State: state, Note: "Avance", Result: result}
+			if err := v.Validate(); err != nil {
+				t.Fatalf("optional test %s: %v", state, err)
+			}
+			if v.Test != "" || v.Result != "" {
+				t.Fatal("fabricated test")
+			}
+		}
+	}
+	for _, v := range []UpdateOrderInput{{State: "Finalizada", Note: "Avance", Test: "Ruta"}, {State: "Finalizada", Note: "Avance", Result: "Fallida"}} {
+		if v.Validate() == nil {
+			t.Fatal("incomplete explicit test accepted")
+		}
+	}
+}

@@ -10,8 +10,13 @@ export function shiftPeriod(period,reference,direction){
  return date.toISOString().slice(0,10);
 }
 // Each instance owns its state object; no shared/global filter or event bus.
-export function mountPeriodPicker(root,{label,periods,state,onChange}){
+export function mountPeriodPicker(root,{label,periods,state,onChange,compact=false}){
  state.period=periods.includes(state.period)?state.period:'Mes';state.reference ||= todayLima();
+ if(compact){
+  root.innerHTML=`<div class="analysis-period-picker period-picker-compact"><select aria-label="${e(label)}">${periods.map(p=>`<option${p===state.period?' selected':''}>${e(p)}</option>`).join('')}</select></div>`;
+  root.querySelector('select').onchange=event=>{state.period=event.target.value;onChange();};
+  return;
+ }
  root.innerHTML=`<div class="analysis-period-picker"><label>${e(label)}<select aria-label="${e(label)}">${periods.map(p=>`<option${p===state.period?' selected':''}>${e(p)}</option>`).join('')}</select></label><button type="button" class="secondary-button period-prev" aria-label="Período anterior">‹</button><label>Fecha de referencia<input type="date" value="${e(state.reference)}" max="${todayLima()}" required></label><button type="button" class="secondary-button period-next" aria-label="Período siguiente">›</button><button type="button" class="secondary-button period-now">Actual</button></div>`;
  const select=root.querySelector('select'),date=root.querySelector('input'),next=root.querySelector('.period-next');
  const reflect=()=>{select.value=state.period;date.value=state.reference;date.setAttribute('value',state.reference);for(const option of select.options)option.toggleAttribute('selected',option.value===state.period);next.disabled=reportRange(state.period,state.reference).end>new Date(todayLima()+'T05:00:00Z');};

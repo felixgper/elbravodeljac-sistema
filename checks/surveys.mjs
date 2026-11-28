@@ -54,3 +54,37 @@ assert(summary.indexOf('dashboard-satisfaction"')<summary.indexOf('dashboard-ord
 for(const title of ['Órdenes y estatus','Trabajo por mecánico','Servicios más realizados'])assert(summary.includes(title));
 assert(!dashboardSummary({...summaryInput,cards:summaryInput.cards.slice(1),income:null},false).includes('dashboard-satisfaction-card'));
 console.log('PASS: estructura 4/3/3, orden de paneles y restricción del nuevo indicador por permisos.');
+
+// A zero total has no donut; real orders retain the original chart renderer.
+assert(summary.includes('dashboard-orders-empty'));
+assert(summary.includes('No hay órdenes registradas.'));
+assert(!summary.includes('class="donut"'));
+assert(!summary.includes('class="chart-legend"'));
+const populatedStates=[{label:'Pendientes',count:1,color:'#d89a2a'},{label:'Finalizadas',count:2,color:'#36a376'}];
+const populatedSummary=dashboardSummary({...summaryInput,states:populatedStates},true);
+const {donutChart}=await import('../dist/assets/js/components/charts.js');
+assert(populatedSummary.includes(donutChart(populatedStates)));
+assert(!populatedSummary.includes('dashboard-orders-empty'));
+assert.equal(summary.split('</section>')[0],populatedSummary.split('</section>')[0]);
+const css=fs.readFileSync('dist/assets/css/gestion-carbon.css','utf8');
+assert(css.includes('.dashboard-orders .donut'));
+assert(css.includes('max-height:184px'));
+console.log('PASS: empty orders omit the donut; populated orders retain the original chart and upper indicators.');
+
+// Annual income keeps the authorized ledger and existing Lima boundaries.
+financial.length=0;
+const annualIncome=await getIncomeReport('Año','2024-02-29');
+assert.equal(annualIncome.range.start.toISOString(),'2024-01-01T05:00:00.000Z');
+assert.equal(annualIncome.range.end.toISOString(),'2025-01-01T05:00:00.000Z');
+assert.equal(annualIncome.range.previous.toISOString(),'2023-01-01T05:00:00.000Z');
+assert.equal(financial.length,2);
+assert(financial[0].path.includes('desde=2024-01-01')&&financial[0].path.includes('hasta=2025-01-01'));
+const {mountPeriodPicker}=await import('../dist/assets/js/components/analysis-periods.js');
+const compactSelect={};const compactRoot={innerHTML:'',querySelector:s=>{assert.equal(s,'select');return compactSelect;}};
+const independent={period:'Mes',reference:'2024-02-29'};let changed=0;
+mountPeriodPicker(compactRoot,{label:'Período de ingresos',periods:['Semana','Mes','Año'],state:independent,onChange:()=>changed++,compact:true});
+assert(!compactRoot.innerHTML.includes('<input'));assert(!compactRoot.innerHTML.includes('<button'));assert(!compactRoot.innerHTML.includes('Fecha de referencia'));
+assert.deepEqual([...compactRoot.innerHTML.matchAll(/<option[^>]*>(.*?)<\/option>/g)].map(x=>x[1]),['Semana','Mes','Año']);
+compactSelect.onchange({target:{value:'Año'}});assert.equal(changed,1);assert.equal(independent.period,'Año');assert.equal(independent.reference,'2024-02-29');
+const integratedSource=fs.readFileSync('dist/assets/js/views/dashboard.js','utf8');assert(!integratedSource.includes("field('Fecha de referencia'"));assert(!integratedSource.includes('reference=data.reference'));
+console.log('PASS: annual income boundaries, compact period-only controls and internal base date preserved.');

@@ -395,18 +395,8 @@ func (s *Store) UpdateOrder(ctx context.Context, id string, v domain.UpdateOrder
 			return nil, err
 		}
 	}
-	if v.State == "finalizada" {
-		var passed bool
-		err = tx.QueryRowContext(ctx, `SELECT CONVERT(bit,COALESCE((SELECT TOP (1) CASE WHEN p.resultado=N'satisfactoria' AND NOT EXISTS(
-SELECT 1 FROM historial_estados_ot h WHERE h.id_orden=@p1 AND h.estado_nuevo=N'en_reparacion' AND h.fecha>p.fecha)
-THEN 1 ELSE 0 END FROM pruebas_ot p WHERE p.id_orden=@p1 ORDER BY p.fecha DESC,p.id_prueba DESC),0))`, id).Scan(&passed)
-		if err != nil {
-			return nil, err
-		}
-		if !passed {
-			return nil, domain.Invalid("result", "Finalizar exige la última prueba satisfactoria, posterior a la última reparación.")
-		}
-	}
+	// Technical tests are optional. Explicit results above remain in the audit trail.
+
 	if _, err = tx.ExecContext(ctx, `UPDATE ordenes_trabajo SET estado=@p2,fecha_inicio=CASE WHEN @p2 IN ('en_reparacion','en_pruebas','finalizada') THEN coalesce(fecha_inicio,@p3) ELSE fecha_inicio END,fecha_fin=CASE WHEN @p2 IN ('finalizada','cancelada') THEN @p3 ELSE NULL END WHERE id_orden=@p1`, id, v.State, at); err != nil {
 		return nil, translate(err)
 	}
